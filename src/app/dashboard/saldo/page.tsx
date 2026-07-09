@@ -3,7 +3,7 @@ import { TrendingUp, Lock, Info } from "lucide-react";
 
 export default function SaldoPage() {
   return (
-    <DashboardShell title="Meu Saldo">
+    <DashboardShell title="Meu Saldo" showBack backHref="/dashboard">
       {/* Cards de saldo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">

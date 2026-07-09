@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import Logo from "@/components/Logo";
 import {
   LayoutDashboard,
   Users,
@@ -66,21 +67,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="p-6">
-        <Link
-          href="/"
-          onClick={onNavigate}
-          className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-            <span className="text-brand font-bold text-lg">E</span>
-          </div>
-          <div>
-            <span className="text-white font-bold text-lg block leading-tight">
-              ECOMOPAR
-            </span>
-            <span className="text-gray-400 text-xs">Painel Administrativo</span>
-          </div>
+        <Link href="/" onClick={onNavigate}>
+          <Logo size="sm" variant="light" showTagline={false} />
         </Link>
+        <p className="text-white/60 text-xs mt-2">Painel Administrativo</p>
       </div>
 
       <NavList onNavigate={onNavigate} />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Phone, Mail, MapPin } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const social = [
   {
@@ -43,13 +44,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
           {/* Logo e descrição */}
           <div className="space-y-4 sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-accent to-brand rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">E</span>
-              </div>
-              <span className="text-white font-bold text-xl">ECOMOPAR</span>
-            </div>
-            <p className="text-gray-300 text-sm leading-relaxed max-w-xs">
+            <Logo size="sm" variant="light" showTagline={false} />
+            <p className="text-gray-300 text-sm leading-relaxed max-w-xs mt-4">
               Instituto de Apoio ao Motorista Autônomo. Proteção, reserva e
               benefícios para quem vive da direção.
             </p>
@@ -141,7 +137,13 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-10 pt-6 text-center">
+        <div className="border-t border-white/10 mt-10 pt-6 text-center space-y-2">
+          <Link
+            href="/politica-de-privacidade"
+            className="text-gray-300 hover:text-white transition-colors text-sm inline-block"
+          >
+            Política de Privacidade
+          </Link>
           <p className="text-gray-400 text-sm">
             © {new Date().getFullYear()} ECOMOPAR - Instituto de Apoio ao
             Motorista Autônomo. Todos os direitos reservados.

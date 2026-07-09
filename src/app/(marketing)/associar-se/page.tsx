@@ -42,13 +42,13 @@ export default function AssociarSePage() {
 
   if (enviado) {
     return (
-      <main className="min-h-screen bg-[#F5F7FA] py-20">
+      <main className="min-h-screen bg-surface py-20">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-3xl p-12 text-center shadow-lg">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
-            <h1 className="text-3xl font-bold text-[#0E3A5D] mb-4">
+            <h1 className="text-3xl font-bold text-brand mb-4">
               Cadastro Enviado com Sucesso!
             </h1>
             <p className="text-gray-600 mb-8">
@@ -57,7 +57,7 @@ export default function AssociarSePage() {
             </p>
             <Link
               href="/"
-              className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-[#0E3A5D] to-[#1FA35B] text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+              className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-brand to-accent text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity"
             >
               <span>Voltar para o Início</span>
             </Link>
@@ -68,9 +68,9 @@ export default function AssociarSePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F7FA]">
+    <main className="min-h-screen bg-surface">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#0E3A5D] to-[#1a5a3d] text-white py-12">
+      <div className="bg-gradient-to-br from-brand to-brand-dark text-white py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl lg:text-4xl font-bold mb-4">Associe-se à ECOMOPAR</h1>
           <p className="text-gray-300">
@@ -83,22 +83,22 @@ export default function AssociarSePage() {
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-center space-x-4">
-            <div className={`flex items-center space-x-2 ${step >= 1 ? 'text-[#0E3A5D]' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-[#0E3A5D] text-white' : 'bg-gray-200'}`}>
+            <div className={`flex items-center space-x-2 ${step >= 1 ? 'text-brand' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-brand text-white' : 'bg-gray-200'}`}>
                 <User className="w-4 h-4" />
               </div>
               <span className="text-sm font-medium hidden sm:block">Dados Pessoais</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
-            <div className={`flex items-center space-x-2 ${step >= 2 ? 'text-[#0E3A5D]' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-[#0E3A5D] text-white' : 'bg-gray-200'}`}>
+            <div className={`flex items-center space-x-2 ${step >= 2 ? 'text-brand' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-brand text-white' : 'bg-gray-200'}`}>
                 <Car className="w-4 h-4" />
               </div>
               <span className="text-sm font-medium hidden sm:block">Dados do Veículo</span>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-400" />
-            <div className={`flex items-center space-x-2 ${step >= 3 ? 'text-[#0E3A5D]' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-[#0E3A5D] text-white' : 'bg-gray-200'}`}>
+            <div className={`flex items-center space-x-2 ${step >= 3 ? 'text-brand' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-brand text-white' : 'bg-gray-200'}`}>
                 <CreditCard className="w-4 h-4" />
               </div>
               <span className="text-sm font-medium hidden sm:block">Financeiro</span>
@@ -114,14 +114,14 @@ export default function AssociarSePage() {
             {/* Step 1: Dados Pessoais */}
             {step === 1 && (
               <div className="p-8">
-                <h2 className="text-xl font-bold text-[#0E3A5D] mb-6">Dados Pessoais</h2>
+                <h2 className="text-xl font-bold text-brand mb-6">Dados Pessoais</h2>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
                     <input
                       type="text"
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                       value={formData.nome}
                       onChange={(e) => setFormData({...formData, nome: e.target.value})}
                     />
@@ -133,7 +133,7 @@ export default function AssociarSePage() {
                         type="text"
                         required
                         placeholder="000.000.000-00"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.cpf}
                         onChange={(e) => setFormData({...formData, cpf: e.target.value})}
                       />
@@ -143,7 +143,7 @@ export default function AssociarSePage() {
                       <input
                         type="date"
                         required
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.dataNascimento}
                         onChange={(e) => setFormData({...formData, dataNascimento: e.target.value})}
                       />
@@ -156,7 +156,7 @@ export default function AssociarSePage() {
                         type="tel"
                         required
                         placeholder="(11) 00000-0000"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.telefone}
                         onChange={(e) => setFormData({...formData, telefone: e.target.value})}
                       />
@@ -167,7 +167,7 @@ export default function AssociarSePage() {
                         type="email"
                         required
                         placeholder="seu@email.com"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                       />
@@ -179,7 +179,7 @@ export default function AssociarSePage() {
                       type="text"
                       required
                       placeholder="Rua, número, bairro"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                       value={formData.endereco}
                       onChange={(e) => setFormData({...formData, endereco: e.target.value})}
                     />
@@ -190,7 +190,7 @@ export default function AssociarSePage() {
                       <input
                         type="text"
                         required
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.cidade}
                         onChange={(e) => setFormData({...formData, cidade: e.target.value})}
                       />
@@ -199,7 +199,7 @@ export default function AssociarSePage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
                       <select
                         required
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.estado}
                         onChange={(e) => setFormData({...formData, estado: e.target.value})}
                       >
@@ -222,7 +222,7 @@ export default function AssociarSePage() {
                         type="text"
                         required
                         placeholder="00000-000"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.cep}
                         onChange={(e) => setFormData({...formData, cep: e.target.value})}
                       />
@@ -233,7 +233,7 @@ export default function AssociarSePage() {
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="bg-gradient-to-r from-[#0E3A5D] to-[#1FA35B] text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center space-x-2"
+                    className="bg-gradient-to-r from-brand to-accent text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center space-x-2"
                   >
                     <span>Próximo</span>
                     <ChevronRight className="w-5 h-5" />
@@ -245,13 +245,13 @@ export default function AssociarSePage() {
             {/* Step 2: Dados do Veículo */}
             {step === 2 && (
               <div className="p-8">
-                <h2 className="text-xl font-bold text-[#0E3A5D] mb-6">Dados do Veículo</h2>
+                <h2 className="text-xl font-bold text-brand mb-6">Dados do Veículo</h2>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Veículo *</label>
                     <select
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                       value={formData.tipoVeiculo}
                       onChange={(e) => setFormData({...formData, tipoVeiculo: e.target.value})}
                     >
@@ -271,7 +271,7 @@ export default function AssociarSePage() {
                           name="carroProprio"
                           value="sim"
                           required
-                          className="w-4 h-4 text-[#0E3A5D]"
+                          className="w-4 h-4 text-brand"
                           onChange={() => setFormData({...formData, carroProprio: "sim"})}
                         />
                         <span>Sim</span>
@@ -282,7 +282,7 @@ export default function AssociarSePage() {
                           name="carroProprio"
                           value="nao"
                           required
-                          className="w-4 h-4 text-[#0E3A5D]"
+                          className="w-4 h-4 text-brand"
                           onChange={() => setFormData({...formData, carroProprio: "nao"})}
                         />
                         <span>Não, é alugado</span>
@@ -295,7 +295,7 @@ export default function AssociarSePage() {
                       <input
                         type="text"
                         placeholder="Nome da locadora"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.locadora}
                         onChange={(e) => setFormData({...formData, locadora: e.target.value})}
                       />
@@ -307,7 +307,7 @@ export default function AssociarSePage() {
                       type="text"
                       required
                       placeholder="ABC-1234 ou ABC1D23"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                       value={formData.placa}
                       onChange={(e) => setFormData({...formData, placa: e.target.value})}
                     />
@@ -325,7 +325,7 @@ export default function AssociarSePage() {
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="bg-gradient-to-r from-[#0E3A5D] to-[#1FA35B] text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center space-x-2"
+                    className="bg-gradient-to-r from-brand to-accent text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center space-x-2"
                   >
                     <span>Próximo</span>
                     <ChevronRight className="w-5 h-5" />
@@ -337,7 +337,7 @@ export default function AssociarSePage() {
             {/* Step 3: Dados Financeiros e Finalização */}
             {step === 3 && (
               <div className="p-8">
-                <h2 className="text-xl font-bold text-[#0E3A5D] mb-6">Dados Financeiros</h2>
+                <h2 className="text-xl font-bold text-brand mb-6">Dados Financeiros</h2>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Chave PIX *</label>
@@ -345,7 +345,7 @@ export default function AssociarSePage() {
                       type="text"
                       required
                       placeholder="CPF, e-mail, telefone ou chave aleatória"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                       value={formData.chavePix}
                       onChange={(e) => setFormData({...formData, chavePix: e.target.value})}
                     />
@@ -356,12 +356,12 @@ export default function AssociarSePage() {
                     <label className="flex items-start space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
-                        className="w-5 h-5 text-[#0E3A5D] rounded mt-0.5"
+                        className="w-5 h-5 text-brand rounded mt-0.5"
                         checked={formData.aderiuIndicacao}
                         onChange={(e) => setFormData({...formData, aderiuIndicacao: e.target.checked})}
                       />
                       <div>
-                        <span className="font-medium text-[#0E3A5D]">Quero aderir ao plano de indicação</span>
+                        <span className="font-medium text-brand">Quero aderir ao plano de indicação</span>
                         <p className="text-sm text-gray-600 mt-1">
                           Ganhe R$ 150,00 a cada 3 indicações válidas. 
                           <span className="text-yellow-600 font-medium"> Obs: Saque bloqueado por 90 dias.</span>
@@ -376,7 +376,7 @@ export default function AssociarSePage() {
                       <input
                         type="text"
                         placeholder="Se foi indicado por alguém, digite o código"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#0E3A5D] focus:border-transparent outline-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
                         value={formData.codigoIndicacao}
                         onChange={(e) => setFormData({...formData, codigoIndicacao: e.target.value})}
                       />
@@ -388,12 +388,12 @@ export default function AssociarSePage() {
                       <input
                         type="checkbox"
                         required
-                        className="w-5 h-5 text-[#0E3A5D] rounded mt-0.5"
+                        className="w-5 h-5 text-brand rounded mt-0.5"
                         checked={formData.aceitaTermos}
                         onChange={(e) => setFormData({...formData, aceitaTermos: e.target.checked})}
                       />
                       <span className="text-gray-700">
-                        Li e aceito os <a href="#" className="text-[#0E3A5D] underline">Termos de Uso</a> e a <a href="#" className="text-[#0E3A5D] underline">Política de Privacidade</a> da ECOMOPAR *
+                        Li e aceito os <a href="#" className="text-brand underline">Termos de Uso</a> e a <a href="#" className="text-brand underline">Política de Privacidade</a> da ECOMOPAR *
                       </span>
                     </label>
                   </div>
@@ -419,7 +419,7 @@ export default function AssociarSePage() {
                   </button>
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-[#0E3A5D] to-[#1FA35B] text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center space-x-2"
+                    className="bg-gradient-to-r from-brand to-accent text-white px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center space-x-2"
                   >
                     <span>Enviar Cadastro</span>
                     <CheckCircle className="w-5 h-5" />

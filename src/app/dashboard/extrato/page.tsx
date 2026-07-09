@@ -1,5 +1,5 @@
 import DashboardShell from "@/components/DashboardShell";
-import { Download, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 const transacoes = [
   { data: "15/01/2024", tipo: "Depósito", valorTotal: 7.0, valorReserva: 5.0, valorAdmin: 2.0, status: "Confirmado" },
@@ -14,15 +14,7 @@ const transacoes = [
 
 export default function ExtratoPage() {
   return (
-    <DashboardShell
-      title="Extrato"
-      headerRight={
-        <button className="btn-ghost btn-sm">
-          <Download className="w-5 h-5" />
-          <span className="hidden sm:inline">Exportar</span>
-        </button>
-      }
-    >
+    <DashboardShell title="Extrato" showBack backHref="/dashboard">
       <div className="card p-4 sm:p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex items-center gap-2">

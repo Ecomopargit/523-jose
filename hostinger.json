@@ -1,0 +1,12 @@
+{
+  "name": "ecomopar",
+  "version": "1.0.0",
+  "description": "ECOMOPAR - Next.js app for Hostinger Node.js hosting",
+  "scripts": {
+    "build": "next build",
+    "start": "next start -p ${PORT:-3000}"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

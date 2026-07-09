@@ -1,72 +1,54 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/* Design tokens (Tailwind v4 theme)                                   */
+/* ECOMOPAR — identidade verde (app mobile)                            */
 /* ------------------------------------------------------------------ */
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
 
-  --color-brand-50: #eaf1f7;
-  --color-brand-100: #cbdcea;
-  --color-brand-500: #17557f;
-  --color-brand-600: #114869;
-  --color-brand: #0e3a5d;
-  --color-brand-dark: #0a2c47;
+  /* Verde principal do app */
+  --color-brand-50: #ecf8f0;
+  --color-brand-100: #d4f0de;
+  --color-brand-200: #a8e0bc;
+  --color-brand-500: #0d9a47;
+  --color-brand-600: #0a7d3a;
+  --color-brand: #108a3d;
+  --color-brand-dark: #066b31;
 
-  --color-accent-50: #e7f6ee;
-  --color-accent-100: #c3e9d3;
-  --color-accent-500: #1fa35b;
-  --color-accent: #1fa35b;
-  --color-accent-dark: #178b4b;
+  --color-accent: #108a3d;
+  --color-accent-dark: #066b31;
+  --color-accent-light: #1aad52;
 
-  --color-surface: #f5f7fa;
+  --color-surface: #f4f7f5;
+  --color-muted: #6b7c72;
 
-  --radius-xl: 0.875rem;
+  --radius-pill: 9999px;
+  --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
 }
 
-/* ------------------------------------------------------------------ */
-/* Base                                                                */
-/* ------------------------------------------------------------------ */
 @layer base {
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
     text-rendering: optimizeLegibility;
+    background-color: #ffffff;
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-brand);
     outline-offset: 2px;
-    border-radius: 4px;
   }
 
   ::selection {
-    background-color: color-mix(in srgb, var(--color-accent) 28%, transparent);
+    background-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
     color: var(--color-brand-dark);
-  }
-
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: #c7d0dc transparent;
-  }
-  *::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  *::-webkit-scrollbar-thumb {
-    background-color: #c7d0dc;
-    border-radius: 9999px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-  }
-  *::-webkit-scrollbar-thumb:hover {
-    background-color: #a9b6c8;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -77,93 +59,129 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Componentes reutilizáveis                                           */
-/* ------------------------------------------------------------------ */
 @layer components {
+  /* Botões pill (padrão app) */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
       transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
       focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
       transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
       focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none
-      text-white shadow-lg shadow-brand/20
-      bg-gradient-to-r from-brand to-accent hover:shadow-xl hover:brightness-105;
+      bg-brand text-white shadow-lg shadow-brand/30
+      hover:bg-brand-dark hover:shadow-xl;
   }
 
   .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
       transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
       focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none
-      bg-accent text-white shadow-lg shadow-accent/25 hover:bg-accent-dark;
+      bg-brand text-white shadow-md shadow-brand/25 hover:bg-brand-dark;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
       transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
       focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none
-      border border-brand/20 text-brand bg-white hover:bg-brand-50;
+      border-2 border-brand text-brand bg-white hover:bg-brand-50;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
       transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
       focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none
-      text-gray-600 hover:bg-gray-100;
+      text-brand hover:bg-brand-50;
   }
 
   .btn-lg {
-    @apply px-8 py-4 text-lg;
+    @apply px-8 py-4 text-base sm:text-lg min-h-[52px];
   }
   .btn-md {
-    @apply px-6 py-3;
+    @apply px-6 py-3.5 text-base min-h-[48px];
   }
   .btn-sm {
-    @apply px-4 py-2 text-sm;
+    @apply px-4 py-2 text-sm min-h-[40px];
   }
 
+  /* Campos pill com borda verde (login app) */
   .field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-gray-900
-      placeholder:text-gray-400 outline-none transition-all
-      focus:ring-2 focus:ring-brand focus:border-transparent
-      hover:border-gray-400;
+    @apply w-full px-5 py-3.5 rounded-full border-2 border-brand/40 bg-white
+      text-gray-900 placeholder:text-gray-400 outline-none transition-all
+      focus:border-brand focus:ring-4 focus:ring-brand/15
+      hover:border-brand/60 min-h-[52px];
+  }
+
+  .field-pill {
+    @apply w-full px-5 py-3.5 rounded-full border-2 border-brand/40 bg-white
+      text-gray-900 placeholder:text-gray-400 outline-none transition-all
+      focus:border-brand focus:ring-4 focus:ring-brand/15
+      hover:border-brand/60 min-h-[52px];
   }
 
   .card {
-    @apply bg-white rounded-2xl shadow-sm;
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+  }
+
+  .card-green {
+    @apply bg-brand text-white rounded-2xl shadow-lg shadow-brand/20;
+  }
+
+  .balance-bar {
+    @apply flex items-center justify-between rounded-2xl bg-brand text-white
+      px-5 py-4 font-bold shadow-md shadow-brand/20;
+  }
+
+  .shortcut-tile {
+    @apply flex flex-col items-center justify-center gap-3 rounded-2xl
+      bg-brand text-white p-5 min-h-[120px] font-semibold text-sm
+      shadow-md shadow-brand/20 transition-transform active:scale-[0.98]
+      hover:bg-brand-dark;
+  }
+
+  .app-drawer-wave {
+    clip-path: ellipse(120% 100% at 50% 0%);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 
 @layer utilities {
   .animate-fade-up {
-    animation: fade-up 0.5s ease-out both;
+    animation: fade-up 0.45s ease-out both;
+  }
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;

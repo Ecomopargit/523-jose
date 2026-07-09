@@ -1,0 +1,44 @@
+const CACHE = "ecomopar-v2";
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE).then((cache) =>
+      cache.addAll(["/icons/icon.svg", "/manifest.webmanifest"])
+    )
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Nunca cachear HTML/RSC — evita páginas quebradas
+  if (
+    request.mode === "navigate" ||
+    request.headers.get("accept")?.includes("text/html") ||
+    url.pathname.startsWith("/_next/")
+  ) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Apenas assets estáticos (ícones, manifest)
+  if (url.pathname.startsWith("/icons/") || url.pathname === "/manifest.webmanifest") {
+    event.respondWith(
+      caches.match(request).then((cached) => cached || fetch(request))
+    );
+  }
+});

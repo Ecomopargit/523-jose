@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X, User } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const navLinks = [
   { href: "/", label: "Início" },
@@ -46,22 +47,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20">
           {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <div className="w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-brand to-accent rounded-lg flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-xl">E</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-brand font-bold text-lg sm:text-xl leading-tight">
-                ECOMOPAR
-              </span>
-              <span className="text-accent text-[10px] sm:text-xs">
-                Instituto de Apoio ao Motorista
-              </span>
-            </div>
-          </Link>
+          <Logo size="sm" href="/" showTagline={false} />
 
           {/* Navegação desktop */}
           <nav className="hidden lg:flex items-center gap-1">

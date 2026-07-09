@@ -4,7 +4,7 @@ export default function QuemSomosPage() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#0E3A5D] to-[#1a5a3d] text-white py-20">
+      <section className="bg-gradient-to-br from-brand to-brand-dark text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="text-4xl lg:text-5xl font-bold mb-6">Quem Somos</h1>
@@ -21,15 +21,16 @@ export default function QuemSomosPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="text-[#1FA35B] font-semibold text-sm uppercase tracking-wider">Nossa História</span>
-              <h2 className="text-3xl lg:text-4xl font-bold text-[#0E3A5D] mt-3 mb-6">
+              <span className="text-accent font-semibold text-sm uppercase tracking-wider">Nossa História</span>
+              <h2 className="text-3xl lg:text-4xl font-bold text-brand mt-3 mb-6">
                 ECOMOPAR – Instituto de Apoio ao Motorista Autônomo
               </h2>
               <div className="space-y-4 text-gray-600 leading-relaxed">
                 <p>
-                  A ECOMOPAR nasceu para dar suporte, visibilidade e segurança ao motorista autônomo, 
-                  uma categoria que cresce a cada dia e que muitas vezes não encontra o amparo 
-                  necessário nos modelos tradicionais.
+                  A ECOMOPAR é uma instituição que dá visibilidade a uma categoria que cresce
+                  a cada dia e que não tem suporte por parte da CLT e outros órgãos competentes.
+                  Nascemos para apoiar o motorista autônomo com reserva financeira, benefícios
+                  e proteção no dia a dia.
                 </p>
                 <p>
                   Nosso objetivo é oferecer soluções práticas para ajudar o associado a construir 
@@ -44,23 +45,23 @@ export default function QuemSomosPage() {
               </div>
             </div>
             <div className="relative">
-              <div className="bg-gradient-to-br from-[#0E3A5D] to-[#1FA35B] rounded-3xl p-1">
+              <div className="bg-gradient-to-br from-brand to-accent rounded-3xl p-1">
                 <div className="bg-white rounded-3xl p-8">
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="text-center p-4 bg-[#F5F7FA] rounded-2xl">
-                      <div className="text-4xl font-bold text-[#0E3A5D]">+5k</div>
+                    <div className="text-center p-4 bg-surface rounded-2xl">
+                      <div className="text-4xl font-bold text-brand">+5k</div>
                       <div className="text-sm text-gray-600 mt-1">Associados</div>
                     </div>
-                    <div className="text-center p-4 bg-[#F5F7FA] rounded-2xl">
-                      <div className="text-4xl font-bold text-[#1FA35B]">R$ 2M+</div>
+                    <div className="text-center p-4 bg-surface rounded-2xl">
+                      <div className="text-4xl font-bold text-accent">R$ 2M+</div>
                       <div className="text-sm text-gray-600 mt-1">Em Reservas</div>
                     </div>
-                    <div className="text-center p-4 bg-[#F5F7FA] rounded-2xl">
-                      <div className="text-4xl font-bold text-[#0E3A5D]">98%</div>
+                    <div className="text-center p-4 bg-surface rounded-2xl">
+                      <div className="text-4xl font-bold text-brand">98%</div>
                       <div className="text-sm text-gray-600 mt-1">Satisfação</div>
                     </div>
-                    <div className="text-center p-4 bg-[#F5F7FA] rounded-2xl">
-                      <div className="text-4xl font-bold text-[#1FA35B]">24h</div>
+                    <div className="text-center p-4 bg-surface rounded-2xl">
+                      <div className="text-4xl font-bold text-accent">24h</div>
                       <div className="text-sm text-gray-600 mt-1">Suporte</div>
                     </div>
                   </div>
@@ -72,14 +73,14 @@ export default function QuemSomosPage() {
       </section>
 
       {/* Missão, Visão, Propósito */}
-      <section className="py-20 bg-[#F5F7FA]">
+      <section className="py-20 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white rounded-2xl p-8 shadow-sm">
-              <div className="w-14 h-14 bg-[#0E3A5D] rounded-xl flex items-center justify-center mb-6">
+              <div className="w-14 h-14 bg-brand rounded-xl flex items-center justify-center mb-6">
                 <Target className="w-7 h-7 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-[#0E3A5D] mb-3">Missão</h3>
+              <h3 className="text-xl font-bold text-brand mb-3">Missão</h3>
               <p className="text-gray-600">
                 Proporcionar segurança financeira e acesso a benefícios essenciais 
                 para o motorista autônomo, contribuindo para sua estabilidade e 
@@ -88,10 +89,10 @@ export default function QuemSomosPage() {
             </div>
 
             <div className="bg-white rounded-2xl p-8 shadow-sm">
-              <div className="w-14 h-14 bg-[#1FA35B] rounded-xl flex items-center justify-center mb-6">
+              <div className="w-14 h-14 bg-accent rounded-xl flex items-center justify-center mb-6">
                 <Eye className="w-7 h-7 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-[#0E3A5D] mb-3">Visão</h3>
+              <h3 className="text-xl font-bold text-brand mb-3">Visão</h3>
               <p className="text-gray-600">
                 Ser referência nacional em proteção e apoio ao motorista autônomo, 
                 reconhecida pela eficiência, transparência e compromisso com 
@@ -100,10 +101,10 @@ export default function QuemSomosPage() {
             </div>
 
             <div className="bg-white rounded-2xl p-8 shadow-sm">
-              <div className="w-14 h-14 bg-[#0E3A5D] rounded-xl flex items-center justify-center mb-6">
+              <div className="w-14 h-14 bg-brand rounded-xl flex items-center justify-center mb-6">
                 <Heart className="w-7 h-7 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-[#0E3A5D] mb-3">Propósito</h3>
+              <h3 className="text-xl font-bold text-brand mb-3">Propósito</h3>
               <p className="text-gray-600">
                 Valorizar e proteger quem movimenta a economia do país. Acreditamos 
                 que todo motorista autônomo merece dignidade, segurança e 
@@ -118,8 +119,8 @@ export default function QuemSomosPage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-[#1FA35B] font-semibold text-sm uppercase tracking-wider">Nossos Valores</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#0E3A5D] mt-3">
+            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Nossos Valores</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-brand mt-3">
               O que nos guia todos os dias
             </h2>
           </div>
@@ -132,9 +133,9 @@ export default function QuemSomosPage() {
               { title: "Solidariedade", desc: "Acreditamos na força da união e no apoio mútuo." },
             ].map((valor, index) => (
               <div key={index} className="flex items-start space-x-3">
-                <CheckCircle className="w-6 h-6 text-[#1FA35B] flex-shrink-0 mt-0.5" />
+                <CheckCircle className="w-6 h-6 text-accent flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-[#0E3A5D]">{valor.title}</h4>
+                  <h4 className="font-bold text-brand">{valor.title}</h4>
                   <p className="text-sm text-gray-600 mt-1">{valor.desc}</p>
                 </div>
               </div>
@@ -144,7 +145,7 @@ export default function QuemSomosPage() {
       </section>
 
       {/* Por que escolher */}
-      <section className="py-20 bg-gradient-to-br from-[#0E3A5D] to-[#1a5a3d] text-white">
+      <section className="py-20 bg-gradient-to-br from-brand to-brand-dark text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -153,7 +154,7 @@ export default function QuemSomosPage() {
               </h2>
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-[#1FA35B] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -162,7 +163,7 @@ export default function QuemSomosPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-[#1FA35B] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -171,7 +172,7 @@ export default function QuemSomosPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-[#1FA35B] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -180,7 +181,7 @@ export default function QuemSomosPage() {
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-[#1FA35B] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -197,7 +198,7 @@ export default function QuemSomosPage() {
                   agora tenho uma reserva e benefícios que me dão tranquilidade.&rdquo;
                 </blockquote>
                 <div className="mt-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-[#1FA35B] rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center">
                     <span className="text-white font-bold">JS</span>
                   </div>
                   <div>

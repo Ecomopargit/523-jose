@@ -19,7 +19,7 @@ export default function SaquePage() {
   };
 
   return (
-    <DashboardShell title="Solicitar Saque">
+    <DashboardShell title="Solicitar Saque" showBack backHref="/dashboard">
       <div className="max-w-2xl mx-auto">
         <div className="bg-gradient-to-br from-brand to-brand-dark rounded-2xl p-6 text-white mb-6">
           <p className="text-gray-300 text-sm">Saldo disponível para saque</p>

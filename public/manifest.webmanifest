@@ -1,0 +1,26 @@
+{
+  "name": "ECOMOPAR - Economia do Motorista Parceiro",
+  "short_name": "ECOMOPAR",
+  "description": "Instituto de Apoio ao Motorista Autônomo. Reserva, benefícios e proteção.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#108a3d",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "categories": ["finance", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
