@@ -39,30 +39,25 @@ const beneficios = [
 
 export default function Footer() {
   return (
-    <footer className="bg-brand text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
-          {/* Logo e descrição */}
-          <div className="space-y-4 sm:col-span-2 lg:col-span-1">
+    <footer className="relative bg-brand text-white overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_30%_0%,white,transparent_50%)]" />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12">
+          <div className="space-y-5 sm:col-span-2 lg:col-span-1">
             <Logo size="sm" variant="light" showTagline={false} />
-            <p className="text-gray-300 text-sm leading-relaxed max-w-xs mt-4">
+            <p className="text-white/70 text-sm leading-relaxed max-w-xs">
               Instituto de Apoio ao Motorista Autônomo. Proteção, reserva e
               benefícios para quem vive da direção.
             </p>
-            <div className="flex gap-3 pt-1">
+            <div className="flex gap-3">
               {social.map((s) => (
                 <a
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-200 hover:bg-accent hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand"
+                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white hover:text-brand transition-all duration-200 hover:-translate-y-0.5"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d={s.path} />
                   </svg>
                 </a>
@@ -70,18 +65,14 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links rápidos */}
           <div>
-            <h3 className="text-base font-semibold mb-4 text-accent">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white/90 mb-5">
               Links Rápidos
             </h3>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {quickLinks.map((l) => (
                 <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    className="text-gray-300 hover:text-white transition-colors text-sm"
-                  >
+                  <Link href={l.href} className="text-white/65 hover:text-white text-sm transition-colors">
                     {l.label}
                   </Link>
                 </li>
@@ -89,45 +80,37 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Benefícios */}
           <div>
-            <h3 className="text-base font-semibold mb-4 text-accent">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white/90 mb-5">
               Benefícios
             </h3>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {beneficios.map((b) => (
-                <li key={b} className="text-gray-300 text-sm">
+                <li key={b} className="text-white/65 text-sm">
                   {b}
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Contato */}
           <div>
-            <h3 className="text-base font-semibold mb-4 text-accent">Contato</h3>
-            <ul className="space-y-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white/90 mb-5">Contato</h3>
+            <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <Phone size={18} className="text-accent mt-0.5 shrink-0" />
-                <a
-                  href="tel:+551140000000"
-                  className="text-gray-300 text-sm hover:text-white transition-colors"
-                >
+                <Phone size={18} className="text-white/80 mt-0.5 shrink-0" />
+                <a href="tel:+551140000000" className="text-white/65 text-sm hover:text-white transition-colors">
                   (11) 4000-0000
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <Mail size={18} className="text-accent mt-0.5 shrink-0" />
-                <a
-                  href="mailto:contato@ecomopar.org"
-                  className="text-gray-300 text-sm hover:text-white transition-colors break-all"
-                >
+                <Mail size={18} className="text-white/80 mt-0.5 shrink-0" />
+                <a href="mailto:contato@ecomopar.org" className="text-white/65 text-sm hover:text-white transition-colors break-all">
                   contato@ecomopar.org
                 </a>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin size={18} className="text-accent mt-0.5 shrink-0" />
-                <span className="text-gray-300 text-sm">
+                <MapPin size={18} className="text-white/80 mt-0.5 shrink-0" />
+                <span className="text-white/65 text-sm">
                   Av. Paulista, 1000
                   <br />
                   São Paulo - SP, 01310-100
@@ -137,16 +120,12 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-10 pt-6 text-center space-y-2">
-          <Link
-            href="/politica-de-privacidade"
-            className="text-gray-300 hover:text-white transition-colors text-sm inline-block"
-          >
+        <div className="border-t border-white/10 mt-12 pt-8 text-center space-y-2">
+          <Link href="/politica-de-privacidade" className="text-white/60 hover:text-white text-sm transition-colors inline-block">
             Política de Privacidade
           </Link>
-          <p className="text-gray-400 text-sm">
-            © {new Date().getFullYear()} ECOMOPAR - Instituto de Apoio ao
-            Motorista Autônomo. Todos os direitos reservados.
+          <p className="text-white/45 text-sm">
+            © {new Date().getFullYear()} ECOMOPAR — Instituto de Apoio ao Motorista Autônomo.
           </p>
         </div>
       </div>

@@ -13,7 +13,7 @@ export default function LoginForm({ action }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <main className="min-h-dvh bg-white flex flex-col safe-top">
+    <main className="min-h-dvh mesh-bg flex flex-col safe-top">
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 max-w-md mx-auto w-full">
         <div className="mb-10 animate-fade-up">
           <Logo

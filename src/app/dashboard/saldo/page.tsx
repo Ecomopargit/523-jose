@@ -1,110 +1,81 @@
 import DashboardShell from "@/components/DashboardShell";
-import { TrendingUp, Lock, Info } from "lucide-react";
+import { brl } from "@/lib/dashboard-meta";
+import { Bell, Lock, PiggyBank, TrendingUp } from "lucide-react";
 
 export default function SaldoPage() {
   return (
-    <DashboardShell title="Meu Saldo" showBack backHref="/dashboard">
-      {/* Cards de saldo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <TrendingUp className="w-8 h-8 opacity-80" />
-            <span className="text-sm opacity-80">Disponível</span>
+    <DashboardShell showBack backHref="/dashboard">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="bal-card avail">
+          <div className="relative z-10 flex items-center justify-between mb-5">
+            <div className="w-[30px] h-[30px] rounded-[9px] bg-white/18 flex items-center justify-center">
+              <TrendingUp className="w-[15px] h-[15px]" strokeWidth={2} />
+            </div>
+            <span className="text-[12.5px] font-semibold opacity-85">Disponível</span>
           </div>
-          <p className="text-sm opacity-80">Saldo em Reserva</p>
-          <p className="text-3xl sm:text-4xl font-bold">R$ 1.850,00</p>
+          <p className="relative z-10 text-xs opacity-75 mb-1.5">Saldo em reserva</p>
+          <p className="relative z-10 font-mono-num font-display text-[26px] font-bold">
+            {brl(1850)}
+          </p>
         </div>
 
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <Lock className="w-8 h-8 opacity-80" />
-            <span className="text-sm opacity-80">Bloqueado</span>
+        <div className="bal-card locked">
+          <div className="relative z-10 flex items-center justify-between mb-5">
+            <div className="w-[30px] h-[30px] rounded-[9px] bg-white/18 flex items-center justify-center">
+              <Lock className="w-[15px] h-[15px]" strokeWidth={2} />
+            </div>
+            <span className="text-[12.5px] font-semibold opacity-85">Bloqueado</span>
           </div>
-          <p className="text-sm opacity-80">Saldo Bloqueado</p>
-          <p className="text-3xl sm:text-4xl font-bold">R$ 0,00</p>
+          <p className="relative z-10 text-xs opacity-75 mb-1.5">Saldo bloqueado</p>
+          <p className="relative z-10 font-mono-num font-display text-[26px] font-bold">
+            {brl(0)}
+          </p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <TrendingUp className="w-8 h-8 opacity-80" />
-            <span className="text-sm opacity-80">Bônus</span>
+        <div className="bal-card bonus">
+          <div className="relative z-10 flex items-center justify-between mb-5">
+            <div className="w-[30px] h-[30px] rounded-[9px] bg-white/18 flex items-center justify-center">
+              <Bell className="w-[15px] h-[15px]" strokeWidth={2} />
+            </div>
+            <span className="text-[12.5px] font-semibold opacity-85">Bônus</span>
           </div>
-          <p className="text-sm opacity-80">Saldo de Bônus</p>
-          <p className="text-3xl sm:text-4xl font-bold">R$ 150,00</p>
+          <p className="relative z-10 text-xs opacity-75 mb-1.5">Saldo de bônus</p>
+          <p className="relative z-10 font-mono-num font-display text-[26px] font-bold">
+            {brl(150)}
+          </p>
         </div>
       </div>
 
-      {/* Detalhamento */}
-      <div className="card p-6">
-        <h2 className="text-lg font-bold text-brand mb-6">
-          Detalhamento dos Saldos
-        </h2>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-brand">Reserva Principal</p>
-                <p className="text-sm text-gray-500">
-                  Valor acumulado dos depósitos diários
-                </p>
-              </div>
+      <h2 className="section-title">Detalhamento dos saldos</h2>
+      <div className="card p-1.5">
+        <div className="detail-row">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="icon-badge-lg">
+              <PiggyBank className="w-[17px] h-[17px] text-green-700" strokeWidth={2} />
             </div>
-            <p className="text-lg sm:text-xl font-bold text-green-600 whitespace-nowrap">
-              R$ 1.700,00
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
-                <TrendingUp className="w-5 h-5 text-purple-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-brand">Bônus de Indicação</p>
-                <p className="text-sm text-gray-500">
-                  Ganhos do programa Indique e Ganhe
-                </p>
-              </div>
+            <div>
+              <p className="text-sm font-semibold">Reserva Principal</p>
+              <p className="text-[12.5px] text-ink-soft">Valor acumulado dos depósitos diários</p>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-purple-600 whitespace-nowrap">
-              R$ 150,00
-            </p>
           </div>
-
-          <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
-                <Lock className="w-5 h-5 text-red-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-brand">Saldo Bloqueado</p>
-                <p className="text-sm text-gray-500">
-                  Valor em período de carência
-                </p>
-              </div>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-red-600 whitespace-nowrap">
-              R$ 0,00
-            </p>
-          </div>
+          <p className="font-mono-num font-semibold text-sm text-green-700 shrink-0">
+            +{brl(1700)}
+          </p>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-xl flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-blue-800">
-              Informação sobre saques
-            </p>
-            <p className="text-sm text-blue-700 mt-1">
-              O saldo em reserva pode ser solicitado para saque a qualquer
-              momento, desde que não haja bloqueios ativos. O prazo de
-              processamento é de até 3 dias úteis.
-            </p>
+        <div className="detail-row">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="icon-badge-lg icon-badge-amber">
+              <Bell className="w-[17px] h-[17px] text-amber-600" strokeWidth={2} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Bônus de Indicação</p>
+              <p className="text-[12.5px] text-ink-soft">Ganhos do programa Indique e Ganhe</p>
+            </div>
           </div>
+          <p className="font-mono-num font-semibold text-sm text-amber-600 shrink-0">
+            {brl(150)}
+          </p>
         </div>
       </div>
     </DashboardShell>

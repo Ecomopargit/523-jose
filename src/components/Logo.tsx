@@ -9,9 +9,9 @@ type LogoProps = {
 };
 
 const sizes = {
-  sm: { icon: "w-9 h-9 text-lg", name: "text-lg", tag: "text-[9px]" },
-  md: { icon: "w-11 h-11 text-xl", name: "text-xl", tag: "text-[10px]" },
-  lg: { icon: "w-14 h-14 text-2xl", name: "text-2xl sm:text-3xl", tag: "text-xs" },
+  sm: { mark: "w-[38px] h-[38px] text-base", name: "text-[15px]", tag: "text-[10px]" },
+  md: { mark: "w-11 h-11 text-lg", name: "text-xl", tag: "text-[10px]" },
+  lg: { mark: "w-14 h-14 text-2xl", name: "text-2xl sm:text-3xl", tag: "text-xs" },
 };
 
 export default function Logo({
@@ -27,22 +27,26 @@ export default function Logo({
   const content = (
     <div className={`flex items-center gap-3 ${className}`}>
       <div
-        className={`${s.icon} rounded-full bg-brand flex items-center justify-center shadow-md shadow-brand/25 shrink-0`}
+        className={`${s.mark} rounded-[11px] flex items-center justify-center shrink-0 font-display font-bold ${
+          isLight
+            ? "bg-white/15 text-white ring-1 ring-white/25"
+            : "brand-mark"
+        }`}
       >
-        <span className="text-white font-bold leading-none">e</span>
+        e
       </div>
       <div className="min-w-0">
         <span
-          className={`block font-extrabold tracking-tight leading-tight ${s.name} ${
-            isLight ? "text-white" : "text-brand"
+          className={`block font-display font-bold tracking-tight leading-tight ${s.name} ${
+            isLight ? "text-white" : "text-green-900"
           }`}
         >
           ECOMOPAR
         </span>
         {showTagline && (
           <span
-            className={`block font-semibold uppercase tracking-wide leading-tight mt-0.5 ${s.tag} ${
-              isLight ? "text-white/80" : "text-brand/70"
+            className={`block font-semibold uppercase tracking-wider leading-tight mt-0.5 ${s.tag} ${
+              isLight ? "text-white/70" : "text-ink-soft"
             }`}
           >
             Economia do motorista parceiro
@@ -54,7 +58,7 @@ export default function Logo({
 
   if (href) {
     return (
-      <Link href={href} className="inline-flex rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+      <Link href={href} className="inline-flex rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500">
         {content}
       </Link>
     );
