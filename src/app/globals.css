@@ -1,63 +1,85 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/* ECOMOPAR — identidade verde (app mobile)                            */
+/* ECOMOPAR — design system (protótipo UI/UX)                          */
 /* ------------------------------------------------------------------ */
 @theme {
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 
-  /* Verde principal do app */
-  --color-brand-50: #ecf8f0;
-  --color-brand-100: #d4f0de;
-  --color-brand-200: #a8e0bc;
-  --color-brand-500: #0d9a47;
-  --color-brand-600: #0a7d3a;
-  --color-brand: #108a3d;
-  --color-brand-dark: #066b31;
+  --color-green-950: #082a1f;
+  --color-green-900: #0b3d2c;
+  --color-green-800: #0f4e38;
+  --color-green-700: #136148;
+  --color-green-600: #177a59;
+  --color-green-500: #1e9b6b;
+  --color-green-400: #3ab689;
+  --color-green-100: #e7f4ec;
+  --color-green-50: #f3faf6;
 
-  --color-accent: #108a3d;
-  --color-accent-dark: #066b31;
-  --color-accent-light: #1aad52;
+  --color-amber-600: #b8802f;
+  --color-amber-500: #c68a3d;
+  --color-amber-100: #f7ebd8;
 
-  --color-surface: #f4f7f5;
-  --color-muted: #6b7c72;
+  --color-brick-600: #9a4128;
+  --color-brick-500: #b5502f;
+  --color-brick-100: #f6e4dd;
 
-  --radius-pill: 9999px;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
+  --color-ink: #12241c;
+  --color-ink-soft: #5b6b62;
+  --color-ink-faint: #8b978f;
+  --color-bg: #f3f4f1;
+  --color-surface: #ffffff;
+  --color-line: #e4e7e1;
+  --color-line-soft: #edefea;
+
+  /* aliases legados */
+  --color-brand: #136148;
+  --color-brand-dark: #0b3d2c;
+  --color-brand-deep: #082a1f;
+  --color-brand-50: #f3faf6;
+  --color-brand-100: #e7f4ec;
+  --color-accent: #1e9b6b;
+  --color-muted: #5b6b62;
+  --color-surface-elevated: #ffffff;
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --shadow-sm: 0 1px 2px rgba(18, 36, 28, 0.04), 0 1px 1px rgba(18, 36, 28, 0.03);
+  --shadow-md: 0 8px 24px rgba(11, 61, 44, 0.08), 0 2px 6px rgba(11, 61, 44, 0.05);
+  --shadow-lg: 0 16px 40px rgba(11, 61, 44, 0.14), 0 4px 12px rgba(11, 61, 44, 0.06);
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
     text-rendering: optimizeLegibility;
-    background-color: #ffffff;
+    background-color: var(--color-bg);
+    color: var(--color-ink);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-brand);
+    outline: 2px solid var(--color-green-500);
     outline-offset: 2px;
+    border-radius: 6px;
   }
 
   ::selection {
-    background-color: color-mix(in srgb, var(--color-brand) 25%, transparent);
-    color: var(--color-brand-dark);
+    background: var(--color-green-100);
+    color: var(--color-green-900);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-    *,
-    *::before,
-    *::after {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
@@ -65,126 +87,269 @@
 }
 
 @layer components {
-  /* Botões pill (padrão app) */
+  .font-display { font-family: var(--font-display); }
+  .font-mono-num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* —— Botões —— */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
-      transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
-      focus-visible:ring-offset-2 active:scale-[0.98]
+    @apply inline-flex items-center justify-center gap-2 font-semibold cursor-pointer select-none
+      transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-green-500 focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
-      transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
-      focus-visible:ring-offset-2 active:scale-[0.98]
+    @apply inline-flex items-center justify-center gap-2 font-semibold cursor-pointer select-none
+      transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-green-500 focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none
-      bg-brand text-white shadow-lg shadow-brand/30
-      hover:bg-brand-dark hover:shadow-xl;
+      bg-green-700 text-white rounded-xl hover:bg-green-800 hover:-translate-y-px;
+    box-shadow: var(--shadow-sm);
   }
 
   .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
-      transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
-      focus-visible:ring-offset-2 active:scale-[0.98]
+    @apply inline-flex items-center justify-center gap-2 font-semibold cursor-pointer select-none
+      transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-green-500 focus-visible:ring-offset-2 active:scale-[0.98]
       disabled:opacity-60 disabled:pointer-events-none
-      bg-brand text-white shadow-md shadow-brand/25 hover:bg-brand-dark;
+      bg-green-700 text-white rounded-xl hover:bg-green-800 hover:-translate-y-px;
+    box-shadow: var(--shadow-sm);
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
-      transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
-      focus-visible:ring-offset-2 active:scale-[0.98]
-      disabled:opacity-60 disabled:pointer-events-none
-      border-2 border-brand text-brand bg-white hover:bg-brand-50;
+    @apply inline-flex items-center justify-center gap-2 font-semibold cursor-pointer select-none
+      transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
+      focus-visible:ring-green-500 focus-visible:ring-offset-2
+      border border-line text-ink bg-surface rounded-xl hover:bg-green-50 hover:border-green-400;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold
-      transition-all duration-200 cursor-pointer select-none
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
-      focus-visible:ring-offset-2 active:scale-[0.98]
-      disabled:opacity-60 disabled:pointer-events-none
-      text-brand hover:bg-brand-50;
+    @apply inline-flex items-center justify-center gap-2 font-semibold cursor-pointer
+      text-green-700 rounded-xl hover:bg-green-50 transition-colors;
   }
 
-  .btn-lg {
-    @apply px-8 py-4 text-base sm:text-lg min-h-[52px];
-  }
-  .btn-md {
-    @apply px-6 py-3.5 text-base min-h-[48px];
-  }
-  .btn-sm {
-    @apply px-4 py-2 text-sm min-h-[40px];
+  .btn-hero {
+    @apply inline-flex items-center gap-2 bg-white text-green-900 font-semibold text-sm
+      px-5 py-2.5 rounded-xl border-none cursor-pointer transition-all duration-150
+      hover:-translate-y-px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
   }
 
-  /* Campos pill com borda verde (login app) */
+  .btn-lg { @apply px-8 py-3.5 text-base min-h-[52px] rounded-xl; }
+  .btn-md { @apply px-6 py-3.5 text-sm min-h-[48px] rounded-xl; }
+  .btn-sm { @apply px-4 py-2 text-sm min-h-[40px] rounded-xl; }
+
+  /* —— Campos —— */
   .field {
-    @apply w-full px-5 py-3.5 rounded-full border-2 border-brand/40 bg-white
-      text-gray-900 placeholder:text-gray-400 outline-none transition-all
-      focus:border-brand focus:ring-4 focus:ring-brand/15
-      hover:border-brand/60 min-h-[52px];
+    @apply w-full border border-line rounded-[11px] px-3.5 py-3.5 text-sm text-ink
+      bg-surface outline-none transition-all duration-150 min-h-[48px];
+  }
+  .field:focus {
+    border-color: var(--color-green-500);
+    box-shadow: 0 0 0 3px var(--color-green-100);
+  }
+  .field.with-prefix { @apply pl-9; }
+
+  textarea.field {
+    @apply resize-y min-h-[76px] rounded-[11px];
   }
 
-  .field-pill {
-    @apply w-full px-5 py-3.5 rounded-full border-2 border-brand/40 bg-white
-      text-gray-900 placeholder:text-gray-400 outline-none transition-all
-      focus:border-brand focus:ring-4 focus:ring-brand/15
-      hover:border-brand/60 min-h-[52px];
-  }
-
+  /* —— Cards —— */
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+    @apply bg-surface border border-line-soft rounded-[20px];
+    box-shadow: var(--shadow-sm);
   }
 
-  .card-green {
-    @apply bg-brand text-white rounded-2xl shadow-lg shadow-brand/20;
+  .section-title {
+    @apply font-display text-[15px] font-semibold text-ink mb-3.5;
   }
 
-  .balance-bar {
-    @apply flex items-center justify-between rounded-2xl bg-brand text-white
-      px-5 py-4 font-bold shadow-md shadow-brand/20;
+  /* —— Sidebar —— */
+  .sidebar-app {
+    @apply flex flex-col shrink-0 text-white relative overflow-hidden;
+    width: 264px;
+    background:
+      radial-gradient(120% 140% at 0% 0%, rgba(58, 182, 137, 0.2) 0%, rgba(58, 182, 137, 0) 45%),
+      linear-gradient(180deg, var(--color-green-900) 0%, var(--color-green-950) 100%);
+    box-shadow: 4px 0 24px rgba(6, 61, 44, 0.12);
   }
 
-  .shortcut-tile {
-    @apply flex flex-col items-center justify-center gap-3 rounded-2xl
-      bg-brand text-white p-5 min-h-[120px] font-semibold text-sm
-      shadow-md shadow-brand/20 transition-transform active:scale-[0.98]
-      hover:bg-brand-dark;
+  .sidebar-link {
+    @apply relative flex items-center gap-3 px-3 py-2.5 rounded-[11px] w-full
+      text-sm font-medium text-white/68 transition-all duration-150
+      hover:bg-white/6 hover:text-white;
   }
 
-  .app-drawer-wave {
-    clip-path: ellipse(120% 100% at 50% 0%);
+  .sidebar-link-active {
+    @apply bg-white/12 text-white font-medium;
   }
 
-  .safe-top {
-    padding-top: env(safe-area-inset-top, 0px);
+  .sidebar-link-active::before {
+    content: "";
+    position: absolute;
+    left: -16px;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    background: var(--color-green-400);
+    border-radius: 0 4px 4px 0;
   }
 
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+  .brand-mark {
+    @apply w-[38px] h-[38px] rounded-[11px] flex items-center justify-center shrink-0
+      font-display font-bold text-base text-white;
+    background: linear-gradient(150deg, var(--color-green-400), var(--color-green-600));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
   }
+
+  /* —— Dashboard hero —— */
+  .dash-hero {
+    @apply rounded-3xl text-white p-7 sm:p-8 grid gap-7 items-center mb-5;
+    grid-template-columns: 1fr;
+    background:
+      radial-gradient(90% 140% at 100% 0%, rgba(58, 182, 137, 0.35) 0%, rgba(58, 182, 137, 0) 55%),
+      linear-gradient(135deg, var(--color-green-800) 0%, var(--color-green-900) 60%, var(--color-green-950) 100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  @media (min-width: 640px) {
+    .dash-hero { grid-template-columns: 1fr auto; }
+  }
+
+  .status-pill {
+    @apply inline-flex items-center gap-1.5 mt-3.5 px-3 py-1.5 rounded-full
+      bg-white/12 text-xs font-medium;
+  }
+
+  .status-pill .dot {
+    @apply w-1.5 h-1.5 rounded-full bg-amber-500;
+  }
+
+  /* —— Stat cards —— */
+  .stat-card {
+    @apply bg-surface border border-line-soft rounded-[20px] p-4 sm:p-5;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .icon-badge {
+    @apply w-8 h-8 rounded-[9px] bg-green-100 flex items-center justify-center mb-3;
+  }
+  .icon-badge svg, .icon-badge .lucide { @apply w-4 h-4 text-green-700; }
+
+  .icon-badge-lg {
+    @apply w-10 h-10 rounded-[10px] bg-green-100 flex items-center justify-center shrink-0;
+  }
+
+  .icon-badge-amber {
+    @apply bg-amber-100;
+  }
+  .icon-badge-amber svg, .icon-badge-amber .lucide { @apply text-amber-600; }
+
+  /* —— Balance cards —— */
+  .bal-card {
+    @apply rounded-[20px] p-5 sm:p-6 text-white relative overflow-hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .bal-card::after {
+    content: "";
+    position: absolute;
+    right: -30px;
+    top: -30px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .bal-card.avail {
+    background: linear-gradient(135deg, var(--color-green-500), var(--color-green-800));
+  }
+  .bal-card.locked {
+    background: linear-gradient(135deg, var(--color-brick-500), var(--color-brick-600));
+  }
+  .bal-card.bonus {
+    background: linear-gradient(135deg, var(--color-amber-500), var(--color-amber-600));
+  }
+
+  /* —— Rows —— */
+  .detail-row {
+    @apply flex items-center justify-between gap-3.5 p-4 rounded-[14px]
+      transition-colors duration-150 hover:bg-green-50;
+  }
+
+  .txn-row {
+    @apply grid gap-3 sm:gap-4 items-center p-3.5 sm:p-4 rounded-[14px]
+      transition-colors duration-150 hover:bg-green-50;
+    grid-template-columns: auto 1fr;
+  }
+
+  @media (min-width: 640px) {
+    .txn-row {
+      grid-template-columns: auto 1fr auto auto;
+    }
+  }
+
+  .badge-confirmado {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold
+      bg-green-100 text-green-700;
+  }
+
+  .badge-pago {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold
+      bg-amber-100 text-amber-600;
+  }
+
+  .shortcut-btn {
+    @apply flex items-center gap-3 p-3.5 rounded-[14px] border border-line-soft bg-surface
+      text-left text-sm font-semibold text-ink transition-all duration-150
+      hover:border-green-400 hover:bg-green-50;
+  }
+
+  .shortcut-btn .icon-mini {
+    @apply w-[30px] h-[30px] rounded-[9px] bg-green-900 flex items-center justify-center shrink-0;
+  }
+
+  .note-inline {
+    @apply flex gap-3 p-3.5 sm:p-4 rounded-[14px] bg-green-50 border border-line-soft mb-5;
+  }
+
+  .withdraw-hero {
+    @apply rounded-[20px] p-5 sm:p-6 mb-5 text-white flex flex-col sm:flex-row
+      sm:items-center sm:justify-between gap-3;
+    background: linear-gradient(135deg, var(--color-green-800), var(--color-green-950));
+  }
+
+  .plan-banner {
+    @apply bg-surface border border-line-soft flex items-center justify-between p-4 sm:p-5 mb-5 rounded-[20px];
+    box-shadow: var(--shadow-sm);
+    background: linear-gradient(135deg, var(--color-green-50), #fff);
+  }
+
+  .benefit-card {
+    @apply bg-surface border border-line-soft rounded-[20px] p-5 flex gap-3.5;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .profile-card {
+    @apply bg-surface border border-line-soft rounded-[20px] p-6 sm:p-7 max-w-2xl;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .info-row {
+    @apply flex items-center gap-3.5 py-4 border-b border-line-soft;
+  }
+
+  .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 
 @layer utilities {
   .animate-fade-up {
-    animation: fade-up 0.45s ease-out both;
+    animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 }
 
 @keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }

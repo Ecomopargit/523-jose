@@ -1,5 +1,5 @@
 import DashboardShell from "@/components/DashboardShell";
-import { PiggyBank, TrendingUp, Stethoscope, Scale, Car, Sparkles } from "lucide-react";
+import { Car, Layers, PiggyBank, Scale, Stethoscope, TrendingUp } from "lucide-react";
 
 const beneficios = [
   {
@@ -20,37 +20,39 @@ const beneficios = [
   {
     icon: Scale,
     title: "Assistência jurídica",
-    desc: "Orientação jurídica em situações relacionadas à sua atividade como motorista autônomo.",
+    desc: "Orientação jurídica especializada para questões relacionadas à atividade do motorista parceiro.",
   },
   {
     icon: Car,
     title: "Seguro da franquia",
-    desc: "Em caso de sinistro, você paga uma taxa reduzida e o instituto cobre o valor da franquia para preservar sua reserva.",
+    desc: "Em caso de sinistro, você paga uma taxa reduzida e o instituto cobre o valor da franquia.",
   },
 ];
 
 export default function BeneficiosDashboardPage() {
   return (
-    <DashboardShell title="Clube de benefícios" showBack backHref="/dashboard">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-brand flex items-center justify-center">
-          <Sparkles className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <p className="text-sm text-muted">Seus benefícios ativos</p>
-          <p className="font-bold text-brand">Plano diário R$ 7,00</p>
+    <DashboardShell showBack backHref="/dashboard">
+      <div className="plan-banner">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-green-900 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5 text-white" strokeWidth={2} />
+          </div>
+          <div>
+            <p className="text-xs text-ink-soft">Seus benefícios ativos</p>
+            <p className="font-display text-base font-semibold">Plano diário · R$ 7,00</p>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {beneficios.map((b) => (
-          <div key={b.title} className="card p-5 flex gap-4">
-            <div className="w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-              <b.icon className="w-6 h-6 text-brand" />
+          <div key={b.title} className="benefit-card">
+            <div className="w-[42px] h-[42px] rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+              <b.icon className="w-[19px] h-[19px] text-green-700" strokeWidth={2} />
             </div>
             <div>
-              <h3 className="font-bold text-brand mb-1">{b.title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{b.desc}</p>
+              <h4 className="text-sm font-semibold mb-1">{b.title}</h4>
+              <p className="text-[12.5px] text-ink-soft leading-relaxed">{b.desc}</p>
             </div>
           </div>
         ))}

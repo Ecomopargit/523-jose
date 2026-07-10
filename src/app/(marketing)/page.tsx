@@ -16,22 +16,23 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-brand via-brand to-brand-dark text-white overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0aDR2NGgtNHpNMjAgMjBoNHY0aC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-20" />
+      <section className="relative bg-gradient-to-br from-brand via-brand-dark to-brand-deep text-white overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0aDR2NGgtNHpNMjAgMjBoNHY0aC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_20%,rgba(255,255,255,0.12),transparent)]" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 relative">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             <div className="space-y-6 sm:space-y-8 animate-fade-up">
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                <Shield className="w-5 h-5 text-accent" />
-                <span className="text-sm font-medium">
+              <div className="inline-flex items-center gap-2 bg-white/12 backdrop-blur-md rounded-full px-4 py-2 border border-white/10">
+                <Shield className="w-5 h-5 text-brand-100" />
+                <span className="text-sm font-semibold">
                   Proteção para Motoristas Autônomos
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight text-balance">
                 Proteção, reserva e apoio para o{" "}
-                <span className="text-accent">motorista autônomo</span>
+                <span className="text-brand-100">motorista autônomo</span>
               </h1>
-              <p className="text-base sm:text-xl text-gray-300 leading-relaxed max-w-xl">
+              <p className="text-base sm:text-xl text-white/75 leading-relaxed max-w-xl">
                 A ECOMOPAR é o instituto que ajuda você a construir sua reserva
                 financeira, enfrentar imprevistos e ter acesso a benefícios
                 importantes para o seu dia a dia.
@@ -51,7 +52,7 @@ export default function HomePage() {
             </div>
 
             <div className="relative animate-fade-up" style={{ animationDelay: "0.15s" }}>
-              <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 sm:p-8 border border-white/10">
+              <div className="bg-white/8 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/15 shadow-2xl shadow-black/10">
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="bg-white/10 rounded-2xl p-5 sm:p-6 text-center">
                     <PiggyBank className="w-8 h-8 sm:w-10 sm:h-10 text-accent mx-auto mb-3" />

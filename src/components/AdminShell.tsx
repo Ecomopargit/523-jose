@@ -37,8 +37,8 @@ const menuItems: MenuItem[] = [
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <nav className="flex-1 px-4 pb-6 overflow-y-auto">
-      <div className="space-y-1">
+    <nav className="flex-1 px-3 py-2 overflow-y-auto">
+      <div className="space-y-0.5">
         {menuItems.map((item) => {
           const active = pathname === item.href;
           return (
@@ -47,13 +47,9 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                active
-                  ? "bg-accent text-white shadow-sm"
-                  : "text-gray-300 hover:bg-white/10"
-              }`}
+              className={`sidebar-link ${active ? "sidebar-link-active" : ""}`}
             >
-              <item.icon className="w-5 h-5 shrink-0" />
+              <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.75} />
               <span>{item.label}</span>
             </Link>
           );
@@ -65,27 +61,29 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <>
-      <div className="p-6">
+    <div className="relative flex flex-col h-full">
+      <div className="px-6 pt-8 pb-5 border-b border-white/10">
         <Link href="/" onClick={onNavigate}>
           <Logo size="sm" variant="light" showTagline={false} />
         </Link>
-        <p className="text-white/60 text-xs mt-2">Painel Administrativo</p>
+        <p className="text-white/55 text-xs mt-3 font-medium uppercase tracking-wider">
+          Painel Administrativo
+        </p>
       </div>
 
       <NavList onNavigate={onNavigate} />
 
-      <div className="p-4 border-t border-white/10">
+      <div className="mt-auto p-4 border-t border-white/10">
         <Link
           href="/login"
           onClick={onNavigate}
-          className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-white/10 rounded-xl transition-colors font-medium"
+          className="sidebar-link text-white/80"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5" strokeWidth={1.75} />
           <span>Sair</span>
         </Link>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -110,25 +108,19 @@ export default function AdminShell({
   }, [open]);
 
   return (
-    <div className="min-h-screen bg-surface lg:flex">
-      {/* Sidebar desktop */}
-      <aside className="hidden lg:flex lg:flex-col w-64 bg-brand shadow-lg sticky top-0 h-screen shrink-0">
+    <div className="min-h-dvh flex bg-surface">
+      <aside className="sidebar-app hidden lg:flex lg:w-[280px] lg:sticky lg:top-0 lg:h-dvh relative overflow-hidden">
         <SidebarContent />
       </aside>
 
-      {/* Drawer mobile */}
       <div
         className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300 ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div
-          className="absolute inset-0 bg-black/50"
-          onClick={() => setOpen(false)}
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
         <aside
-          className={`absolute left-0 top-0 h-full w-72 max-w-[80%] bg-brand shadow-2xl flex flex-col transition-transform duration-300 ${
+          className={`sidebar-app absolute left-0 top-0 h-full w-72 max-w-[85%] flex flex-col transition-transform duration-300 ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -136,7 +128,7 @@ export default function AdminShell({
             type="button"
             aria-label="Fechar menu"
             onClick={() => setOpen(false)}
-            className="absolute right-3 top-4 p-2 rounded-lg text-gray-300 hover:bg-white/10"
+            className="absolute right-3 top-4 z-10 p-2 rounded-full bg-white/15"
           >
             <X className="w-5 h-5" />
           </button>
@@ -144,25 +136,24 @@ export default function AdminShell({
         </aside>
       </div>
 
-      {/* Conteúdo */}
-      <div className="flex-1 min-w-0">
-        <header className="bg-white shadow-sm sticky top-0 z-30">
-          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-4">
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-xl border-b border-gray-200/60">
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-10 py-4">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 aria-label="Abrir menu"
                 onClick={() => setOpen(true)}
-                className="lg:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="lg:hidden p-2 -ml-1 rounded-xl text-ink-soft hover:bg-white transition-colors"
               >
                 <Menu className="w-6 h-6" />
               </button>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-brand truncate">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-brand truncate tracking-tight">
                   {title}
                 </h1>
                 {subtitle && (
-                  <p className="text-gray-500 text-sm truncate">{subtitle}</p>
+                  <p className="text-muted text-sm truncate mt-0.5">{subtitle}</p>
                 )}
               </div>
             </div>
@@ -172,7 +163,7 @@ export default function AdminShell({
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-6xl">{children}</main>
       </div>
     </div>
   );

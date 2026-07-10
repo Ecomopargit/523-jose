@@ -1,14 +1,27 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-inter",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: ["500", "600", "700"],
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  weight: ["500", "600"],
 });
 
 const APP_NAME = "ECOMOPAR";
@@ -28,9 +41,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: APP_NAME,
   },
-  formatDetection: {
-    telephone: false,
-  },
+  formatDetection: { telephone: false },
   icons: {
     icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
@@ -45,7 +56,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#108a3d",
+  themeColor: "#0B3D2C",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -54,8 +65,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" className={jakarta.variable}>
-      <body className="bg-white text-gray-900 antialiased font-sans safe-bottom">
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
+      data-scroll-behavior="smooth"
+    >
+      <body className="bg-bg text-ink antialiased font-sans safe-bottom">
         {children}
         <ServiceWorkerRegister />
       </body>
