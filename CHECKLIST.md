@@ -35,7 +35,7 @@
 - [x] `manifest.webmanifest` (theme `#0B3D2C`)
 - [x] Ícone SVG + meta Apple Web App
 - [x] Service worker (assets estáticos em produção; off em dev)
-- [ ] Ícones PNG 192×192 e 512×512
+- [x] Ícones PNG 192×192 e 512×512
 - [ ] Capacitor / App Store / Play Store
 
 ## Backend / integrações (próximos passos MVP)

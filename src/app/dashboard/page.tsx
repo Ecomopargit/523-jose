@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
 import DepositRing from "@/components/DepositRing";
 import { brl } from "@/lib/dashboard-meta";
+import { LOGO_WATERMARK } from "@/lib/logo";
 import {
   ArrowRight,
   Banknote,
@@ -27,6 +29,16 @@ export default function DashboardPage() {
   return (
     <DashboardShell>
       <div className="dash-hero animate-fade-up">
+        <Image
+          src={LOGO_WATERMARK}
+          alt=""
+          width={320}
+          height={320}
+          className="dash-hero-logo"
+          aria-hidden
+          unoptimized
+          priority={false}
+        />
         <div>
           <p className="text-xs uppercase tracking-widest text-white/55 font-semibold mb-2.5">
             Saldo atual

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -16,7 +17,9 @@ import {
   ChevronLeft,
   type LucideIcon,
 } from "lucide-react";
+import Logo from "@/components/Logo";
 import { getDashboardMeta } from "@/lib/dashboard-meta";
+import { LOGO_WATERMARK_BRAND } from "@/lib/logo";
 
 type MenuItem = { href: string; icon: LucideIcon; label: string };
 
@@ -56,16 +59,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 function SidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="relative flex flex-col h-full px-4 py-6">
-      <div className="flex items-center gap-3 px-2.5 pb-5 mb-3 border-b border-white/10">
-        <div className="brand-mark">e</div>
-        <div className="min-w-0">
-          <div className="font-display font-bold text-[15px] tracking-wide leading-tight">
-            ECOMOPAR
-          </div>
-          <div className="text-[10px] text-white/55 uppercase tracking-wider mt-0.5 leading-tight">
-            Economia do motorista parceiro
-          </div>
-        </div>
+      <div className="px-2.5 pb-5 mb-3 border-b border-white/10">
+        <Logo size="sm" variant="light" href="/dashboard" />
       </div>
 
       <SidebarNav onNavigate={onNavigate} />
@@ -118,6 +113,7 @@ export default function DashboardShell({
   const pageTitle = title ?? meta.title;
   const pageSub = subtitle ?? meta.subtitle;
   const [open, setOpen] = useState(false);
+  const showPageWatermark = pathname !== "/dashboard";
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -188,7 +184,21 @@ export default function DashboardShell({
           </div>
         </header>
 
-        <main className="flex-1 px-5 sm:px-10 pb-12 max-w-[1120px] w-full">{children}</main>
+        <main className="relative flex-1 px-5 sm:px-10 pb-12 max-w-[1120px] w-full">
+          {showPageWatermark && (
+            <Image
+              src={LOGO_WATERMARK_BRAND}
+              alt=""
+              width={360}
+              height={360}
+              className="dash-page-logo"
+              aria-hidden
+              unoptimized
+              priority={false}
+            />
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

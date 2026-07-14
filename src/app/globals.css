@@ -204,12 +204,40 @@
 
   /* —— Dashboard hero —— */
   .dash-hero {
-    @apply rounded-3xl text-white p-7 sm:p-8 grid gap-7 items-center mb-5;
+    @apply relative overflow-hidden rounded-3xl text-white p-7 sm:p-8 grid gap-7 items-center mb-5;
     grid-template-columns: 1fr;
     background:
       radial-gradient(90% 140% at 100% 0%, rgba(58, 182, 137, 0.35) 0%, rgba(58, 182, 137, 0) 55%),
       linear-gradient(135deg, var(--color-green-800) 0%, var(--color-green-900) 60%, var(--color-green-950) 100%);
     box-shadow: var(--shadow-lg);
+  }
+
+  .dash-hero > *:not(.dash-hero-logo) {
+    @apply relative z-[1];
+  }
+
+  .dash-hero-logo {
+    @apply pointer-events-none absolute select-none;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(280px, 48%);
+    height: auto;
+    opacity: 0.34;
+    -webkit-mask-image: radial-gradient(circle, #000 48%, transparent 78%);
+    mask-image: radial-gradient(circle, #000 48%, transparent 78%);
+  }
+
+  .dash-page-logo {
+    @apply pointer-events-none absolute select-none z-[2];
+    left: 50%;
+    top: 48%;
+    transform: translate(-50%, -50%);
+    width: min(320px, 58%);
+    height: auto;
+    opacity: 0.16;
+    -webkit-mask-image: radial-gradient(circle, #000 45%, transparent 76%);
+    mask-image: radial-gradient(circle, #000 45%, transparent 76%);
   }
 
   @media (min-width: 640px) {
