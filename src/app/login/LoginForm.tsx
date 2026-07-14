@@ -13,9 +13,9 @@ export default function LoginForm({ action }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <main className="min-h-dvh mesh-bg flex flex-col safe-top">
+    <main className="min-h-dvh bg-bg flex flex-col safe-top">
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 max-w-md mx-auto w-full">
-        <div className="mb-10 animate-fade-up">
+        <div className="mb-8 animate-fade-up">
           <Logo
             size="lg"
             href="/"
@@ -23,66 +23,75 @@ export default function LoginForm({ action }: LoginFormProps) {
           />
         </div>
 
-        <h1 className="text-2xl font-bold text-brand mb-8 animate-fade-up">Login</h1>
+        <div className="card w-full p-6 sm:p-7 animate-fade-up">
+          <h1 className="font-display text-xl font-semibold text-ink mb-1">Entrar</h1>
+          <p className="text-sm text-ink-soft mb-6">Acesse sua área de associado</p>
 
-        <form action={action} className="w-full space-y-5 animate-fade-up">
-          <div className="relative">
-            <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-            <input
-              type="email"
-              name="email"
-              required
-              placeholder="Email"
-              className="field !pl-14"
-              autoComplete="email"
-            />
-          </div>
+          <form action={action} className="space-y-4">
+            <div>
+              <label className="text-[13px] font-semibold block mb-1.5">E-mail</label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-ink-faint pointer-events-none" />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="seu@email.com"
+                  className="field !pl-10"
+                  autoComplete="email"
+                />
+              </div>
+            </div>
 
-          <div className="relative">
-            <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              required
-              placeholder="Senha"
-              className="field !pl-14 !pr-14"
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand p-1"
-              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-            >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            <div>
+              <label className="text-[13px] font-semibold block mb-1.5">Senha</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-ink-faint pointer-events-none" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  required
+                  placeholder="Sua senha"
+                  className="field !pl-10 !pr-12"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-green-700 p-1"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <Link
+                href="/recuperar-senha"
+                className="text-green-700 font-semibold text-[13px] hover:underline"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+
+            <button type="submit" className="btn-primary btn-lg w-full">
+              Entrar
             </button>
-          </div>
+          </form>
+        </div>
 
-          <div className="text-center">
-            <Link
-              href="/recuperar-senha"
-              className="text-brand font-bold text-sm hover:underline"
-            >
-              Esqueci minha senha
-            </Link>
-          </div>
-
-          <button type="submit" className="btn-primary btn-lg w-full">
-            Entrar
-          </button>
-        </form>
-
-        <p className="mt-8 text-center text-brand font-bold text-sm animate-fade-up">
+        <p className="mt-6 text-center text-sm text-ink-soft animate-fade-up">
           Não possui conta?{" "}
-          <Link href="/associar-se" className="underline underline-offset-2">
-            Cadastre-se agora!
+          <Link href="/associar-se" className="text-green-700 font-semibold underline underline-offset-2">
+            Cadastre-se agora
           </Link>
         </p>
       </div>
 
-      <footer className="px-6 pb-10 text-center">
-        <p className="text-brand font-bold text-sm leading-relaxed max-w-xs mx-auto">
-          Faça login para acessar todos os recursos do aplicativo
+      <footer className="px-6 pb-8 text-center">
+        <p className="text-[12px] text-ink-faint max-w-xs mx-auto">
+          Área restrita aos associados ECOMOPAR
         </p>
       </footer>
     </main>

@@ -6,7 +6,7 @@ import {
   Users,
   CheckCircle,
   Share2,
-  TrendingUp,
+  Gift,
   Copy,
   Check,
 } from "lucide-react";
@@ -35,121 +35,108 @@ export default function IndicacoesPage() {
   };
 
   return (
-    <DashboardShell title="Minhas Indicações" showBack backHref="/dashboard">
-      {/* Cards de resumo */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+    <DashboardShell showBack backHref="/dashboard">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
         {[
-          { icon: Users, bg: "bg-blue-100", fg: "text-blue-600", label: "Total Indicados", value: "5", valueColor: "text-brand" },
-          { icon: CheckCircle, bg: "bg-green-100", fg: "text-green-600", label: "Convertidos", value: "3", valueColor: "text-brand" },
-          { icon: TrendingUp, bg: "bg-yellow-100", fg: "text-yellow-600", label: "Bônus Liberado", value: "R$ 150,00", valueColor: "text-accent" },
-          { icon: Share2, bg: "bg-purple-100", fg: "text-purple-600", label: "Pendentes", value: "2", valueColor: "text-brand" },
-        ].map((c, i) => (
-          <div key={i} className="card p-5 sm:p-6">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${c.bg}`}>
-              <c.icon className={`w-6 h-6 ${c.fg}`} />
+          { icon: Users, label: "Total indicados", value: "5" },
+          { icon: CheckCircle, label: "Convertidos", value: "3" },
+          { icon: Gift, label: "Bônus liberado", value: "R$ 150,00" },
+          { icon: Share2, label: "Pendentes", value: "2" },
+        ].map((c) => (
+          <div key={c.label} className="stat-card">
+            <div className="icon-badge">
+              <c.icon />
             </div>
-            <p className="text-gray-500 text-sm">{c.label}</p>
-            <p className={`text-xl sm:text-2xl font-bold ${c.valueColor}`}>{c.value}</p>
+            <p className="text-[12.5px] text-ink-soft mb-1">{c.label}</p>
+            <p className="font-display font-mono-num text-xl font-semibold">{c.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Código de indicação */}
-      <div className="bg-gradient-to-br from-brand to-brand-dark rounded-2xl p-6 sm:p-8 text-white mb-8">
-        <h2 className="text-xl font-bold mb-6">Seu Código de Indicação</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-gray-300 text-sm mb-2">Código</p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 bg-white/10 rounded-xl px-5 py-4 font-mono text-xl sm:text-2xl truncate">
-                {codigoIndicacao}
+      <div className="withdraw-hero mb-5">
+        <div className="w-full">
+          <p className="text-[12.5px] opacity-70 mb-4">Seu código de indicação</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-[11px] opacity-55 uppercase tracking-wide mb-2 font-semibold">
+                Código
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-white/10 rounded-xl px-4 py-3 font-mono-num text-xl truncate">
+                  {codigoIndicacao}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copy(codigoIndicacao, "codigo")}
+                  aria-label="Copiar código"
+                  className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  {copied === "codigo" ? (
+                    <Check className="w-5 h-5 text-green-400" />
+                  ) : (
+                    <Copy className="w-5 h-5" />
+                  )}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => copy(codigoIndicacao, "codigo")}
-                aria-label="Copiar código"
-                className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {copied === "codigo" ? (
-                  <Check className="w-5 h-5 text-accent" />
-                ) : (
-                  <Copy className="w-5 h-5" />
-                )}
-              </button>
             </div>
-          </div>
-          <div>
-            <p className="text-gray-300 text-sm mb-2">Link de Indicação</p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 bg-white/10 rounded-xl px-5 py-4 text-sm truncate">
-                {linkIndicacao}
+            <div>
+              <p className="text-[11px] opacity-55 uppercase tracking-wide mb-2 font-semibold">
+                Link
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-white/10 rounded-xl px-4 py-3 text-sm truncate">
+                  {linkIndicacao}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copy(linkIndicacao, "link")}
+                  aria-label="Copiar link"
+                  className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  {copied === "link" ? (
+                    <Check className="w-5 h-5 text-green-400" />
+                  ) : (
+                    <Copy className="w-5 h-5" />
+                  )}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => copy(linkIndicacao, "link")}
-                aria-label="Copiar link"
-                className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {copied === "link" ? (
-                  <Check className="w-5 h-5 text-accent" />
-                ) : (
-                  <Copy className="w-5 h-5" />
-                )}
-              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Lista de indicados */}
-      <div className="card overflow-hidden">
-        <div className="p-6 border-b">
-          <h2 className="text-lg font-bold text-brand">Seus Indicados</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">E-mail</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {indicados.map((ind, i) => (
-                <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-brand whitespace-nowrap">
-                    {ind.nome}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{ind.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                    {ind.data}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                        ind.status === "convertido"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {ind.status === "convertido" ? (
-                        <>
-                          <CheckCircle className="w-3 h-3 mr-1" /> Convertido
-                        </>
-                      ) : (
-                        <>
-                          <TrendingUp className="w-3 h-3 mr-1" /> Pendente
-                        </>
-                      )}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <p className="section-title">Seus indicados</p>
+      <div className="card p-1.5">
+        {indicados.map((ind) => (
+          <div key={ind.email} className="detail-row">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div
+                className={`icon-badge-lg mb-0 ${
+                  ind.status === "convertido" ? "" : "icon-badge-amber bg-amber-100"
+                }`}
+              >
+                {ind.status === "convertido" ? (
+                  <CheckCircle className="w-4 h-4 text-green-700" />
+                ) : (
+                  <Share2 className="w-4 h-4 text-amber-600" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{ind.nome}</p>
+                <p className="text-[12.5px] text-ink-soft truncate">
+                  {ind.email} · {ind.data}
+                </p>
+              </div>
+            </div>
+            <span
+              className={
+                ind.status === "convertido" ? "badge-confirmado shrink-0" : "badge-pago shrink-0"
+              }
+            >
+              {ind.status === "convertido" ? "Convertido" : "Pendente"}
+            </span>
+          </div>
+        ))}
       </div>
     </DashboardShell>
   );
