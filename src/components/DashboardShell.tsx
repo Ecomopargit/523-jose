@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Home,
@@ -18,7 +18,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Logo from "@/components/Logo";
+import { useMemberSession } from "@/hooks/useMemberSession";
 import { getDashboardMeta } from "@/lib/dashboard-meta";
+import { initialsFromName } from "@/lib/member-store";
 import { LOGO_WATERMARK_BRAND } from "@/lib/logo";
 
 type MenuItem = { href: string; icon: LucideIcon; label: string };
@@ -57,6 +59,19 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function SidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
+  const router = useRouter();
+  const { member, ready, logout } = useMemberSession();
+  const displayName = member?.nome ?? (ready ? "Visitante" : "…");
+  const displayEmail = member?.email ?? "Faça login para ver seus dados";
+  const initials = member ? initialsFromName(member.nome) : "?";
+
+  const handleLogout = () => {
+    void logout().then(() => {
+      onNavigate?.();
+      router.push("/login");
+    });
+  };
+
   return (
     <div className="relative flex flex-col h-full px-4 py-6">
       <div className="px-2.5 pb-5 mb-3 border-b border-white/10">
@@ -66,20 +81,28 @@ function SidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
       <SidebarNav onNavigate={onNavigate} />
 
       <div className="mt-auto pt-3.5 border-t border-white/10">
-        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-[11px] mb-0.5">
+        <Link
+          href={member ? "/dashboard/perfil" : "/login"}
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 px-2.5 py-2 rounded-[11px] mb-0.5 hover:bg-white/6 transition-colors"
+        >
           <div className="w-[34px] h-[34px] rounded-full bg-white/14 flex items-center justify-center text-xs font-semibold shrink-0">
-            LS
+            {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold leading-tight">Lucas Silva</p>
-            <p className="text-[11px] text-white/50">Associado</p>
+            <p className="text-[13px] font-semibold leading-tight truncate">{displayName}</p>
+            <p className="text-[11px] text-white/50 truncate">{displayEmail}</p>
           </div>
-        </div>
+        </Link>
 
-        <Link href="/login" onClick={onNavigate} className="sidebar-link text-[13px] text-white/55 py-2">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="sidebar-link text-[13px] text-white/55 py-2 w-full"
+        >
           <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
           <span>Sair</span>
-        </Link>
+        </button>
 
         <Link
           href="/politica-de-privacidade"

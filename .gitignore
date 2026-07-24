@@ -32,3 +32,6 @@ out
 
 # Next.js
 next-env.d.ts
+
+# Netlify
+.netlify

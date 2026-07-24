@@ -202,10 +202,10 @@ export default function IndiqueEGanhePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/associar-se"
+              href="/cadastrar"
               className="inline-flex items-center justify-center space-x-2 bg-accent hover:bg-[brand-dark] text-white px-10 py-4 rounded-xl font-semibold text-lg transition-all"
             >
-              <span>Quero me Associar</span>
+              <span>Cadastrar-se</span>
               <ChevronRight className="w-5 h-5" />
             </Link>
           </div>

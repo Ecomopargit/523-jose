@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import RequireAdmin from "@/components/RequireAdmin";
 
 export const metadata: Metadata = {
   title: "Painel Administrativo",
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return <RequireAdmin>{children}</RequireAdmin>;
 }

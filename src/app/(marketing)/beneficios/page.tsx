@@ -192,10 +192,10 @@ export default function BeneficiosPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/associar-se"
+              href="/cadastrar"
               className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-brand to-accent text-white px-10 py-4 rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity shadow-lg"
             >
-              <span>Associar-se Agora</span>
+              <span>Cadastrar-se agora</span>
               <ChevronRight className="w-5 h-5" />
             </Link>
           </div>

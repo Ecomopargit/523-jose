@@ -1,19 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import Logo from "@/components/Logo";
+import { useAuth } from "@/components/AuthProvider";
 import {
   LayoutDashboard,
   Users,
   UserPlus,
-  DollarSign,
   TrendingDown,
-  Share2,
-  Gift,
-  FileText,
-  Settings,
+  MessageCircle,
   LogOut,
   Menu,
   X,
@@ -25,13 +22,9 @@ type MenuItem = { href: string; icon: LucideIcon; label: string };
 const menuItems: MenuItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/associados", icon: Users, label: "Associados" },
-  { href: "/admin/pendentes", icon: UserPlus, label: "Cadastros Pendentes" },
-  { href: "/admin/pagamentos", icon: DollarSign, label: "Pagamentos" },
+  { href: "/admin/pendentes", icon: UserPlus, label: "Pendentes" },
   { href: "/admin/saques", icon: TrendingDown, label: "Saques" },
-  { href: "/admin/indicacoes", icon: Share2, label: "Indicações" },
-  { href: "/admin/bonus", icon: Gift, label: "Bônus" },
-  { href: "/admin/relatorios", icon: FileText, label: "Relatórios" },
-  { href: "/admin/configuracoes", icon: Settings, label: "Configurações" },
+  { href: "/admin/suporte", icon: MessageCircle, label: "Atendimento" },
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
@@ -40,7 +33,8 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex-1 px-3 py-2 overflow-y-auto">
       <div className="space-y-0.5">
         {menuItems.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
@@ -60,10 +54,13 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+  const router = useRouter();
+  const { logout } = useAuth();
+
   return (
     <div className="relative flex flex-col h-full">
       <div className="px-6 pt-8 pb-5 border-b border-white/10">
-        <Link href="/" onClick={onNavigate}>
+        <Link href="/admin" onClick={onNavigate}>
           <Logo size="sm" variant="light" showTagline={false} />
         </Link>
         <p className="text-white/55 text-xs mt-3 font-medium uppercase tracking-wider">
@@ -74,14 +71,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <NavList onNavigate={onNavigate} />
 
       <div className="mt-auto p-4 border-t border-white/10">
-        <Link
-          href="/login"
-          onClick={onNavigate}
-          className="sidebar-link text-white/80"
+        <button
+          type="button"
+          onClick={() => {
+            void logout().then(() => {
+              onNavigate?.();
+              router.push("/login");
+            });
+          }}
+          className="sidebar-link text-white/80 w-full"
         >
           <LogOut className="w-5 h-5" strokeWidth={1.75} />
           <span>Sair</span>
-        </Link>
+        </button>
       </div>
     </div>
   );
@@ -108,7 +110,7 @@ export default function AdminShell({
   }, [open]);
 
   return (
-    <div className="min-h-dvh flex bg-surface">
+    <div className="min-h-dvh flex bg-bg">
       <aside className="sidebar-app hidden lg:flex lg:w-[280px] lg:sticky lg:top-0 lg:h-dvh relative overflow-hidden">
         <SidebarContent />
       </aside>
@@ -137,7 +139,7 @@ export default function AdminShell({
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-xl border-b border-gray-200/60">
+        <header className="sticky top-0 z-30 bg-bg/90 backdrop-blur-xl border-b border-line-soft">
           <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-10 py-4">
             <div className="flex items-center gap-3 min-w-0">
               <button
@@ -149,11 +151,11 @@ export default function AdminShell({
                 <Menu className="w-6 h-6" />
               </button>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-brand truncate tracking-tight">
+                <h1 className="font-display text-xl sm:text-2xl font-semibold text-ink truncate tracking-tight">
                   {title}
                 </h1>
                 {subtitle && (
-                  <p className="text-muted text-sm truncate mt-0.5">{subtitle}</p>
+                  <p className="text-ink-soft text-sm truncate mt-0.5">{subtitle}</p>
                 )}
               </div>
             </div>
@@ -163,7 +165,7 @@ export default function AdminShell({
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-6xl">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-6xl w-full">{children}</main>
       </div>
     </div>
   );

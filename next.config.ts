@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // Netlify usa o runtime Next.js nativo; "standalone" é para Hostinger/VPS.
   turbopack: {
     root: process.cwd(),
   },

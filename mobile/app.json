@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "ECOMOPAR",
+    "slug": "ecomopar",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.ecomopar.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B3D2C",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "package": "org.ecomopar.app",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "A ECOMOPAR precisa acessar suas fotos para atualizar sua imagem de perfil.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-font"
+    ]
+  }
+}

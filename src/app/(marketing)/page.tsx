@@ -38,8 +38,8 @@ export default function HomePage() {
                 importantes para o seu dia a dia.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <Link href="/associar-se" className="btn-accent btn-lg w-full sm:w-auto">
-                  <span>Quero me Associar</span>
+                <Link href="/cadastrar" className="btn-accent btn-lg w-full sm:w-auto">
+                  <span>Cadastrar-se</span>
                   <ChevronRight className="w-5 h-5" />
                 </Link>
                 <Link
@@ -248,8 +248,8 @@ export default function HomePage() {
             Junte-se a milhares de motoristas autônomos que já estão protegidos
             pela ECOMOPAR. Comece hoje com apenas R$ 7,00 por dia.
           </p>
-          <Link href="/associar-se" className="btn-primary btn-lg">
-            <span>Quero me Associar Agora</span>
+          <Link href="/cadastrar" className="btn-primary btn-lg">
+            <span>Cadastrar-se agora</span>
             <ChevronRight className="w-5 h-5" />
           </Link>
           <p className="text-sm text-gray-500 mt-6">

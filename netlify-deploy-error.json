@@ -1,0 +1,7 @@
+﻿node.exe :  ┬╗   JSONHTTPError: Forbidden
+No C:\Users\Usuário\OneDrive\BORDERLESS\523-josé\node_modules\.bin\netlify.ps1:24 caractere:5
++     & "node$exe"  "$basedir/../netlify-cli/bin/run.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( ┬╗   JSONHTTPError: Forbidden:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

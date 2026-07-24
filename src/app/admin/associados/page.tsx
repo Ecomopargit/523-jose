@@ -1,126 +1,388 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/AdminShell";
-import { Search, Filter, MoreVertical, CheckCircle, XCircle, Clock } from "lucide-react";
+import { useAdminSession } from "@/hooks/useAdminSession";
 import { brl } from "@/lib/dashboard-meta";
+import {
+  deleteMemberAdmin,
+  initialsFromName,
+  saldoTotal,
+  updateMemberAdmin,
+  vehicleLabel,
+  type MemberProfile,
+  type MemberStatus,
+} from "@/lib/member-store";
+import {
+  Search,
+  Filter,
+  X,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertTriangle,
+  Mail,
+  Phone,
+  MapPin,
+  Car,
+  KeyRound,
+  Trash2,
+  Save,
+} from "lucide-react";
 
-const associados = [
-  { id: 1, nome: "João Silva", cpf: "123.456.789-00", email: "joao@email.com", telefone: "(11) 98765-4321", status: "ativo", saldo: 1850.0, dataCadastro: "01/01/2024" },
-  { id: 2, nome: "Maria Santos", cpf: "987.654.321-00", email: "maria@email.com", telefone: "(11) 91234-5678", status: "ativo", saldo: 3200.0, dataCadastro: "15/01/2024" },
-  { id: 3, nome: "Pedro Costa", cpf: "456.789.123-00", email: "pedro@email.com", telefone: "(11) 99876-5432", status: "inadimplente", saldo: 450.0, dataCadastro: "20/12/2023" },
-  { id: 4, nome: "Ana Paula", cpf: "789.123.456-00", email: "ana@email.com", telefone: "(11) 96543-2187", status: "ativo", saldo: 2100.0, dataCadastro: "05/02/2024" },
-  { id: 5, nome: "Carlos Lima", cpf: "321.654.987-00", email: "carlos@email.com", telefone: "(11) 94321-8765", status: "bloqueado", saldo: 0.0, dataCadastro: "10/01/2024" },
+const statusOptions: { value: MemberStatus | "todos"; label: string }[] = [
+  { value: "todos", label: "Todos" },
+  { value: "pendente", label: "Pendentes" },
+  { value: "ativo", label: "Ativos" },
+  { value: "inadimplente", label: "Inadimplentes" },
+  { value: "bloqueado", label: "Bloqueados" },
 ];
 
-function statusBadge(status: string) {
+function statusBadge(status: MemberStatus) {
   if (status === "ativo") return "badge-confirmado";
-  if (status === "inadimplente") return "badge-pago";
+  if (status === "pendente") return "badge-pago";
+  if (status === "inadimplente") {
+    return "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700";
+  }
   return "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brick-100 text-brick-600";
 }
 
-export default function AssociadosPage() {
-  const [filtroStatus, setFiltroStatus] = useState("todos");
-  const [busca, setBusca] = useState("");
+function StatusIcon({ status }: { status: MemberStatus }) {
+  if (status === "ativo") return <CheckCircle className="w-3 h-3" />;
+  if (status === "pendente") return <Clock className="w-3 h-3" />;
+  if (status === "inadimplente") return <AlertTriangle className="w-3 h-3" />;
+  return <XCircle className="w-3 h-3" />;
+}
 
-  const associadosFiltrados = associados.filter((assoc) => {
-    if (filtroStatus !== "todos" && assoc.status !== filtroStatus) return false;
-    if (
-      busca &&
-      !assoc.nome.toLowerCase().includes(busca.toLowerCase()) &&
-      !assoc.cpf.includes(busca)
-    )
-      return false;
-    return true;
-  });
+export default function AssociadosPage() {
+  const { members, refresh } = useAdminSession();
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<MemberStatus | "todos">("todos");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    return members.filter((m) => {
+      if (filtroStatus !== "todos" && m.status !== filtroStatus) return false;
+      if (!busca.trim()) return true;
+      const q = busca.toLowerCase();
+      return (
+        m.nome.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q) ||
+        m.cpf.includes(q) ||
+        m.telefone.includes(q) ||
+        m.placa?.toLowerCase().includes(q)
+      );
+    });
+  }, [members, busca, filtroStatus]);
+
+  const selected = members.find((m) => m.id === selectedId) ?? null;
 
   return (
-    <AdminShell title="Associados" subtitle="Gerenciar associados cadastrados">
+    <AdminShell
+      title="Associados"
+      subtitle={`${members.length} cadastrado${members.length === 1 ? "" : "s"} na plataforma`}
+    >
       <div className="card p-4 sm:p-5 mb-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="relative flex-1 md:max-w-md">
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
             <input
               type="text"
-              placeholder="Buscar por nome ou CPF..."
+              placeholder="Buscar nome, e-mail, CPF, placa..."
               className="field !pl-10"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-ink-soft shrink-0" />
             <select
               className="field md:w-auto"
               value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
+              onChange={(e) => setFiltroStatus(e.target.value as MemberStatus | "todos")}
             >
-              <option value="todos">Todos os status</option>
-              <option value="ativo">Ativo</option>
-              <option value="inadimplente">Inadimplente</option>
-              <option value="bloqueado">Bloqueado</option>
+              {statusOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
       </div>
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-green-50/60">
-              <tr>
-                {["Associado", "CPF", "Telefone", "Status", "Saldo", "Cadastro", "Ações"].map(
-                  (h) => (
+      {filtered.length === 0 ? (
+        <div className="card p-10 text-center">
+          <p className="font-display font-semibold text-ink mb-1">Nenhum associado encontrado</p>
+          <p className="text-sm text-ink-soft">
+            Quando alguém se cadastrar em /cadastrar, aparece aqui automaticamente.
+          </p>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-green-50/60">
+                <tr>
+                  {["Associado", "Contato", "Status", "Reserva", "Cadastro", ""].map((h) => (
                     <th
-                      key={h}
+                      key={h || "actions"}
                       className="px-5 py-3.5 text-left text-[10.5px] font-semibold text-ink-faint uppercase tracking-wide"
                     >
                       {h}
                     </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line-soft">
-              {associadosFiltrados.map((a) => (
-                <tr key={a.id} className="hover:bg-green-50/50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <p className="font-semibold text-ink text-sm whitespace-nowrap">{a.nome}</p>
-                    <p className="text-[12.5px] text-ink-soft">{a.email}</p>
-                  </td>
-                  <td className="px-5 py-3.5 text-sm font-mono-num text-ink whitespace-nowrap">
-                    {a.cpf}
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-ink whitespace-nowrap">{a.telefone}</td>
-                  <td className="px-5 py-3.5">
-                    <span className={statusBadge(a.status)}>
-                      {a.status === "ativo" && <CheckCircle className="w-3 h-3" />}
-                      {a.status === "inadimplente" && <Clock className="w-3 h-3" />}
-                      {a.status === "bloqueado" && <XCircle className="w-3 h-3" />}
-                      {a.status.charAt(0).toUpperCase() + a.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-sm font-mono-num font-semibold text-green-700 whitespace-nowrap">
-                    {brl(a.saldo)}
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-ink-soft whitespace-nowrap">
-                    {a.dataCadastro}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <button
-                      type="button"
-                      aria-label="Mais ações"
-                      className="p-1.5 rounded-lg text-ink-faint hover:text-green-700 hover:bg-green-50"
-                    >
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
-                  </td>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-line-soft">
+                {filtered.map((m) => (
+                  <tr
+                    key={m.id}
+                    className="hover:bg-green-50/50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedId(m.id)}
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-green-100 text-green-700 text-xs font-bold flex items-center justify-center shrink-0">
+                          {initialsFromName(m.nome)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-ink text-sm truncate">{m.nome}</p>
+                          <p className="text-[12px] text-ink-soft font-mono-num">{m.cpf || "—"}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <p className="text-sm text-ink truncate max-w-[180px]">{m.email}</p>
+                      <p className="text-[12.5px] text-ink-soft">{m.telefone}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className={statusBadge(m.status)}>
+                        <StatusIcon status={m.status} />
+                        {m.status.charAt(0).toUpperCase() + m.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 font-mono-num font-semibold text-green-700 text-sm whitespace-nowrap">
+                      {brl(saldoTotal(m))}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm text-ink-soft whitespace-nowrap">
+                      {new Date(m.createdAt).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <button
+                        type="button"
+                        className="text-[13px] font-semibold text-green-700 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedId(m.id);
+                        }}
+                      >
+                        Gerenciar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {selected && (
+        <MemberDrawer
+          member={selected}
+          onClose={() => setSelectedId(null)}
+          onSaved={() => refresh()}
+        />
+      )}
     </AdminShell>
+  );
+}
+
+function MemberDrawer({
+  member,
+  onClose,
+  onSaved,
+}: {
+  member: MemberProfile;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+}) {
+  const [status, setStatus] = useState<MemberStatus>(member.status);
+  const [saldoDisponivel, setSaldoDisponivel] = useState(String(member.saldoDisponivel));
+  const [saldoBloqueado, setSaldoBloqueado] = useState(String(member.saldoBloqueado));
+  const [saldoBonus, setSaldoBonus] = useState(String(member.saldoBonus));
+  const [depositosCount, setDepositosCount] = useState(String(member.depositosCount));
+  const [notasAdmin, setNotasAdmin] = useState(member.notasAdmin);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    setStatus(member.status);
+    setSaldoDisponivel(String(member.saldoDisponivel));
+    setSaldoBloqueado(String(member.saldoBloqueado));
+    setSaldoBonus(String(member.saldoBonus));
+    setDepositosCount(String(member.depositosCount));
+    setNotasAdmin(member.notasAdmin);
+    setMsg("");
+  }, [member]);
+
+  const save = async () => {
+    setMsg("");
+    const result = await updateMemberAdmin(member.id, {
+      status,
+      saldoDisponivel: Number(saldoDisponivel.replace(",", ".")),
+      saldoBloqueado: Number(saldoBloqueado.replace(",", ".")),
+      saldoBonus: Number(saldoBonus.replace(",", ".")),
+      depositosCount: Number(depositosCount),
+      notasAdmin,
+    });
+    if (!result.ok) {
+      setMsg(result.error);
+      return;
+    }
+    setMsg("Alterações salvas.");
+    await onSaved();
+  };
+
+  const remove = async () => {
+    if (!confirm(`Remover o cadastro de ${member.nome}? Esta ação não pode ser desfeita.`)) return;
+    const result = await deleteMemberAdmin(member.id);
+    if (!result.ok) {
+      setMsg(result.error);
+      return;
+    }
+    await onSaved();
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-label="Fechar" onClick={onClose} />
+      <aside className="relative w-full max-w-lg h-full bg-surface shadow-2xl overflow-y-auto animate-fade-up border-l border-line-soft">
+        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur border-b border-line-soft px-5 py-4 flex items-center justify-between">
+          <div>
+            <p className="font-display font-semibold text-ink">{member.nome}</p>
+            <p className="text-[12.5px] text-ink-soft">{member.email}</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-green-50 text-ink-soft" aria-label="Fechar">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="stat-card !p-3">
+              <p className="text-[11px] text-ink-soft mb-1">Disponível</p>
+              <p className="font-mono-num font-semibold text-green-700 text-sm">{brl(member.saldoDisponivel)}</p>
+            </div>
+            <div className="stat-card !p-3">
+              <p className="text-[11px] text-ink-soft mb-1">Bloqueado</p>
+              <p className="font-mono-num font-semibold text-brick-600 text-sm">{brl(member.saldoBloqueado)}</p>
+            </div>
+            <div className="stat-card !p-3">
+              <p className="text-[11px] text-ink-soft mb-1">Bônus</p>
+              <p className="font-mono-num font-semibold text-amber-600 text-sm">{brl(member.saldoBonus)}</p>
+            </div>
+          </div>
+
+          <section className="space-y-3">
+            <h3 className="font-display text-[15px] font-semibold">Dados cadastrais</h3>
+            <InfoLine icon={Mail} label="E-mail" value={member.email} />
+            <InfoLine icon={Phone} label="Telefone" value={member.telefone || "—"} />
+            <InfoLine
+              icon={MapPin}
+              label="Endereço"
+              value={[member.endereco, member.cidade && `${member.cidade}-${member.estado}`, member.cep]
+                .filter(Boolean)
+                .join(" · ") || "—"}
+            />
+            <InfoLine icon={Car} label="Veículo" value={vehicleLabel(member)} />
+            <InfoLine icon={KeyRound} label="Chave PIX" value={member.chavePix || "—"} />
+          </section>
+
+          <section className="space-y-3 pt-2 border-t border-line-soft">
+            <h3 className="font-display text-[15px] font-semibold">Gestão</h3>
+
+            <div>
+              <label className="text-[13px] font-semibold block mb-1.5">Status</label>
+              <select className="field" value={status} onChange={(e) => setStatus(e.target.value as MemberStatus)}>
+                <option value="pendente">Pendente</option>
+                <option value="ativo">Ativo</option>
+                <option value="inadimplente">Inadimplente</option>
+                <option value="bloqueado">Bloqueado</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[13px] font-semibold block mb-1.5">Saldo disponível (R$)</label>
+                <input className="field font-mono-num" value={saldoDisponivel} onChange={(e) => setSaldoDisponivel(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[13px] font-semibold block mb-1.5">Saldo bloqueado (R$)</label>
+                <input className="field font-mono-num" value={saldoBloqueado} onChange={(e) => setSaldoBloqueado(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[13px] font-semibold block mb-1.5">Saldo bônus (R$)</label>
+                <input className="field font-mono-num" value={saldoBonus} onChange={(e) => setSaldoBonus(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[13px] font-semibold block mb-1.5">Nº depósitos</label>
+                <input className="field font-mono-num" value={depositosCount} onChange={(e) => setDepositosCount(e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[13px] font-semibold block mb-1.5">Notas internas</label>
+              <textarea
+                className="field min-h-[90px]"
+                placeholder="Observações do admin..."
+                value={notasAdmin}
+                onChange={(e) => setNotasAdmin(e.target.value)}
+              />
+            </div>
+
+            {msg && (
+              <p className="text-[13px] text-green-700 bg-green-50 border border-line-soft rounded-[11px] px-3 py-2">
+                {msg}
+              </p>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <button type="button" onClick={save} className="btn-primary btn-md flex-1">
+                <Save className="w-4 h-4" />
+                Salvar alterações
+              </button>
+              <button type="button" onClick={remove} className="btn-outline btn-md text-brick-600 border-brick-100 hover:bg-brick-100/40">
+                <Trash2 className="w-4 h-4" />
+                Remover
+              </button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function InfoLine({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="icon-badge-lg mb-0">
+        <Icon className="w-[15px] h-[15px] text-green-700" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10.5px] uppercase tracking-wide text-ink-faint font-semibold">{label}</p>
+        <p className="text-sm font-medium break-words">{value}</p>
+      </div>
+    </div>
   );
 }

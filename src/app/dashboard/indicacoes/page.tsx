@@ -21,7 +21,7 @@ const indicados = [
 
 export default function IndicacoesPage() {
   const codigoIndicacao = "JOAO2024";
-  const linkIndicacao = `https://ecomopar.org/associar-se?ref=${codigoIndicacao}`;
+  const linkIndicacao = `https://ecomopar.org/cadastrar?ref=${codigoIndicacao}`;
   const [copied, setCopied] = useState<"codigo" | "link" | null>(null);
 
   const copy = async (value: string, which: "codigo" | "link") => {

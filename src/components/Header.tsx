@@ -71,8 +71,8 @@ export default function Header() {
               <User size={18} strokeWidth={2} />
               <span>Área do Associado</span>
             </Link>
-            <Link href="/associar-se" className="btn-primary btn-sm">
-              Quero me Associar
+            <Link href="/cadastrar" className="btn-primary btn-sm">
+              Cadastrar-se
             </Link>
           </div>
 
@@ -125,8 +125,8 @@ export default function Header() {
             <User size={20} />
             <span>Área do Associado</span>
           </Link>
-          <Link href="/associar-se" className="btn-primary btn-md w-full mt-2">
-            Quero me Associar
+          <Link href="/cadastrar" className="btn-primary btn-md w-full mt-2">
+            Cadastrar-se
           </Link>
         </nav>
       </div>

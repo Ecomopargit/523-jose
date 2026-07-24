@@ -4,14 +4,28 @@ import { useState } from "react";
 import Link from "next/link";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import Logo from "@/components/Logo";
+import { resetPassword } from "@/lib/member-store";
 
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setError("");
+    setLoading(true);
+    try {
+      const result = await resetPassword(email);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setSent(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,8 +65,13 @@ export default function RecuperarSenhaPage() {
                   />
                 </div>
               </div>
-              <button type="submit" className="btn-primary btn-lg w-full">
-                Enviar link
+              {error && (
+                <div className="rounded-[14px] border border-brick-100 bg-brick-100/40 px-3.5 py-3 text-[13px] text-brick-600">
+                  {error}
+                </div>
+              )}
+              <button type="submit" disabled={loading} className="btn-primary btn-lg w-full">
+                {loading ? "Enviando…" : "Enviar link"}
               </button>
             </form>
           )}

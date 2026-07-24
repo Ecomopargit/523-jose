@@ -25,7 +25,7 @@ const quickLinks = [
   { href: "/quem-somos", label: "Quem Somos" },
   { href: "/beneficios", label: "Benefícios" },
   { href: "/como-funciona", label: "Como Funciona" },
-  { href: "/associar-se", label: "Seja um Associado" },
+  { href: "/cadastrar", label: "Cadastrar-se" },
 ];
 
 const beneficios = [

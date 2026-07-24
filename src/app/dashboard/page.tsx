@@ -1,7 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
 import DepositRing from "@/components/DepositRing";
+import { useMemberSession } from "@/hooks/useMemberSession";
 import { brl } from "@/lib/dashboard-meta";
 import { LOGO_WATERMARK } from "@/lib/logo";
 import {
@@ -18,7 +21,6 @@ import {
 } from "lucide-react";
 
 const dados = {
-  nome: "Lucas",
   saldo: 0,
   reservaMensal: 0,
   depositos: 0,
@@ -26,8 +28,18 @@ const dados = {
 };
 
 export default function DashboardPage() {
+  const { member } = useMemberSession();
+  const primeiroNome = member?.nome?.trim().split(/\s+/)[0] ?? "Associado";
+
   return (
     <DashboardShell>
+      <p className="text-sm text-ink-soft mb-4 animate-fade-up">
+        Olá, <span className="font-semibold text-ink">{primeiroNome}</span>
+        {member?.email ? (
+          <span className="text-ink-faint"> · {member.email}</span>
+        ) : null}
+      </p>
+
       <div className="dash-hero animate-fade-up">
         <Image
           src={LOGO_WATERMARK}

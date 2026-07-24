@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userData().role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isAdminEmail() {
+      return signedIn()
+        && request.auth.token.email == 'admin@ecomopar.org';
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin() || isAdminEmail();
+
+      allow create: if isOwner(userId) && (
+        (
+          request.resource.data.role == 'member'
+          && request.resource.data.email == request.auth.token.email
+        )
+        || (
+          isAdminEmail()
+          && request.resource.data.role == 'admin'
+        )
+      );
+
+      allow update: if isAdmin() || isAdminEmail()
+        || (
+          isOwner(userId)
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.saldoDisponivel == resource.data.saldoDisponivel
+          && request.resource.data.saldoBloqueado == resource.data.saldoBloqueado
+          && request.resource.data.saldoBonus == resource.data.saldoBonus
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.depositosCount == resource.data.depositosCount
+          && request.resource.data.notasAdmin == resource.data.notasAdmin
+        );
+
+      allow delete: if isAdmin() || isAdminEmail();
+    }
+
+    match /supportChats/{chatId} {
+      allow read: if isOwner(chatId) || isAdmin() || isAdminEmail();
+      allow create: if isOwner(chatId)
+        && request.resource.data.memberId == request.auth.uid;
+      allow update: if isAdmin() || isAdminEmail()
+        || (
+          isOwner(chatId)
+          && request.resource.data.memberId == resource.data.memberId
+          && request.resource.data.memberId == request.auth.uid
+        );
+      allow delete: if isAdmin() || isAdminEmail();
+
+      match /messages/{messageId} {
+        allow read: if isOwner(chatId) || isAdmin() || isAdminEmail();
+        allow create: if signedIn()
+          && request.resource.data.senderId == request.auth.uid
+          && (
+            (isOwner(chatId) && request.resource.data.senderRole == 'member')
+            || ((isAdmin() || isAdminEmail()) && request.resource.data.senderRole == 'admin')
+          );
+        allow update, delete: if false;
+      }
+    }
+  }
+}

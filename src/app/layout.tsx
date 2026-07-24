@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { AuthProvider } from "@/components/AuthProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -75,8 +76,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       data-scroll-behavior="smooth"
     >
       <body className="bg-bg text-ink antialiased font-sans safe-bottom">
-        {children}
-        <ServiceWorkerRegister />
+        <AuthProvider>
+          {children}
+          <ServiceWorkerRegister />
+        </AuthProvider>
       </body>
     </html>
   );
