@@ -1,18 +1,30 @@
 import { Feather } from "@expo/vector-icons";
+import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { LinearGradient } from "expo-linear-gradient";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
+import { TransactionFlowModal, type TransactionFlow } from "../components/TransactionFlowModal";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts, shadow } from "../theme";
+import type { AppTabParamList } from "../types";
 
 const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function WalletScreen() {
+type Props = BottomTabScreenProps<AppTabParamList, "Carteira">;
+
+export function WalletScreen({ navigation, route }: Props) {
   const { member } = useAuth();
+  const [flow, setFlow] = useState<TransactionFlow | null>(null);
   const total = (member?.saldoDisponivel || 0) + (member?.saldoBloqueado || 0) + (member?.saldoBonus || 0);
-  const notice = (title: string) => Alert.alert(title, "A integração PIX será conectada na próxima etapa do projeto.");
+
+  useEffect(() => {
+    if (!route.params?.flow) return;
+    setFlow(route.params.flow);
+    navigation.setParams({ flow: undefined });
+  }, [navigation, route.params?.flow]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
@@ -34,8 +46,8 @@ export function WalletScreen() {
         </LinearGradient>
 
         <View style={styles.actions}>
-          <Action icon="plus" label="Depositar" hint="via PIX" onPress={() => notice("Depósito via PIX")} primary />
-          <Action icon="arrow-down" label="Solicitar" hint="saque" onPress={() => notice("Solicitação de saque")} />
+          <Action icon="plus" label="Depositar" hint="via PIX" onPress={() => setFlow("deposit")} primary />
+          <Action icon="arrow-down" label="Solicitar" hint="saque" onPress={() => setFlow("withdraw")} />
         </View>
 
         <View style={styles.sectionHeading}><View><Text style={styles.section}>Composição da reserva</Text><Text style={styles.sectionHint}>Entenda onde está o seu patrimônio</Text></View><Feather color={colors.inkFaint} name="pie-chart" size={18} /></View>
@@ -60,11 +72,17 @@ export function WalletScreen() {
               <View style={styles.emptyIcon}><Feather color={colors.green700} name="inbox" size={21} /></View>
               <Text style={styles.emptyTitle}>Sua jornada começa aqui</Text>
               <Text style={styles.emptyText}>Quando você fizer sua primeira contribuição, ela aparecerá neste histórico.</Text>
-              <Pressable onPress={() => notice("Depósito via PIX")} style={styles.emptyAction}><Text style={styles.emptyActionText}>Fazer primeiro depósito</Text><Feather color={colors.green700} name="arrow-right" size={14} /></Pressable>
+              <Pressable onPress={() => setFlow("deposit")} style={styles.emptyAction}><Text style={styles.emptyActionText}>Fazer primeiro depósito</Text><Feather color={colors.green700} name="arrow-right" size={14} /></Pressable>
             </View>
           )}
         </View>
       </ScrollView>
+      <TransactionFlowModal
+        availableBalance={member?.saldoDisponivel || 0}
+        flow={flow}
+        onClose={() => setFlow(null)}
+        pixKey={member?.chavePix || ""}
+      />
     </SafeAreaView>
   );
 }

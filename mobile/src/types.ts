@@ -38,15 +38,17 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   App: NavigatorScreenParams<AppTabParamList> | undefined;
+  Admin: undefined;
   Support: undefined;
   EditProfile: undefined;
   PrivacySecurity: undefined;
+  PrivacyPolicy: undefined;
   HelpCenter: undefined;
 };
 
 export type AppTabParamList = {
   Início: undefined;
-  Carteira: undefined;
+  Carteira: { flow?: "deposit" | "withdraw" } | undefined;
   Benefícios: undefined;
   Perfil: undefined;
 };

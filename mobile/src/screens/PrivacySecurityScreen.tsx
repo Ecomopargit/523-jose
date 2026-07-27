@@ -1,31 +1,21 @@
 import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenAtmosphere } from "../components/UI";
+import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import { useAuth } from "../context/AuthContext";
-import { resetPassword } from "../lib/members";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
+import { useState } from "react";
 
 type Props = NativeStackScreenProps<RootStackParamList, "PrivacySecurity">;
 
 export function PrivacySecurityScreen({ navigation }: Props) {
   const { member, user } = useAuth();
-
-  async function changePassword() {
-    const email = member?.email || user?.email;
-    if (!email) return;
-    const result = await resetPassword(email);
-    Alert.alert(
-      result.ok ? "E-mail enviado" : "Não foi possível enviar",
-      result.ok
-        ? `Enviamos as instruções de alteração de senha para ${email}.`
-        : result.error,
-    );
-  }
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
@@ -45,7 +35,7 @@ export function PrivacySecurityScreen({ navigation }: Props) {
 
         <Text style={styles.section}>Segurança de acesso</Text>
         <View style={styles.card}>
-          <SecurityRow icon="key" title="Alterar minha senha" subtitle="Receba um link seguro por e-mail" onPress={changePassword} />
+          <SecurityRow icon="key" title="Alterar minha senha" subtitle="Crie uma nova senha de acesso" onPress={() => setPasswordModalOpen(true)} />
           <SecurityRow icon="mail" title="E-mail de acesso" subtitle={member?.email || user?.email || ""} />
           <SecurityRow icon="smartphone" title="Sessão atual" subtitle="Este iPhone está conectado" last />
         </View>
@@ -54,11 +44,16 @@ export function PrivacySecurityScreen({ navigation }: Props) {
         <View style={styles.card}>
           <SecurityRow icon="database" title="Uso dos seus dados" subtitle="Utilizados somente para operar sua associação" />
           <SecurityRow icon="eye" title="Quem pode acessar" subtitle="Você e administradores autorizados" />
-          <SecurityRow icon="file-text" title="Política de privacidade" subtitle="Conheça como protegemos suas informações" last onPress={() => Alert.alert("Política de privacidade", "A política completa está disponível no site oficial da ECOMOPAR.")} />
+          <SecurityRow icon="file-text" title="Política de privacidade" subtitle="Conheça como protegemos suas informações" last onPress={() => navigation.navigate("PrivacyPolicy")} />
         </View>
 
         <View style={styles.note}><Feather color={colors.green700} name="info" size={17} /><Text style={styles.noteText}>Nunca compartilhe sua senha ou códigos recebidos por e-mail. A ECOMOPAR nunca solicitará sua senha pelo chat.</Text></View>
       </ScrollView>
+      <ChangePasswordModal
+        email={member?.email || user?.email || ""}
+        onClose={() => setPasswordModalOpen(false)}
+        visible={passwordModalOpen}
+      />
     </SafeAreaView>
   );
 }

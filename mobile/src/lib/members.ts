@@ -1,8 +1,11 @@
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updatePassword,
   updateProfile,
   type User,
 } from "firebase/auth";
@@ -18,6 +21,7 @@ function messageFor(code = "") {
     "auth/invalid-email": "Digite um e-mail válido.",
     "auth/weak-password": "A senha precisa ter pelo menos 6 caracteres.",
     "auth/invalid-credential": "E-mail ou senha incorretos.",
+    "auth/wrong-password": "A senha atual está incorreta.",
     "auth/user-not-found": "Conta não encontrada.",
     "auth/network-request-failed": "Sem conexão. Verifique sua internet.",
     "auth/too-many-requests": "Muitas tentativas. Aguarde e tente novamente.",
@@ -252,5 +256,26 @@ export async function resetPassword(email: string) {
     return { ok: true as const };
   } catch (error) {
     return { ok: false as const, error: messageFor((error as { code?: string }).code) };
+  }
+}
+
+export async function changeMemberPassword(currentPassword: string, newPassword: string) {
+  const user = auth.currentUser;
+  if (!user?.email) {
+    return { ok: false as const, error: "Sessão expirada. Entre novamente." };
+  }
+
+  try {
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
+    return { ok: true as const };
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    const passwordError =
+      code === "auth/invalid-credential" || code === "auth/wrong-password"
+        ? "A senha atual está incorreta."
+        : messageFor(code);
+    return { ok: false as const, error: passwordError };
   }
 }

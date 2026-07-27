@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -15,6 +16,7 @@ const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", 
 
 export function HomeScreen({ navigation }: Props) {
   const { member, refresh } = useAuth();
+  const [moneyVisible, setMoneyVisible] = useState(true);
   const firstName = member?.nome?.split(" ")[0] || "Associado";
   const total = (member?.saldoDisponivel || 0) + (member?.saldoBloqueado || 0) + (member?.saldoBonus || 0);
   const status = member?.status === "ativo" ? "Cadastro ativo" : "Cadastro em análise";
@@ -40,9 +42,11 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.glow} />
           <View style={styles.heroTop}>
             <Text style={styles.heroLabel}>PATRIMÔNIO ECOMOPAR</Text>
-            <Feather color="rgba(255,255,255,0.75)" name="eye" size={18} />
+            <Pressable accessibilityLabel={moneyVisible ? "Ocultar valores" : "Mostrar valores"} hitSlop={10} onPress={() => setMoneyVisible((visible) => !visible)}>
+              <Feather color="rgba(255,255,255,0.75)" name={moneyVisible ? "eye" : "eye-off"} size={18} />
+            </Pressable>
           </View>
-          <Text style={styles.balance}>{money(total)}</Text>
+          <Text style={styles.balance}>{moneyVisible ? money(total) : "••••••"}</Text>
           <View style={styles.status}>
             <View style={[styles.statusDot, member?.status === "ativo" && { backgroundColor: colors.green400 }]} />
             <Text style={styles.statusText}>{status}</Text>
@@ -51,7 +55,7 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.heroStats}>
             <View>
               <Text style={styles.heroStatLabel}>Reserva disponível</Text>
-              <Text style={styles.heroStatValue}>{money(member?.saldoDisponivel)}</Text>
+              <Text style={styles.heroStatValue}>{moneyVisible ? money(member?.saldoDisponivel) : "••••••"}</Text>
             </View>
             <View style={styles.statDivider} />
             <View>
@@ -63,9 +67,9 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.sectionRow}><Text style={styles.sectionTitle}>Acesso rápido</Text><Text style={styles.sectionCaption}>PRINCIPAIS AÇÕES</Text></View>
         <View style={styles.shortcuts}>
-          <Shortcut icon="plus-circle" label="Depositar" onPress={() => navigation.navigate("Carteira")} />
+          <Shortcut icon="plus-circle" label="Depositar" onPress={() => navigation.navigate("Carteira", { flow: "deposit" })} />
           <Shortcut icon="send" label="Indicar" onPress={() => navigation.navigate("Benefícios")} />
-          <Shortcut icon="arrow-down-circle" label="Sacar" onPress={() => navigation.navigate("Carteira")} />
+          <Shortcut icon="arrow-down-circle" label="Sacar" onPress={() => navigation.navigate("Carteira", { flow: "withdraw" })} />
           <Shortcut icon="headphones" label="Suporte" onPress={() => navigation.navigate("Perfil")} />
         </View>
 
@@ -74,11 +78,11 @@ export function HomeScreen({ navigation }: Props) {
           <Pressable onPress={() => navigation.navigate("Carteira")}><Text style={styles.seeAll}>Ver detalhes</Text></Pressable>
         </View>
         <Card>
-          <SummaryRow icon="check-circle" label="Disponível" tone="green" value={money(member?.saldoDisponivel)} />
+          <SummaryRow icon="check-circle" label="Disponível" tone="green" value={moneyVisible ? money(member?.saldoDisponivel) : "••••••"} />
           <View style={styles.rule} />
-          <SummaryRow icon="lock" label="Em carência" tone="brick" value={money(member?.saldoBloqueado)} />
+          <SummaryRow icon="lock" label="Em carência" tone="brick" value={moneyVisible ? money(member?.saldoBloqueado) : "••••••"} />
           <View style={styles.rule} />
-          <SummaryRow icon="gift" label="Bônus" tone="amber" value={money(member?.saldoBonus)} />
+          <SummaryRow icon="gift" label="Bônus" tone="amber" value={moneyVisible ? money(member?.saldoBonus) : "••••••"} />
         </Card>
 
         <LinearGradient colors={[colors.amber100, "#FFFDF8"]} style={styles.tip}>

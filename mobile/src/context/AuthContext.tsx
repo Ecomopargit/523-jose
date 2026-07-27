@@ -31,24 +31,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (nextUser) => {
         if (!active) return;
 
-        // A sessão está pronta neste ponto. O perfil do Firestore pode carregar
-        // em segundo plano sem bloquear indefinidamente a abertura do app.
-        clearTimeout(safetyTimer);
-        setInitializing(false);
-        setUser(nextUser);
-
         if (!nextUser) {
+          clearTimeout(safetyTimer);
+          setUser(null);
           setMember(null);
+          setInitializing(false);
           return;
         }
 
         void ensureMemberProfile(nextUser)
           .then((profile) => {
-            if (active) setMember(profile);
+            if (!active) return;
+            clearTimeout(safetyTimer);
+            setUser(nextUser);
+            setMember(profile);
+            setInitializing(false);
           })
           .catch((error) => {
             console.warn("Não foi possível carregar o perfil do associado.", error);
-            if (active) setMember(null);
+            if (active) {
+              clearTimeout(safetyTimer);
+              setUser(null);
+              setMember(null);
+              setInitializing(false);
+            }
           });
       },
       (error) => {

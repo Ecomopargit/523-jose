@@ -18,8 +18,10 @@ import { RegisterScreen } from "./src/screens/RegisterScreen";
 import { SupportScreen } from "./src/screens/SupportScreen";
 import { EditProfileScreen } from "./src/screens/EditProfileScreen";
 import { PrivacySecurityScreen } from "./src/screens/PrivacySecurityScreen";
+import { PrivacyPolicyScreen } from "./src/screens/PrivacyPolicyScreen";
 import { HelpCenterScreen } from "./src/screens/HelpCenterScreen";
 import { WelcomeScreen } from "./src/screens/WelcomeScreen";
+import { AdminDashboardScreen } from "./src/screens/AdminDashboardScreen";
 import { colors } from "./src/theme";
 import type { RootStackParamList } from "./src/types";
 
@@ -38,7 +40,7 @@ const navigationTheme = {
 };
 
 function RootNavigator() {
-  const { user, initializing } = useAuth();
+  const { user, member, initializing } = useAuth();
 
   if (initializing) {
     return (
@@ -52,13 +54,18 @@ function RootNavigator() {
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
         {user ? (
-          <>
-            <Stack.Screen name="App" component={AppTabs} />
-            <Stack.Screen name="Support" component={SupportScreen} options={{ animation: "slide_from_right" }} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ animation: "slide_from_right" }} />
-            <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} options={{ animation: "slide_from_right" }} />
-            <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ animation: "slide_from_right" }} />
-          </>
+          member?.role === "admin" ? (
+            <Stack.Screen name="Admin" component={AdminDashboardScreen} />
+          ) : (
+            <>
+              <Stack.Screen name="App" component={AppTabs} />
+              <Stack.Screen name="Support" component={SupportScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ animation: "slide_from_right" }} />
+            </>
+          )
         ) : (
           <>
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
