@@ -165,7 +165,7 @@ export default function AdminShell({
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-6xl w-full">{children}</main>
+        <main className="mx-auto w-full max-w-[1500px] flex-1 p-4 sm:p-6 lg:p-8 xl:p-10">{children}</main>
       </div>
     </div>
   );

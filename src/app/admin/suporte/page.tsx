@@ -11,6 +11,7 @@ import {
   Search,
   Send,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 import AdminShell from "@/components/AdminShell";
 import {
@@ -83,6 +84,7 @@ export default function AdminSupportPage() {
 
   useEffect(() => {
     if (!selectedId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear stale thread when returning to inbox
       setMessages([]);
       return;
     }
@@ -125,7 +127,7 @@ export default function AdminSupportPage() {
     >
       <div className="overflow-hidden rounded-[24px] border border-line-soft bg-white shadow-[0_18px_50px_rgba(11,61,44,0.08)]">
         <div className="grid min-h-[680px] lg:grid-cols-[340px_1fr]">
-          <aside className="border-b border-line-soft bg-[#f8faf7] lg:border-b-0 lg:border-r">
+          <aside className={`${selected ? "hidden lg:block" : "block"} border-b border-line-soft bg-[#f8faf7] lg:border-b-0 lg:border-r`}>
             <div className="border-b border-line-soft p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>
@@ -195,10 +197,13 @@ export default function AdminSupportPage() {
             </div>
           </aside>
 
-          <section className="flex min-h-[680px] flex-col bg-[#f3f4f1]">
+          <section className={`${selected ? "flex" : "hidden lg:flex"} min-h-[680px] flex-col bg-[#f3f4f1]`}>
             {selected ? (
               <>
                 <header className="flex items-center gap-3 border-b border-line-soft bg-white px-5 py-4">
+                  <button type="button" onClick={() => setSelectedId(null)} className="-ml-2 rounded-xl p-2 text-ink-soft hover:bg-green-50 lg:hidden" aria-label="Voltar às conversas">
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
                   <div className="relative flex h-11 w-11 items-center justify-center rounded-[14px] bg-green-100 text-xs font-bold text-green-700">
                     {initials(selected.memberName)}
                     <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-400" />

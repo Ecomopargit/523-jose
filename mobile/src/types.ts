@@ -39,11 +39,18 @@ export type RootStackParamList = {
   Register: undefined;
   App: NavigatorScreenParams<AppTabParamList> | undefined;
   Admin: undefined;
+  AdminOperations: { section: "associados" | "saques" | "atendimento" };
+  AdminMember: { memberId: string };
+  AdminWithdrawal: { withdrawalId: string };
+  AdminChat: { chatId: string; memberName: string; memberEmail: string };
   Support: undefined;
   EditProfile: undefined;
   PrivacySecurity: undefined;
   PrivacyPolicy: undefined;
   HelpCenter: undefined;
+  BenefitDetail: {
+    benefitId: "financial" | "health" | "legal" | "vehicle";
+  };
 };
 
 export type AppTabParamList = {

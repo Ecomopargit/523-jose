@@ -28,6 +28,10 @@ import {
   KeyRound,
   Trash2,
   Save,
+  Users,
+  UserCheck,
+  UserRoundX,
+  LoaderCircle,
 } from "lucide-react";
 
 const statusOptions: { value: MemberStatus | "todos"; label: string }[] = [
@@ -55,7 +59,7 @@ function StatusIcon({ status }: { status: MemberStatus }) {
 }
 
 export default function AssociadosPage() {
-  const { members, refresh } = useAdminSession();
+  const { members, refresh, ready } = useAdminSession();
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<MemberStatus | "todos">("todos");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -82,6 +86,24 @@ export default function AssociadosPage() {
       title="Associados"
       subtitle={`${members.length} cadastrado${members.length === 1 ? "" : "s"} na plataforma`}
     >
+      <section className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { label: "Base total", value: members.length, icon: Users },
+          { label: "Ativos", value: members.filter((m) => m.status === "ativo").length, icon: UserCheck },
+          { label: "Pendentes", value: members.filter((m) => m.status === "pendente").length, icon: Clock },
+          { label: "Com atenção", value: members.filter((m) => m.status === "inadimplente" || m.status === "bloqueado").length, icon: UserRoundX },
+        ].map((item) => (
+          <div key={item.label} className="admin-metric">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-ink-faint">{item.label}</p>
+                <p className="mt-2 font-display text-2xl font-semibold">{item.value}</p>
+              </div>
+              <span className="admin-metric-icon"><item.icon className="h-4 w-4" /></span>
+            </div>
+          </div>
+        ))}
+      </section>
       <div className="card p-4 sm:p-5 mb-5">
         <div className="flex flex-col md:flex-row md:items-center gap-3">
           <div className="relative flex-1">
@@ -111,7 +133,11 @@ export default function AssociadosPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {!ready ? (
+        <div className="card flex min-h-64 items-center justify-center text-sm text-ink-soft">
+          <LoaderCircle className="mr-2 h-5 w-5 animate-spin text-green-700" /> Carregando associados...
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="card p-10 text-center">
           <p className="font-display font-semibold text-ink mb-1">Nenhum associado encontrado</p>
           <p className="text-sm text-ink-soft">
@@ -121,8 +147,8 @@ export default function AssociadosPage() {
       ) : (
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-green-50/60">
+            <table className="w-full min-w-[920px]">
+              <thead className="admin-table-head">
                 <tr>
                   {["Associado", "Contato", "Status", "Reserva", "Cadastro", ""].map((h) => (
                     <th
@@ -217,6 +243,7 @@ function MemberDrawer({
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- synchronize editable draft when drawer target changes */
     setStatus(member.status);
     setSaldoDisponivel(String(member.saldoDisponivel));
     setSaldoBloqueado(String(member.saldoBloqueado));
@@ -224,6 +251,7 @@ function MemberDrawer({
     setDepositosCount(String(member.depositosCount));
     setNotasAdmin(member.notasAdmin);
     setMsg("");
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [member]);
 
   const save = async () => {

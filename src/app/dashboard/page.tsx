@@ -30,15 +30,22 @@ const dados = {
 export default function DashboardPage() {
   const { member } = useMemberSession();
   const primeiroNome = member?.nome?.trim().split(/\s+/)[0] ?? "Associado";
+  const isActive = member?.status === "ativo";
+  const saldo = member?.saldoDisponivel ?? dados.saldo;
+  const depositos = member?.depositosCount ?? dados.depositos;
 
   return (
     <DashboardShell>
-      <p className="text-sm text-ink-soft mb-4 animate-fade-up">
-        Olá, <span className="font-semibold text-ink">{primeiroNome}</span>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5 animate-fade-up">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-green-600">Visão geral</p>
+          <h2 className="font-display text-2xl sm:text-[28px] font-semibold tracking-tight mt-1">Olá, {primeiroNome}</h2>
+          <p className="text-sm text-ink-soft mt-1">Acompanhe sua reserva e os benefícios da sua associação.</p>
+        </div>
         {member?.email ? (
-          <span className="text-ink-faint"> · {member.email}</span>
+          <span className="text-xs text-ink-soft bg-white border border-line-soft rounded-full px-3.5 py-2 shadow-sm">{member.email}</span>
         ) : null}
-      </p>
+      </div>
 
       <div className="dash-hero animate-fade-up">
         <Image
@@ -55,28 +62,30 @@ export default function DashboardPage() {
           <p className="text-xs uppercase tracking-widest text-white/55 font-semibold mb-2.5">
             Saldo atual
           </p>
-          <p className="font-mono-num font-display text-4xl sm:text-[38px] font-bold tracking-tight">
-            {brl(dados.saldo).replace(",00", "")}
+          <p className="font-mono-num font-display text-4xl sm:text-[46px] font-bold tracking-[-0.05em]">
+            {brl(saldo).replace(",00", "")}
             <span className="text-[22px] opacity-70">,00</span>
           </p>
           <div className="status-pill">
             <span className="dot" />
-            Cadastro pendente de ativação
+            {isActive ? "Cadastro ativo" : "Cadastro pendente de ativação"}
           </div>
-          <div className="mt-4">
-            <Link href="/dashboard/ativar-cadastro" className="btn-hero">
-              Ativar cadastro
-              <ArrowRight className="w-4 h-4" strokeWidth={2.4} />
-            </Link>
-          </div>
+          {!isActive ? (
+            <div className="mt-4">
+              <Link href="/dashboard/ativar-cadastro" className="btn-hero">
+                Ativar cadastro
+                <ArrowRight className="w-4 h-4" strokeWidth={2.4} />
+              </Link>
+            </div>
+          ) : null}
         </div>
         <DepositRing days={dados.diasSeguidos} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { icon: Layers, label: "Reserva/mês", value: brl(dados.reservaMensal) },
-          { icon: TrendingUp, label: "Depósitos", value: String(dados.depositos) },
+          { icon: TrendingUp, label: "Depósitos", value: String(depositos) },
           { icon: Star, label: "Benefícios", value: "5 ativos" },
         ].map((s) => (
           <div key={s.label} className="stat-card">
@@ -89,9 +98,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4 mb-5">
-        <div className="card p-5 sm:p-6 flex gap-4 bg-gradient-to-br from-green-50 to-white">
-          <div className="w-11 h-11 rounded-xl bg-surface border border-line flex items-center justify-center shrink-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.45fr_.75fr] gap-5 mb-6">
+        <div className="card p-6 sm:p-8 flex gap-5 bg-gradient-to-br from-green-50 to-white">
+          <div className="w-12 h-12 rounded-2xl bg-surface border border-line flex items-center justify-center shrink-0 shadow-sm">
             <PiggyBank className="w-5 h-5 text-green-600" strokeWidth={2} />
           </div>
           <div>
@@ -119,7 +128,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card p-4 flex flex-col gap-2.5">
+        <div className="card p-4 sm:p-5 flex flex-col justify-center gap-3">
           <Link href="/dashboard/saque" className="shortcut-btn">
             <div className="icon-mini">
               <Banknote className="w-[15px] h-[15px] text-white" strokeWidth={2} />
@@ -135,7 +144,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="card p-5 sm:p-6">
+      <div className="card p-6 sm:p-8">
         <div className="flex items-center justify-between mb-3.5">
           <h3 className="section-title mb-0">Seus benefícios ECOMOPAR</h3>
           <Link

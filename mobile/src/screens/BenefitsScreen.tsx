@@ -1,20 +1,25 @@
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts, shadow } from "../theme";
+import type { RootStackParamList } from "../types";
 
 const benefits = [
-  { icon: "shield", title: "Proteção financeira", text: "Sua reserva para enfrentar imprevistos.", tone: "green" as const, label: "Incluído" },
-  { icon: "heart", title: "Assistência à saúde", text: "Apoio para cuidar de você e da família.", tone: "brick" as const, label: "Em breve" },
-  { icon: "briefcase", title: "Orientação jurídica", text: "Suporte especializado para o motorista.", tone: "amber" as const, label: "Incluído" },
-  { icon: "tool", title: "Assistência veicular", text: "Mais tranquilidade para seguir viagem.", tone: "green" as const, label: "Incluído" },
+  { id: "financial" as const, icon: "shield", title: "Proteção financeira", text: "Sua reserva para enfrentar imprevistos.", tone: "green" as const, label: "Incluído" },
+  { id: "health" as const, icon: "heart", title: "Assistência à saúde", text: "Apoio para cuidar de você e da família.", tone: "brick" as const, label: "Incluído" },
+  { id: "legal" as const, icon: "briefcase", title: "Orientação jurídica", text: "Suporte especializado para o motorista.", tone: "amber" as const, label: "Incluído" },
+  { id: "vehicle" as const, icon: "tool", title: "Assistência veicular", text: "Mais tranquilidade para seguir viagem.", tone: "green" as const, label: "Incluído" },
 ];
 
 export function BenefitsScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { member } = useAuth();
   const code = member?.codigoIndicacao || member?.id.slice(0, 6).toUpperCase() || "ECOMOPAR";
 
@@ -24,6 +29,7 @@ export function BenefitsScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
+      <StatusBar style="dark" />
       <ScreenAtmosphere />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenHeader
@@ -60,7 +66,13 @@ export function BenefitsScreen() {
 
         <View style={styles.list}>
           {benefits.map((benefit) => (
-            <Pressable key={benefit.title} onPress={() => Alert.alert(benefit.title, "Em breve você poderá solicitar este benefício pelo app.")} style={({ pressed }) => pressed && styles.pressed}>
+            <Pressable
+              accessibilityHint="Abre informações sobre o benefício"
+              accessibilityRole="button"
+              key={benefit.title}
+              onPress={() => navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("BenefitDetail", { benefitId: benefit.id })}
+              style={({ pressed }) => pressed && styles.pressed}
+            >
               <View style={styles.benefit}>
                 <IconBadge name={benefit.icon as keyof typeof Feather.glyphMap} tone={benefit.tone} />
                 <View style={styles.benefitCopy}>
@@ -76,11 +88,15 @@ export function BenefitsScreen() {
           ))}
         </View>
 
-        <View style={styles.supportNote}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("Support")}
+          style={({ pressed }) => [styles.supportNote, pressed && styles.pressed]}
+        >
           <Feather color={colors.green700} name="message-circle" size={18} />
           <Text style={styles.supportText}>Precisa de ajuda para usar um benefício?</Text>
           <Text style={styles.supportLink}>Fale conosco</Text>
-        </View>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );

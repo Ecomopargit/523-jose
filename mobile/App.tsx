@@ -20,8 +20,13 @@ import { EditProfileScreen } from "./src/screens/EditProfileScreen";
 import { PrivacySecurityScreen } from "./src/screens/PrivacySecurityScreen";
 import { PrivacyPolicyScreen } from "./src/screens/PrivacyPolicyScreen";
 import { HelpCenterScreen } from "./src/screens/HelpCenterScreen";
+import { BenefitDetailScreen } from "./src/screens/BenefitDetailScreen";
 import { WelcomeScreen } from "./src/screens/WelcomeScreen";
 import { AdminDashboardScreen } from "./src/screens/AdminDashboardScreen";
+import { AdminOperationsScreen } from "./src/screens/AdminOperationsScreen";
+import { AdminMemberScreen } from "./src/screens/AdminMemberScreen";
+import { AdminWithdrawalScreen } from "./src/screens/AdminWithdrawalScreen";
+import { AdminChatScreen } from "./src/screens/AdminChatScreen";
 import { colors } from "./src/theme";
 import type { RootStackParamList } from "./src/types";
 
@@ -55,7 +60,13 @@ function RootNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
         {user ? (
           member?.role === "admin" ? (
-            <Stack.Screen name="Admin" component={AdminDashboardScreen} />
+            <>
+              <Stack.Screen name="Admin" component={AdminDashboardScreen} />
+              <Stack.Screen name="AdminOperations" component={AdminOperationsScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="AdminMember" component={AdminMemberScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="AdminWithdrawal" component={AdminWithdrawalScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="AdminChat" component={AdminChatScreen} options={{ animation: "slide_from_right" }} />
+            </>
           ) : (
             <>
               <Stack.Screen name="App" component={AppTabs} />
@@ -64,6 +75,7 @@ function RootNavigator() {
               <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="BenefitDetail" component={BenefitDetailScreen} options={{ animation: "slide_from_right" }} />
             </>
           )
         ) : (

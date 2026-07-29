@@ -1,10 +1,12 @@
 import { Feather } from "@expo/vector-icons";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { StatusBar } from "expo-status-bar";
+import { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ActivationFlowModal } from "../components/ActivationFlowModal";
 import { Card, IconBadge, ScreenAtmosphere } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts, shadow } from "../theme";
@@ -17,12 +19,19 @@ const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", 
 export function HomeScreen({ navigation }: Props) {
   const { member, refresh } = useAuth();
   const [moneyVisible, setMoneyVisible] = useState(true);
+  const [activationOpen, setActivationOpen] = useState(false);
   const firstName = member?.nome?.split(" ")[0] || "Associado";
   const total = (member?.saldoDisponivel || 0) + (member?.saldoBloqueado || 0) + (member?.saldoBonus || 0);
-  const status = member?.status === "ativo" ? "Cadastro ativo" : "Cadastro em análise";
+  const isActive = member?.status === "ativo";
+  const status = isActive ? "Cadastro ativo" : "Cadastro em análise";
+
+  const handleActivated = useCallback(async () => {
+    await refresh();
+  }, [refresh]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
+      <StatusBar style="dark" />
       <ScreenAtmosphere />
       <ScrollView
         contentContainerStyle={styles.content}
@@ -48,9 +57,15 @@ export function HomeScreen({ navigation }: Props) {
           </View>
           <Text style={styles.balance}>{moneyVisible ? money(total) : "••••••"}</Text>
           <View style={styles.status}>
-            <View style={[styles.statusDot, member?.status === "ativo" && { backgroundColor: colors.green400 }]} />
+            <View style={[styles.statusDot, isActive && { backgroundColor: colors.green400 }]} />
             <Text style={styles.statusText}>{status}</Text>
           </View>
+          {!isActive ? (
+            <Pressable onPress={() => setActivationOpen(true)} style={({ pressed }) => [styles.activateBtn, pressed && styles.pressed]}>
+              <Feather color={colors.green900} name="zap" size={16} />
+              <Text style={styles.activateBtnText}>Ativar cadastro · R$ 7</Text>
+            </Pressable>
+          ) : null}
           <View style={styles.heroRule} />
           <View style={styles.heroStats}>
             <View>
@@ -64,6 +79,17 @@ export function HomeScreen({ navigation }: Props) {
             </View>
           </View>
         </LinearGradient>
+
+        {!isActive ? (
+          <Pressable onPress={() => setActivationOpen(true)} style={({ pressed }) => [styles.activateBanner, pressed && styles.pressed]}>
+            <IconBadge name="zap" tone="amber" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.tipTitle}>Ative seu cadastro</Text>
+              <Text style={styles.tipText}>Gere um PIX de R$ 7. R$ 2 já estão incluídos como taxa da transação.</Text>
+            </View>
+            <Feather color={colors.green700} name="chevron-right" size={18} />
+          </Pressable>
+        ) : null}
 
         <View style={styles.sectionRow}><Text style={styles.sectionTitle}>Acesso rápido</Text><Text style={styles.sectionCaption}>PRINCIPAIS AÇÕES</Text></View>
         <View style={styles.shortcuts}>
@@ -93,6 +119,13 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         </LinearGradient>
       </ScrollView>
+
+      <ActivationFlowModal
+        memberEmail={member?.email}
+        onActivated={handleActivated}
+        onClose={() => setActivationOpen(false)}
+        visible={activationOpen}
+      />
     </SafeAreaView>
   );
 }
@@ -136,6 +169,9 @@ const styles = StyleSheet.create({
   status: { alignItems: "center", flexDirection: "row", gap: 6, marginTop: 5 },
   statusDot: { backgroundColor: colors.amber500, borderRadius: 4, height: 7, width: 7 },
   statusText: { color: "rgba(255,255,255,0.72)", fontFamily: fonts.medium, fontSize: 11 },
+  activateBtn: { alignItems: "center", alignSelf: "flex-start", backgroundColor: colors.white, borderRadius: 999, flexDirection: "row", gap: 8, marginTop: 14, paddingHorizontal: 14, paddingVertical: 10 },
+  activateBtnText: { color: colors.green900, fontFamily: fonts.bold, fontSize: 12.5 },
+  activateBanner: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 18, borderWidth: 1, flexDirection: "row", gap: 12, marginTop: 16, padding: 14 },
   heroRule: { backgroundColor: "rgba(255,255,255,0.12)", height: 1, marginVertical: 18 },
   heroStats: { flexDirection: "row", gap: 24 },
   heroStatLabel: { color: "rgba(255,255,255,0.54)", fontFamily: fonts.medium, fontSize: 10 },

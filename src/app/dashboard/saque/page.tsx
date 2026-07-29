@@ -4,18 +4,38 @@ import { useState } from "react";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
 import { brl } from "@/lib/dashboard-meta";
-import { CheckCircle, Info } from "lucide-react";
-
-const saldoDisponivel = 1850.0;
+import { CheckCircle, Clock3, Info, KeyRound, ShieldCheck } from "lucide-react";
+import { useMemberSession } from "@/hooks/useMemberSession";
+import { requestWithdrawal } from "@/lib/withdrawal-store";
 
 export default function SaquePage() {
   const [valor, setValor] = useState("");
   const [chavePix, setChavePix] = useState("");
   const [observacao, setObservacao] = useState("");
   const [enviado, setEnviado] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const { member } = useMemberSession();
+  const saldoDisponivel = member?.saldoDisponivel ?? 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!member || sending) return;
+    setError("");
+    setSending(true);
+    const result = await requestWithdrawal({
+      memberId: member.id,
+      memberName: member.nome,
+      memberCpf: member.cpf,
+      value: Number(valor),
+      pixKey: chavePix,
+      note: observacao,
+    });
+    setSending(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
     setEnviado(true);
   };
 
@@ -29,8 +49,9 @@ export default function SaquePage() {
         <p className="text-xs opacity-60">mín. R$ 10,00 · máx. {brl(saldoDisponivel)}</p>
       </div>
 
+      <div className="grid lg:grid-cols-[minmax(0,1.15fr)_380px] gap-6 items-start">
       {enviado ? (
-        <div className="card p-8 text-center max-w-xl">
+        <div className="card p-8 sm:p-12 text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
             <CheckCircle className="w-8 h-8 text-green-700" />
           </div>
@@ -43,7 +64,12 @@ export default function SaquePage() {
           </Link>
         </div>
       ) : (
-        <div className="card p-6 sm:p-7 max-w-xl">
+        <div className="card p-6 sm:p-8">
+          <div className="mb-7 pb-6 border-b border-line-soft">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-green-600 mb-2">Nova transferência</p>
+            <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight">Dados do saque</h2>
+            <p className="text-sm text-ink-soft mt-1.5">Confira os dados antes de confirmar a solicitação.</p>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-[13px] font-semibold block mb-1.5">
@@ -108,12 +134,39 @@ export default function SaquePage() {
               </ul>
             </div>
 
-            <button type="submit" className="btn-primary w-full py-3.5">
+            {error ? <p role="alert" className="rounded-xl bg-brick-100 px-3 py-2.5 text-xs text-brick-600">{error}</p> : null}
+            <button disabled={sending || saldoDisponivel < 10} type="submit" className="btn-primary w-full py-3.5">
               Confirmar solicitação de saque
             </button>
           </form>
         </div>
       )}
+
+        <aside className="space-y-4 lg:sticky lg:top-28">
+          <div className="card p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-green-600 mb-5">Resumo do processo</p>
+            {[
+              { icon: KeyRound, title: "Recebimento via PIX", text: "O valor será enviado para a chave informada." },
+              { icon: Clock3, title: "Até 3 dias úteis", text: "Você acompanha a análise pelo histórico." },
+              { icon: ShieldCheck, title: "Processo protegido", text: "Seus dados são usados apenas nesta operação." },
+            ].map((item) => (
+              <div key={item.title} className="flex gap-3.5 py-4 border-t border-line-soft first:border-t-0 first:pt-0 last:pb-0">
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+                  <item.icon className="w-[18px] h-[18px] text-green-700" strokeWidth={1.9} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{item.title}</p>
+                  <p className="text-xs text-ink-soft leading-relaxed mt-1">{item.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-[22px] border border-amber-100 bg-amber-100/55 p-5">
+            <p className="text-sm font-semibold text-ink">Antes de solicitar</p>
+            <p className="text-xs text-ink-soft leading-relaxed mt-1.5">O valor precisa estar disponível e a chave PIX deve pertencer ao titular do cadastro.</p>
+          </div>
+        </aside>
+      </div>
     </DashboardShell>
   );
 }

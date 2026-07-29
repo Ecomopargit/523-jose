@@ -1,37 +1,156 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import {
+  Check,
+  Copy,
+  Download,
+  Loader2,
+  QrCode,
+  Sparkles,
+} from "lucide-react";
 import DashboardShell from "@/components/DashboardShell";
-import { Check, Sparkles } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
+import {
+  createActivationPayment,
+  downloadActivationReceipt,
+  getActivationPayment,
+  type PublicActivationPayment,
+} from "@/lib/activation-client";
+
+const money = (value: number) =>
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function AtivarCadastroPage() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [confirmed, setConfirmed] = useState(false);
+  const { member, ready, refreshProfile } = useAuth();
+  const [payment, setPayment] = useState<PublicActivationPayment | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [polling, setPolling] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState(false);
 
-  const plans = [
-    {
-      id: "diario",
-      label: "Plano diário",
-      price: "R$ 7,00",
-      detail: "R$ 5,00 reserva + R$ 2,00 administrativo",
-    },
-  ];
+  const approved = payment?.status === "approved" || member?.status === "ativo";
 
-  if (confirmed) {
+  const startActivation = useCallback(async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const created = await createActivationPayment();
+      setPayment(created);
+      setPolling(created.status === "pending");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível gerar o PIX.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!payment?.id || payment.status !== "pending" || !polling) return;
+
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const next = await getActivationPayment(payment.id);
+        if (cancelled) return;
+        setPayment(next);
+        if (next.status === "approved") {
+          setPolling(false);
+          await refreshProfile();
+        } else if (next.status !== "pending") {
+          setPolling(false);
+        }
+      } catch {
+        /* keep polling */
+      }
+    };
+
+    void tick();
+    const id = window.setInterval(() => void tick(), 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [payment?.id, payment?.status, polling, refreshProfile]);
+
+  async function copyPix() {
+    if (!payment?.qrCode) return;
+    await navigator.clipboard.writeText(payment.qrCode);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleDownload() {
+    if (!payment?.id) return;
+    setDownloading(true);
+    setError("");
+    try {
+      const blob = await downloadActivationReceipt(payment.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `comprovante-ativacao-${payment.id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao baixar comprovante.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  if (!ready) {
     return (
       <DashboardShell showBack backHref="/dashboard">
-        <div className="card p-8 text-center max-w-xl animate-fade-up">
+        <div className="card p-8 text-center text-sm text-ink-soft">Carregando…</div>
+      </DashboardShell>
+    );
+  }
+
+  if (approved) {
+    return (
+      <DashboardShell showBack backHref="/dashboard">
+        <div className="card p-8 text-center max-w-xl animate-fade-up mx-auto">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
             <Check className="w-8 h-8 text-green-700" />
           </div>
           <h2 className="font-display text-xl font-semibold mb-3">Cadastro ativado!</h2>
-          <p className="text-ink-soft text-sm mb-6 leading-relaxed">
-            Seu plano diário está ativo. Comece os depósitos via PIX para construir sua reserva.
+          <p className="text-ink-soft text-sm mb-4 leading-relaxed">
+            Seu PIX de {money(7)} foi confirmado. Enviamos o comprovante para{" "}
+            <strong className="text-ink">{member?.email}</strong>.
           </p>
-          <Link href="/dashboard/pagamentos" className="btn-primary btn-md">
-            Ir para pagamento
-          </Link>
+          <p className="text-[12.5px] text-ink-faint mb-6">
+            R$ 2,00 deste valor correspondem à taxa por transação (já incluídos).
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {payment?.id ? (
+              <button
+                type="button"
+                className="btn-primary btn-md"
+                disabled={downloading}
+                onClick={() => void handleDownload()}
+              >
+                {downloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Gerando…
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Baixar comprovante
+                  </>
+                )}
+              </button>
+            ) : null}
+            <Link href="/dashboard" className="btn-ghost btn-md">
+              Ir ao início
+            </Link>
+          </div>
+          {error ? <p className="text-sm text-brick-600 mt-4">{error}</p> : null}
         </div>
       </DashboardShell>
     );
@@ -39,7 +158,7 @@ export default function AtivarCadastroPage() {
 
   return (
     <DashboardShell showBack backHref="/dashboard">
-      <div className="space-y-5 animate-fade-up max-w-xl">
+      <div className="space-y-5 animate-fade-up max-w-xl mx-auto">
         <div className="plan-banner !mb-0">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-green-900 flex items-center justify-center shrink-0">
@@ -47,84 +166,91 @@ export default function AtivarCadastroPage() {
             </div>
             <div>
               <p className="text-xs text-ink-soft">Adesão ECOMOPAR</p>
-              <p className="font-display text-base font-semibold">Escolha o plano diário</p>
+              <p className="font-display text-base font-semibold">Ativar cadastro via PIX</p>
             </div>
           </div>
         </div>
 
-        <p className="text-ink-soft text-sm leading-relaxed">
-          Selecione o plano para acessar reserva, benefícios e o clube do associado.
-        </p>
+        <div className="card p-6 space-y-4">
+          <div>
+            <p className="text-[13px] text-ink-soft">Valor da ativação</p>
+            <p className="font-display text-3xl font-bold font-mono-num mt-1">{money(7)}</p>
+            <p className="text-[12.5px] text-ink-faint mt-2">
+              R$ 2,00 deste valor correspondem à taxa por transação (já incluídos no total).
+            </p>
+          </div>
 
-        <div className="grid gap-3">
-          {plans.map((plan) => {
-            const active = selected === plan.id;
-            return (
-              <button
-                key={plan.id}
-                type="button"
-                onClick={() => setSelected(plan.id)}
-                className={`rounded-[20px] p-6 text-left transition-all border ${
-                  active
-                    ? "bg-gradient-to-br from-green-700 to-green-900 text-white border-transparent shadow-md"
-                    : "bg-surface text-ink border-line-soft hover:border-green-400 hover:bg-green-50"
-                }`}
-              >
-                <span className={`text-sm font-semibold ${active ? "opacity-90" : "text-ink-soft"}`}>
-                  {plan.label}
-                </span>
-                <span className="font-display text-3xl font-bold mt-1 block font-mono-num">
-                  {plan.price}
-                  <span className={`text-sm font-medium ml-1 ${active ? "opacity-70" : "text-ink-faint"}`}>
-                    /dia
-                  </span>
-                </span>
-                <span className={`text-xs mt-2 block ${active ? "text-white/75" : "text-ink-soft"}`}>
-                  {plan.detail}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {!selected ? (
-          <p className="text-center text-ink-faint text-sm">Selecione o plano acima para continuar</p>
-        ) : (
-          <div className="space-y-4">
-            <div className="note-inline !mb-0">
-              <div className="w-[26px] h-[26px] rounded-lg bg-surface border border-line flex items-center justify-center shrink-0">
-                <InfoIcon />
-              </div>
-              <ul className="list-none text-[12.5px] text-ink-soft leading-[1.8]">
-                <strong className="block text-[13px] text-ink mb-0.5">Sobre o plano</strong>
-                <li>· PIX diário de R$ 7,00 — R$ 5,00 na reserva, R$ 2,00 do instituto</li>
-                <li>· Reserva disponível para saque a qualquer momento</li>
-                <li>· Indique e ganhe: R$ 150 a cada 3 parceiros (carência 90 dias)</li>
-              </ul>
-            </div>
+          {!payment ? (
             <button
               type="button"
               className="btn-primary btn-lg w-full"
-              onClick={() => setConfirmed(true)}
+              disabled={loading}
+              onClick={() => void startActivation()}
             >
-              Confirmar ativação
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Gerando PIX…
+                </>
+              ) : (
+                <>
+                  <QrCode className="w-4 h-4" />
+                  Gerar PIX de ativação
+                </>
+              )}
             </button>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-4">
+              {payment.qrCodeBase64 ? (
+                <div className="flex justify-center rounded-[18px] border border-line-soft bg-white p-4">
+                  <Image
+                    alt="QR Code PIX"
+                    src={`data:image/png;base64,${payment.qrCodeBase64}`}
+                    width={220}
+                    height={220}
+                    unoptimized
+                  />
+                </div>
+              ) : null}
+
+              <div>
+                <p className="text-[13px] font-semibold mb-1.5">PIX copia e cola</p>
+                <div className="rounded-[14px] border border-line-soft bg-green-50/60 p-3 text-[11.5px] break-all font-mono text-ink-soft">
+                  {payment.qrCode}
+                </div>
+                <button type="button" className="btn-ghost btn-md w-full mt-3" onClick={() => void copyPix()}>
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Código copiado
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copiar código PIX
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="rounded-[14px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-[13px] text-ink-soft flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-amber-600 shrink-0" />
+                Aguardando confirmação do pagamento…
+              </div>
+            </div>
+          )}
+
+          {error ? (
+            <div className="rounded-[14px] border border-brick-100 bg-brick-100/40 px-3.5 py-3 text-[13px] text-brick-600">
+              {error}
+            </div>
+          ) : null}
+        </div>
 
         <Link href="/dashboard" className="btn-ghost btn-md w-full text-center block">
           Voltar ao início
         </Link>
       </div>
     </DashboardShell>
-  );
-}
-
-function InfoIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-700">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v5M12 16h.01" />
-    </svg>
   );
 }

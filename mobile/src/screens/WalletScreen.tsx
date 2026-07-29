@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
@@ -28,6 +29,7 @@ export function WalletScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
+      <StatusBar style="dark" />
       <ScreenAtmosphere />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenHeader eyebrow="Sua reserva" title="Carteira" action={<View style={styles.secure}><Feather color={colors.green700} name="shield" size={15} /><Text style={styles.secureText}>Protegida</Text></View>} />
@@ -59,7 +61,7 @@ export function WalletScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <View style={styles.sectionHeading}><View><Text style={styles.section}>Movimentações recentes</Text><Text style={styles.sectionHint}>Seu histórico financeiro</Text></View><Pressable><Text style={styles.seeAll}>Ver extrato</Text></Pressable></View>
+        <View style={styles.sectionHeading}><View><Text style={styles.section}>Movimentações recentes</Text><Text style={styles.sectionHint}>Seu histórico financeiro</Text></View><Pressable accessibilityRole="button" hitSlop={10} onPress={() => Alert.alert("Extrato completo", "O histórico completo estará disponível assim que suas primeiras movimentações forem processadas.")}><Text style={styles.seeAll}>Ver extrato</Text></Pressable></View>
         <View style={styles.transactionsCard}>
           {member?.depositosCount ? (
             <>

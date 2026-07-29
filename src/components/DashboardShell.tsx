@@ -174,9 +174,9 @@ export default function DashboardShell({
         </aside>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 bg-bg safe-top">
-          <div className="flex items-center justify-between gap-3 px-5 sm:px-10 py-5">
+      <div className="dashboard-stage flex-1 flex flex-col min-w-0">
+        <header className="dashboard-header sticky top-0 z-30 safe-top">
+          <div className="flex items-center justify-between gap-3 px-5 sm:px-8 xl:px-12 py-5 max-w-[1500px] w-full mx-auto">
             <div className="flex items-center gap-2.5 min-w-0">
               {showBack ? (
                 <Link
@@ -197,17 +197,17 @@ export default function DashboardShell({
                 </button>
               )}
               <div className="min-w-0">
-                <h1 className="font-display text-xl sm:text-[22px] font-semibold tracking-tight text-ink truncate capitalize">
+                <h1 className="font-display text-[22px] sm:text-[26px] font-semibold tracking-[-0.035em] text-ink truncate capitalize">
                   {pageTitle}
                 </h1>
-                <p className="text-[13px] text-ink-soft mt-0.5 truncate">{pageSub}</p>
+                <p className="text-[13px] sm:text-sm text-ink-soft mt-1 truncate">{pageSub}</p>
               </div>
             </div>
             {headerRight}
           </div>
         </header>
 
-        <main className="relative flex-1 px-5 sm:px-10 pb-12 max-w-[1120px] w-full">
+        <main className="dashboard-content relative flex-1 px-5 sm:px-8 xl:px-12 pb-16 max-w-[1500px] w-full mx-auto">
           {showPageWatermark && (
             <Image
               src={LOGO_WATERMARK_BRAND}

@@ -1,11 +1,11 @@
 import DashboardShell from "@/components/DashboardShell";
 import { brl } from "@/lib/dashboard-meta";
-import { Bell, Lock, PiggyBank, TrendingUp } from "lucide-react";
+import { Bell, Info, Lock, PiggyBank, ShieldCheck, TrendingUp } from "lucide-react";
 
 export default function SaldoPage() {
   return (
     <DashboardShell showBack backHref="/dashboard">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 animate-fade-up">
         <div className="bal-card avail">
           <div className="relative z-10 flex items-center justify-between mb-5">
             <div className="w-[30px] h-[30px] rounded-[9px] bg-white/18 flex items-center justify-center">
@@ -46,8 +46,13 @@ export default function SaldoPage() {
         </div>
       </div>
 
-      <h2 className="section-title">Detalhamento dos saldos</h2>
-      <div className="card p-1.5">
+      <div className="grid lg:grid-cols-[minmax(0,1.3fr)_360px] gap-6 items-start">
+      <div>
+      <div className="mb-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-green-600">Composição</p>
+        <h2 className="font-display text-xl font-semibold tracking-tight mt-1">Detalhamento dos saldos</h2>
+      </div>
+      <div className="card p-2.5">
         <div className="detail-row">
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="icon-badge-lg">
@@ -77,6 +82,20 @@ export default function SaldoPage() {
             {brl(150)}
           </p>
         </div>
+      </div>
+      </div>
+
+      <aside className="card p-6 lg:mt-11">
+        <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center mb-5">
+          <ShieldCheck className="w-5 h-5 text-green-700" strokeWidth={1.9} />
+        </div>
+        <h3 className="font-display text-lg font-semibold">Seu patrimônio protegido</h3>
+        <p className="text-sm text-ink-soft leading-relaxed mt-2">Cada saldo tem uma finalidade clara e regras próprias de disponibilidade.</p>
+        <div className="mt-6 pt-5 border-t border-line-soft flex gap-3">
+          <Info className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-ink-soft leading-relaxed">Os valores são atualizados conforme a confirmação das contribuições e dos bônus.</p>
+        </div>
+      </aside>
       </div>
     </DashboardShell>
   );

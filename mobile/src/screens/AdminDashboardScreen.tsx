@@ -9,10 +9,14 @@ import { useAuth } from "../context/AuthContext";
 import { getAdminStats, setMemberStatus, type AdminStats } from "../lib/admin";
 import { colors, fonts, shadow } from "../theme";
 import type { MemberProfile } from "../types";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../types";
 
 const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function AdminDashboardScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, "Admin">;
+
+export function AdminDashboardScreen({ navigation }: Props) {
   const { logout } = useAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,9 +127,9 @@ export function AdminDashboardScreen() {
 
             <Text style={styles.sectionTitle}>Acesso rápido</Text>
             <View style={styles.actions}>
-              <AdminAction icon="users" label="Associados" />
-              <AdminAction icon="trending-down" label="Saques" />
-              <AdminAction icon="message-circle" label="Atendimento" />
+              <AdminAction icon="users" label="Associados" onPress={() => navigation.navigate("AdminOperations", { section: "associados" })} />
+              <AdminAction icon="trending-down" label="Saques" onPress={() => navigation.navigate("AdminOperations", { section: "saques" })} />
+              <AdminAction icon="message-circle" label="Atendimento" onPress={() => navigation.navigate("AdminOperations", { section: "atendimento" })} />
             </View>
           </>
         )}
@@ -143,8 +147,8 @@ function Stat({ icon, label, value, tone }: { icon: keyof typeof Feather.glyphMa
   return <View style={styles.stat}><View style={[styles.statIcon, { backgroundColor: palette[0] }]}><Feather color={palette[1]} name={icon} size={17} /></View><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>;
 }
 
-function AdminAction({ icon, label }: { icon: keyof typeof Feather.glyphMap; label: string }) {
-  return <View style={styles.action}><View style={styles.actionIcon}><Feather color={colors.green700} name={icon} size={19} /></View><Text style={styles.actionText}>{label}</Text><Text style={styles.actionHint}>Em breve</Text></View>;
+function AdminAction({ icon, label, onPress }: { icon: keyof typeof Feather.glyphMap; label: string; onPress: () => void }) {
+  return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.action, pressed && styles.pressed]}><View style={styles.actionIcon}><Feather color={colors.green700} name={icon} size={19} /></View><Text style={styles.actionText}>{label}</Text><Text style={styles.actionHint}>Abrir</Text></Pressable>;
 }
 
 const styles = StyleSheet.create({

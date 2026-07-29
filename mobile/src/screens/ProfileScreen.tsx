@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -23,6 +24,7 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
+      <StatusBar style="dark" />
       <ScreenAtmosphere />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenHeader eyebrow="Sua conta" title="Perfil" action={<Pressable onPress={() => navigation.getParent()?.navigate("PrivacySecurity" as never)} style={styles.settings}><Feather color={colors.green700} name="settings" size={18} /></Pressable>} />

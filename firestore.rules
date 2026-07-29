@@ -76,5 +76,22 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    match /withdrawals/{withdrawalId} {
+      allow read: if isAdmin() || isAdminEmail()
+        || (signedIn() && resource.data.memberId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.memberId == request.auth.uid
+        && request.resource.data.status == 'solicitado'
+        && request.resource.data.value >= 10;
+      allow update: if isAdmin() || isAdminEmail();
+      allow delete: if false;
+    }
+
+    match /activationPayments/{paymentId} {
+      allow read: if isAdmin() || isAdminEmail()
+        || (signedIn() && resource.data.memberId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
   }
 }

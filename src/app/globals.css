@@ -29,10 +29,10 @@
   --color-ink: #12241c;
   --color-ink-soft: #5b6b62;
   --color-ink-faint: #8b978f;
-  --color-bg: #f3f4f1;
+  --color-bg: #f5f7f4;
   --color-surface: #ffffff;
-  --color-line: #e4e7e1;
-  --color-line-soft: #edefea;
+  --color-line: #dfe5df;
+  --color-line-soft: #e9eeea;
 
   /* aliases legados */
   --color-brand: #136148;
@@ -44,13 +44,13 @@
   --color-muted: #5b6b62;
   --color-surface-elevated: #ffffff;
 
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
 
-  --shadow-sm: 0 1px 2px rgba(18, 36, 28, 0.04), 0 1px 1px rgba(18, 36, 28, 0.03);
-  --shadow-md: 0 8px 24px rgba(11, 61, 44, 0.08), 0 2px 6px rgba(11, 61, 44, 0.05);
-  --shadow-lg: 0 16px 40px rgba(11, 61, 44, 0.14), 0 4px 12px rgba(11, 61, 44, 0.06);
+  --shadow-sm: 0 1px 2px rgba(8, 42, 31, 0.04), 0 8px 24px rgba(8, 42, 31, 0.045);
+  --shadow-md: 0 2px 4px rgba(8, 42, 31, 0.04), 0 16px 42px rgba(8, 42, 31, 0.08);
+  --shadow-lg: 0 10px 25px rgba(4, 35, 25, 0.13), 0 30px 70px rgba(4, 35, 25, 0.16);
 }
 
 @layer base {
@@ -156,9 +156,27 @@
 
   /* —— Cards —— */
   .card {
-    @apply bg-surface border border-line-soft rounded-[20px];
+    @apply bg-surface border border-line-soft rounded-[24px] transition-all duration-300;
     box-shadow: var(--shadow-sm);
   }
+  .card:hover {
+    border-color: rgba(30, 155, 107, 0.22);
+    box-shadow: var(--shadow-md);
+  }
+
+  .dashboard-stage {
+    background:
+      radial-gradient(circle at 83% 8%, rgba(58, 182, 137, 0.075), transparent 24rem),
+      radial-gradient(circle at 22% 78%, rgba(255, 255, 255, 0.9), transparent 28rem),
+      var(--color-bg);
+  }
+  .dashboard-header {
+    background: rgba(245, 247, 244, 0.82);
+    border-bottom: 1px solid rgba(223, 229, 223, 0.72);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+  .dashboard-content { padding-top: 28px; }
 
   .section-title {
     @apply font-display text-[15px] font-semibold text-ink mb-3.5;
@@ -167,21 +185,22 @@
   /* —— Sidebar —— */
   .sidebar-app {
     @apply flex flex-col shrink-0 text-white relative overflow-hidden;
-    width: 264px;
+    width: 280px;
     background:
       radial-gradient(120% 140% at 0% 0%, rgba(58, 182, 137, 0.2) 0%, rgba(58, 182, 137, 0) 45%),
       linear-gradient(180deg, var(--color-green-900) 0%, var(--color-green-950) 100%);
-    box-shadow: 4px 0 24px rgba(6, 61, 44, 0.12);
+    box-shadow: 12px 0 42px rgba(6, 61, 44, 0.11);
   }
 
   .sidebar-link {
-    @apply relative flex items-center gap-3 px-3 py-2.5 rounded-[11px] w-full
-      text-sm font-medium text-white/68 transition-all duration-150
-      hover:bg-white/6 hover:text-white;
+    @apply relative flex items-center gap-3 px-3.5 py-3 rounded-[13px] w-full
+      text-sm font-medium text-white/68 transition-all duration-300
+      hover:bg-white/8 hover:text-white hover:translate-x-0.5;
   }
 
   .sidebar-link-active {
-    @apply bg-white/12 text-white font-medium;
+    @apply bg-white/14 text-white font-semibold;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 22px rgba(0,0,0,.08);
   }
 
   .sidebar-link-active::before {
@@ -204,11 +223,12 @@
 
   /* —— Dashboard hero —— */
   .dash-hero {
-    @apply relative overflow-hidden rounded-3xl text-white p-7 sm:p-8 grid gap-7 items-center mb-5;
+    @apply relative overflow-hidden rounded-[30px] text-white p-7 sm:p-9 lg:p-10 grid gap-8 items-center mb-6;
     grid-template-columns: 1fr;
     background:
       radial-gradient(90% 140% at 100% 0%, rgba(58, 182, 137, 0.35) 0%, rgba(58, 182, 137, 0) 55%),
       linear-gradient(135deg, var(--color-green-800) 0%, var(--color-green-900) 60%, var(--color-green-950) 100%);
+    min-height: 270px;
     box-shadow: var(--shadow-lg);
   }
 
@@ -255,9 +275,38 @@
 
   /* —— Stat cards —— */
   .stat-card {
-    @apply bg-surface border border-line-soft rounded-[20px] p-4 sm:p-5;
+    @apply relative overflow-hidden bg-surface border border-line-soft rounded-[22px] p-5 sm:p-6 transition-all duration-300;
     box-shadow: var(--shadow-sm);
   }
+  .stat-card::after {
+    content: "";
+    @apply absolute inset-x-6 bottom-0 h-0.5 bg-green-500 opacity-0 transition-opacity duration-300;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(30, 155, 107, .22);
+    box-shadow: var(--shadow-md);
+  }
+  .stat-card:hover::after { @apply opacity-100; }
+
+  .admin-metric {
+    @apply relative overflow-hidden rounded-[18px] border border-line-soft bg-surface p-4 sm:p-5;
+    box-shadow: var(--shadow-sm);
+  }
+  .admin-metric::after {
+    content: "";
+    @apply pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-green-500 opacity-0 transition-opacity;
+  }
+  .admin-metric:hover::after { @apply opacity-100; }
+  .admin-metric-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-700;
+  }
+  .admin-table-head { @apply bg-[#f7f9f6]; }
+  .admin-table-head th {
+    @apply px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.09em] text-ink-faint;
+  }
+  .admin-table-row { @apply cursor-pointer transition-colors hover:bg-green-50/60; }
+  .admin-table-row td { @apply px-5 py-4; }
 
   .icon-badge {
     @apply w-8 h-8 rounded-[9px] bg-green-100 flex items-center justify-center mb-3;
@@ -275,9 +324,10 @@
 
   /* —— Balance cards —— */
   .bal-card {
-    @apply rounded-[20px] p-5 sm:p-6 text-white relative overflow-hidden;
+    @apply rounded-[24px] p-6 sm:p-7 text-white relative overflow-hidden transition-transform duration-300;
     box-shadow: var(--shadow-md);
   }
+  .bal-card:hover { transform: translateY(-3px); }
   .bal-card::after {
     content: "";
     position: absolute;
@@ -305,8 +355,8 @@
   }
 
   .txn-row {
-    @apply grid gap-3 sm:gap-4 items-center p-3.5 sm:p-4 rounded-[14px]
-      transition-colors duration-150 hover:bg-green-50;
+    @apply relative grid gap-3 sm:gap-5 items-center p-4 sm:p-5 rounded-[18px]
+      transition-all duration-300 hover:bg-green-50/80;
     grid-template-columns: auto 1fr;
   }
 
@@ -327,9 +377,9 @@
   }
 
   .shortcut-btn {
-    @apply flex items-center gap-3 p-3.5 rounded-[14px] border border-line-soft bg-surface
-      text-left text-sm font-semibold text-ink transition-all duration-150
-      hover:border-green-400 hover:bg-green-50;
+    @apply flex items-center gap-3.5 p-4 rounded-[16px] border border-line-soft bg-surface
+      text-left text-sm font-semibold text-ink transition-all duration-300
+      hover:border-green-400 hover:bg-green-50 hover:-translate-y-0.5;
   }
 
   .shortcut-btn .icon-mini {
@@ -341,25 +391,30 @@
   }
 
   .withdraw-hero {
-    @apply rounded-[20px] p-5 sm:p-6 mb-5 text-white flex flex-col sm:flex-row
+    @apply rounded-[26px] p-6 sm:p-8 mb-6 text-white flex flex-col sm:flex-row
       sm:items-center sm:justify-between gap-3;
     background: linear-gradient(135deg, var(--color-green-800), var(--color-green-950));
   }
 
   .plan-banner {
-    @apply bg-surface border border-line-soft flex items-center justify-between p-4 sm:p-5 mb-5 rounded-[20px];
-    box-shadow: var(--shadow-sm);
-    background: linear-gradient(135deg, var(--color-green-50), #fff);
+    @apply border border-white/10 flex items-center justify-between p-6 sm:p-7 mb-6 rounded-[26px] text-white;
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, var(--color-green-800), var(--color-green-950));
   }
 
   .benefit-card {
-    @apply bg-surface border border-line-soft rounded-[20px] p-5 flex gap-3.5;
+    @apply relative overflow-hidden bg-surface border border-line-soft rounded-[24px] p-6 flex gap-4 transition-all duration-300;
     box-shadow: var(--shadow-sm);
+  }
+  .benefit-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(30,155,107,.26);
+    box-shadow: var(--shadow-md);
   }
 
   .profile-card {
-    @apply bg-surface border border-line-soft rounded-[20px] p-6 sm:p-7 max-w-2xl;
-    box-shadow: var(--shadow-sm);
+    @apply bg-surface border border-line-soft rounded-[26px] p-6 sm:p-8;
+    box-shadow: var(--shadow-md);
   }
 
   .info-row {
@@ -380,4 +435,12 @@
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dashboard-header {
+    background: var(--color-bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
