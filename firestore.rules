@@ -48,6 +48,15 @@ service cloud.firestore {
           && request.resource.data.status == resource.data.status
           && request.resource.data.depositosCount == resource.data.depositosCount
           && request.resource.data.notasAdmin == resource.data.notasAdmin
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'referralCode',
+            'referredByUid',
+            'referredByCode',
+            'referralValidCount',
+            'referralBonusPaidGroups',
+            'withdrawalLockedUntil',
+            'activatedAt'
+          ])
         );
 
       allow delete: if isAdmin() || isAdminEmail();
@@ -80,10 +89,7 @@ service cloud.firestore {
     match /withdrawals/{withdrawalId} {
       allow read: if isAdmin() || isAdminEmail()
         || (signedIn() && resource.data.memberId == request.auth.uid);
-      allow create: if signedIn()
-        && request.resource.data.memberId == request.auth.uid
-        && request.resource.data.status == 'solicitado'
-        && request.resource.data.value >= 10;
+      allow create: if false;
       allow update: if isAdmin() || isAdminEmail();
       allow delete: if false;
     }
@@ -92,6 +98,25 @@ service cloud.firestore {
       allow read: if isAdmin() || isAdminEmail()
         || (signedIn() && resource.data.memberId == request.auth.uid);
       allow create, update, delete: if false;
+    }
+
+    match /referrals/{referralId} {
+      allow read: if isAdmin() || isAdminEmail()
+        || (signedIn() && (
+          resource.data.referrerId == request.auth.uid
+          || resource.data.referredId == request.auth.uid
+        ));
+      allow create, update, delete: if false;
+    }
+
+    match /bonusCredits/{creditId} {
+      allow read: if isAdmin() || isAdminEmail()
+        || (signedIn() && resource.data.referrerId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    match /referralCodes/{code} {
+      allow read, create, update, delete: if false;
     }
   }
 }

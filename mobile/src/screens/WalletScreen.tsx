@@ -20,10 +20,29 @@ export function WalletScreen({ navigation, route }: Props) {
   const { member } = useAuth();
   const [flow, setFlow] = useState<TransactionFlow | null>(null);
   const total = (member?.saldoDisponivel || 0) + (member?.saldoBloqueado || 0) + (member?.saldoBonus || 0);
+  const lockedUntil = member?.withdrawalLockedUntil
+    ? new Date(member.withdrawalLockedUntil)
+    : null;
+  const withdrawalLocked = Boolean(
+    member?.aderiuIndicacao && lockedUntil && lockedUntil.getTime() > Date.now(),
+  );
+  const withdrawable = (member?.saldoDisponivel || 0) + (member?.saldoBonus || 0);
+
+  function openWithdrawal() {
+    if (withdrawalLocked && lockedUntil) {
+      Alert.alert(
+        "Saque em carência",
+        `Você aderiu ao Indique e Ganhe. Os saques serão liberados em ${lockedUntil.toLocaleDateString("pt-BR")}, após 90 dias da ativação.`,
+      );
+      return;
+    }
+    setFlow("withdraw");
+  }
 
   useEffect(() => {
     if (!route.params?.flow) return;
-    setFlow(route.params.flow);
+    if (route.params.flow === "withdraw") openWithdrawal();
+    else setFlow(route.params.flow);
     navigation.setParams({ flow: undefined });
   }, [navigation, route.params?.flow]);
 
@@ -49,7 +68,7 @@ export function WalletScreen({ navigation, route }: Props) {
 
         <View style={styles.actions}>
           <Action icon="plus" label="Depositar" hint="via PIX" onPress={() => setFlow("deposit")} primary />
-          <Action icon="arrow-down" label="Solicitar" hint="saque" onPress={() => setFlow("withdraw")} />
+          <Action icon="arrow-down" label="Solicitar" hint={withdrawalLocked ? "em carência" : "saque"} onPress={openWithdrawal} />
         </View>
 
         <View style={styles.sectionHeading}><View><Text style={styles.section}>Composição da reserva</Text><Text style={styles.sectionHint}>Entenda onde está o seu patrimônio</Text></View><Feather color={colors.inkFaint} name="pie-chart" size={18} /></View>
@@ -80,7 +99,7 @@ export function WalletScreen({ navigation, route }: Props) {
         </View>
       </ScrollView>
       <TransactionFlowModal
-        availableBalance={member?.saldoDisponivel || 0}
+        availableBalance={withdrawable}
         flow={flow}
         onClose={() => setFlow(null)}
         pixKey={member?.chavePix || ""}

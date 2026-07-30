@@ -14,6 +14,7 @@ import { doc, getDoc, serverTimestamp, setDoc, updateDoc, type Timestamp } from 
 
 import { auth, db } from "./firebase";
 import type { MemberProfile } from "../types";
+import { ensureReferralProfile } from "./referrals";
 
 function messageFor(code = "") {
   const messages: Record<string, string> = {
@@ -62,6 +63,15 @@ export async function getMember(uid: string): Promise<MemberProfile | null> {
     chavePix: String(data.chavePix ?? ""),
     aderiuIndicacao: Boolean(data.aderiuIndicacao),
     codigoIndicacao: String(data.codigoIndicacao ?? ""),
+    referralCode: String(data.referralCode ?? ""),
+    referredByUid: String(data.referredByUid ?? ""),
+    referredByCode: String(data.referredByCode ?? ""),
+    referralValidCount: Number(data.referralValidCount ?? 0),
+    referralBonusPaidGroups: Number(data.referralBonusPaidGroups ?? 0),
+    activatedAt: data.activatedAt ? toIso(data.activatedAt) : null,
+    withdrawalLockedUntil: data.withdrawalLockedUntil
+      ? toIso(data.withdrawalLockedUntil)
+      : null,
     createdAt: toIso(data.createdAt),
     updatedAt: toIso(data.updatedAt),
     status: data.status || "pendente",
@@ -186,6 +196,7 @@ export async function register(input: Registration) {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    await ensureReferralProfile(input.codigoIndicacao, Boolean(input.codigoIndicacao.trim()));
     return { ok: true as const };
   } catch (error) {
     return { ok: false as const, error: messageFor((error as { code?: string }).code) };

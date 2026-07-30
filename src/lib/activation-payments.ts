@@ -16,6 +16,10 @@ import {
   mapMpStatus,
 } from "@/lib/mercadopago";
 import { buildActivationReceiptPdf, sendActivationReceiptEmail } from "@/lib/receipt";
+import {
+  activateReferralForMember,
+  withdrawalLockUntil,
+} from "@/lib/referrals";
 
 function nowIso() {
   return new Date().toISOString();
@@ -150,7 +154,10 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
   let alreadyApproved = false;
 
   await adminDb.runTransaction(async (tx) => {
-    const snap = await tx.get(paymentRef);
+    const [snap, userSnap] = await Promise.all([
+      tx.get(paymentRef),
+      tx.get(userRef),
+    ]);
     if (!snap.exists) throw new Error("Pagamento de ativação não encontrado.");
     const data = snap.data()!;
     if (data.status === "approved") {
@@ -159,6 +166,10 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
     }
 
     const stamp = nowIso();
+    const member = userSnap.data() || {};
+    const lockedUntil = member.aderiuIndicacao
+      ? withdrawalLockUntil(stamp)
+      : null;
     tx.update(paymentRef, {
       status: "approved",
       approvedAt: stamp,
@@ -170,12 +181,15 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
         status: "ativo",
         updatedAt: FieldValue.serverTimestamp(),
         activatedAt: stamp,
+        withdrawalLockedUntil: lockedUntil,
         activationPaymentId: payment.id,
         activationMpPaymentId: payment.mpPaymentId,
       },
       { merge: true },
     );
   });
+
+  await activateReferralForMember(payment.memberId);
 
   const refreshed = await getActivationPayment(payment.id);
   if (!refreshed) throw new Error("Falha ao recarregar pagamento aprovado.");

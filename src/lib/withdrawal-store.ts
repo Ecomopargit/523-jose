@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   doc,
   onSnapshot,
@@ -82,21 +81,29 @@ export async function requestWithdrawal(input: {
   }
 
   try {
-    await addDoc(collection(db, "withdrawals"), {
-      memberId: input.memberId,
-      memberName: input.memberName,
-      memberCpf: input.memberCpf,
-      value: input.value,
-      pixKey: input.pixKey.trim(),
-      note: input.note?.trim() ?? "",
-      status: "solicitado",
-      requestedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      adminNote: "",
+    const token = await auth.currentUser.getIdToken();
+    const response = await fetch("/api/withdrawals", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        value: input.value,
+        pixKey: input.pixKey.trim(),
+        note: input.note?.trim() ?? "",
+      }),
     });
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) {
+      return { ok: false as const, error: data.error || "Não foi possível registrar o saque." };
+    }
     return { ok: true as const };
-  } catch {
-    return { ok: false as const, error: "Não foi possível registrar o saque." };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Não foi possível registrar o saque.",
+    };
   }
 }
 
@@ -112,9 +119,13 @@ export async function updateWithdrawalStatus(
         const memberSnapshot = await transaction.get(memberRef);
         if (!memberSnapshot.exists()) throw new Error("Associado não encontrado.");
         const available = Number(memberSnapshot.data().saldoDisponivel ?? 0);
-        if (available < withdrawal.value) throw new Error("Saldo insuficiente.");
+        const bonus = Number(memberSnapshot.data().saldoBonus ?? 0);
+        if (available + bonus < withdrawal.value) throw new Error("Saldo insuficiente.");
+        const debitAvailable = Math.min(available, withdrawal.value);
+        const debitBonus = withdrawal.value - debitAvailable;
         transaction.update(memberRef, {
-          saldoDisponivel: available - withdrawal.value,
+          saldoDisponivel: available - debitAvailable,
+          saldoBonus: bonus - debitBonus,
           updatedAt: serverTimestamp(),
         });
         transaction.update(doc(db, "withdrawals", withdrawal.id), {

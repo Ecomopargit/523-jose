@@ -10,6 +10,7 @@ import {
   TrendingDown,
   History,
   Sparkles,
+  Gift,
   CircleDollarSign,
   LogOut,
   Menu,
@@ -31,6 +32,7 @@ const menuItems: MenuItem[] = [
   { href: "/dashboard/saque", icon: TrendingDown, label: "Solicitar saque" },
   { href: "/dashboard/extrato", icon: History, label: "Histórico saque" },
   { href: "/dashboard/beneficios", icon: Sparkles, label: "Clube de benefícios" },
+  { href: "/dashboard/indicacoes", icon: Gift, label: "Indique e ganhe" },
   { href: "/dashboard/saldo", icon: CircleDollarSign, label: "Financeiro" },
 ];
 

@@ -16,11 +16,19 @@ export default function SaquePage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const { member } = useMemberSession();
-  const saldoDisponivel = member?.saldoDisponivel ?? 0;
+  const saldoDisponivel =
+    (member?.saldoDisponivel ?? 0) + (member?.saldoBonus ?? 0);
+  const [nowMs] = useState(() => Date.now());
+  const lockedUntil = member?.withdrawalLockedUntil
+    ? new Date(member.withdrawalLockedUntil)
+    : null;
+  const withdrawalLocked = Boolean(
+    member?.aderiuIndicacao && lockedUntil && lockedUntil.getTime() > nowMs,
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!member || sending) return;
+    if (!member || sending || withdrawalLocked) return;
     setError("");
     setSending(true);
     const result = await requestWithdrawal({
@@ -71,6 +79,13 @@ export default function SaquePage() {
             <p className="text-sm text-ink-soft mt-1.5">Confira os dados antes de confirmar a solicitação.</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {withdrawalLocked && lockedUntil ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-ink-soft">
+                Você aderiu ao Indique e Ganhe. Seus saques serão liberados em{" "}
+                <strong className="text-ink">{lockedUntil.toLocaleDateString("pt-BR")}</strong>,
+                após a carência de 90 dias.
+              </div>
+            ) : null}
             <div>
               <label className="text-[13px] font-semibold block mb-1.5">
                 Valor do saque <span className="text-brick-500">*</span>
@@ -135,7 +150,7 @@ export default function SaquePage() {
             </div>
 
             {error ? <p role="alert" className="rounded-xl bg-brick-100 px-3 py-2.5 text-xs text-brick-600">{error}</p> : null}
-            <button disabled={sending || saldoDisponivel < 10} type="submit" className="btn-primary w-full py-3.5">
+            <button disabled={sending || saldoDisponivel < 10 || withdrawalLocked} type="submit" className="btn-primary w-full py-3.5">
               Confirmar solicitação de saque
             </button>
           </form>

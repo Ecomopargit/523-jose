@@ -1,9 +1,15 @@
 import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Image,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -17,15 +23,104 @@ import type { RootStackParamList } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Welcome">;
 
-const assurances = [
-  { icon: "shield", label: "Proteção" },
-  { icon: "trending-up", label: "Reserva" },
-  { icon: "heart", label: "Benefícios" },
+const highlights = [
+  {
+    icon: "shield",
+    tag: "PROTEÇÃO DIÁRIA",
+    title: "R$ 7 por dia, tranquilidade o mês inteiro",
+    text: "R$ 5 viram sua reserva pessoal e R$ 2 custeiam a associação.",
+  },
+  {
+    icon: "trending-up",
+    tag: "RESERVA QUE CRESCE",
+    title: "R$ 150 guardados a cada 30 dias",
+    text: "Acompanhe seu saldo pelo app e saque conforme as regras.",
+  },
+  {
+    icon: "gift",
+    tag: "INDIQUE E GANHE",
+    title: "R$ 150 a cada 3 parceiros ativados",
+    text: "Compartilhe seu link e acompanhe suas indicações em tempo real.",
+  },
 ] as const;
 
+const AUTOPLAY_MS = 4200;
+
 export function WelcomeScreen({ navigation }: Props) {
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const compact = height < 750;
+  const cardWidth = width - 46;
+
+  const [index, setIndex] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const indexRef = useRef(0);
+  const paused = useRef(false);
+  const [entrance] = useState(() => new Animated.Value(0));
+  const [pulse] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: 650,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 2200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 2200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [entrance, pulse]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (paused.current) return;
+      const next = (indexRef.current + 1) % highlights.length;
+      indexRef.current = next;
+      setIndex(next);
+      scrollRef.current?.scrollTo({ x: next * cardWidth, animated: true });
+    }, AUTOPLAY_MS);
+    return () => clearInterval(timer);
+  }, [cardWidth]);
+
+  const onMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = Math.round(event.nativeEvent.contentOffset.x / cardWidth);
+    indexRef.current = next;
+    setIndex(next);
+    paused.current = false;
+  };
+
+  const goTo = (target: number) => {
+    indexRef.current = target;
+    setIndex(target);
+    scrollRef.current?.scrollTo({ x: target * cardWidth, animated: true });
+  };
+
+  const rise = (distance: number) => ({
+    opacity: entrance,
+    transform: [
+      {
+        translateY: entrance.interpolate({
+          inputRange: [0, 1],
+          outputRange: [distance, 0],
+        }),
+      },
+    ],
+  });
 
   return (
     <LinearGradient
@@ -38,16 +133,35 @@ export function WelcomeScreen({ navigation }: Props) {
       <View pointerEvents="none" style={styles.ambientBottom} />
 
       <SafeAreaView style={[styles.safe, compact && styles.safeCompact]}>
-        <View style={styles.brandRow}>
+        <Animated.View style={[styles.brandRow, rise(-10)]}>
           <Logo />
           <View style={styles.brandRule} />
           <Text style={styles.brandNote}>Instituto de apoio{"\n"}ao motorista autônomo</Text>
-        </View>
+        </Animated.View>
 
         <View style={[styles.hero, compact && styles.heroCompact]}>
-          <View style={[styles.markStage, compact && styles.markStageCompact]}>
-            <View style={styles.ringOuter} />
-            <View style={styles.ringInner} />
+          <Animated.View style={[styles.markStage, compact && styles.markStageCompact, rise(18)]}>
+            <Animated.View
+              style={[
+                styles.ringOuter,
+                {
+                  opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] }),
+                  transform: [
+                    { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] }) },
+                  ],
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.ringInner,
+                {
+                  transform: [
+                    { scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] }) },
+                  ],
+                },
+              ]}
+            />
             <View style={styles.markShadow} />
             <Image
               accessibilityLabel="Símbolo ECOMOPAR"
@@ -58,9 +172,9 @@ export function WelcomeScreen({ navigation }: Props) {
               <Feather color={colors.green900} name="check" size={12} />
               <Text style={styles.sealText}>JUNTOS NA ESTRADA</Text>
             </View>
-          </View>
+          </Animated.View>
 
-          <View style={styles.copy}>
+          <Animated.View style={[styles.copy, rise(22)]}>
             <View style={styles.kickerRow}>
               <View style={styles.kickerLine} />
               <Text style={styles.kicker}>FEITO PARA QUEM MOVE O BRASIL</Text>
@@ -72,20 +186,57 @@ export function WelcomeScreen({ navigation }: Props) {
             <Text style={[styles.subtitle, compact && styles.subtitleCompact]}>
               Reserva financeira e apoio de verdade para você dirigir com mais tranquilidade.
             </Text>
-          </View>
+          </Animated.View>
 
-          <View style={styles.assuranceBar}>
-            {assurances.map((item, index) => (
-              <View key={item.label} style={styles.assuranceItem}>
-                {index > 0 && <View style={styles.assuranceDivider} />}
-                <Feather color={colors.green400} name={item.icon} size={17} />
-                <Text style={styles.assuranceText}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
+          <Animated.View style={rise(26)}>
+            <ScrollView
+              decelerationRate="fast"
+              horizontal
+              onMomentumScrollEnd={onMomentumEnd}
+              onScrollBeginDrag={() => {
+                paused.current = true;
+              }}
+              ref={scrollRef}
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={cardWidth}
+              style={[styles.pager, compact && styles.pagerCompact]}
+            >
+              {highlights.map((item) => (
+                <View key={item.tag} style={{ width: cardWidth }}>
+                  <View style={styles.highlightInner}>
+                    <View style={styles.highlightIcon}>
+                      <Feather color={colors.green400} name={item.icon} size={18} />
+                    </View>
+                    <View style={styles.highlightCopy}>
+                      <Text style={styles.highlightTag}>{item.tag}</Text>
+                      <Text numberOfLines={2} style={styles.highlightTitle}>
+                        {item.title}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.highlightText}>
+                        {item.text}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.dots}>
+              {highlights.map((item, dotIndex) => (
+                <Pressable
+                  accessibilityLabel={`Ver destaque ${dotIndex + 1}`}
+                  accessibilityRole="button"
+                  hitSlop={10}
+                  key={item.tag}
+                  onPress={() => goTo(dotIndex)}
+                  style={[styles.dot, dotIndex === index && styles.dotActive]}
+                />
+              ))}
+            </View>
+          </Animated.View>
         </View>
 
-        <View style={styles.actions}>
+        <Animated.View style={[styles.actions, rise(30)]}>
           <Pressable
             accessibilityRole="button"
             onPress={() => navigation.navigate("Register")}
@@ -109,7 +260,7 @@ export function WelcomeScreen({ navigation }: Props) {
             <Text style={styles.loginText}>Entrar na minha conta</Text>
             <Feather color="rgba(255,255,255,0.82)" name="chevron-right" size={16} />
           </Pressable>
-        </View>
+        </Animated.View>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -169,7 +320,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     width: 230,
   },
-  markStageCompact: { height: 145, marginBottom: 8 },
+  markStageCompact: { height: 140, marginBottom: 4 },
   ringOuter: {
     borderColor: "rgba(255,255,255,0.09)",
     borderRadius: 105,
@@ -199,7 +350,7 @@ const styles = StyleSheet.create({
     height: 124,
     width: 124,
   },
-  heroMarkCompact: { borderRadius: 25, height: 102, width: 102 },
+  heroMarkCompact: { borderRadius: 25, height: 100, width: 100 },
   seal: {
     alignItems: "center",
     backgroundColor: "#F4EEE1",
@@ -234,7 +385,7 @@ const styles = StyleSheet.create({
     letterSpacing: -1.7,
     lineHeight: 45,
   },
-  titleCompact: { fontSize: 36, lineHeight: 39 },
+  titleCompact: { fontSize: 34, lineHeight: 37 },
   titleAccent: { color: "#C9EBDD" },
   subtitle: {
     color: "rgba(255,255,255,0.65)",
@@ -244,39 +395,59 @@ const styles = StyleSheet.create({
     marginTop: 13,
     maxWidth: 340,
   },
-  subtitleCompact: { fontSize: 13.5, lineHeight: 20, marginTop: 9 },
-  assuranceBar: {
+  subtitleCompact: { fontSize: 13, lineHeight: 19, marginTop: 8 },
+  pager: { marginTop: 18 },
+  pagerCompact: { marginTop: 12 },
+  highlightInner: {
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.055)",
     borderColor: "rgba(255,255,255,0.08)",
-    borderRadius: 15,
+    borderRadius: 17,
     borderWidth: 1,
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 19,
-    minHeight: 50,
-    overflow: "hidden",
+    gap: 12,
+    minHeight: 82,
+    padding: 14,
   },
-  assuranceItem: {
+  highlightIcon: {
     alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: 6,
+    backgroundColor: "rgba(58,182,137,0.14)",
+    borderColor: "rgba(58,182,137,0.22)",
+    borderRadius: 13,
+    borderWidth: 1,
+    height: 42,
     justifyContent: "center",
-    position: "relative",
+    width: 42,
   },
-  assuranceDivider: {
-    backgroundColor: "rgba(255,255,255,0.10)",
-    height: 20,
-    left: 0,
-    position: "absolute",
-    width: 1,
+  highlightCopy: { flex: 1 },
+  highlightTag: {
+    color: colors.green400,
+    fontFamily: fonts.bold,
+    fontSize: 7.5,
+    letterSpacing: 1.2,
   },
-  assuranceText: {
-    color: "rgba(255,255,255,0.73)",
-    fontFamily: fonts.semibold,
+  highlightTitle: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  highlightText: {
+    color: "rgba(255,255,255,0.55)",
+    fontFamily: fonts.regular,
     fontSize: 10,
+    lineHeight: 14,
+    marginTop: 3,
   },
+  dots: { alignSelf: "center", flexDirection: "row", gap: 6, marginTop: 11 },
+  dot: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderRadius: 3,
+    height: 5,
+    width: 5,
+  },
+  dotActive: { backgroundColor: colors.green400, width: 18 },
   actions: { gap: 7, paddingTop: 12 },
   primary: {
     alignItems: "center",

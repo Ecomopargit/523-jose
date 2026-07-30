@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   User,
   Car,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { registerMember } from "@/lib/member-store";
+import { ensureReferralProfile } from "@/lib/referral-client";
 
 const ESTADOS = [
   "SP", "RJ", "MG", "RS", "PR", "SC", "BA", "PE", "CE", "DF", "GO", "ES",
@@ -86,12 +87,18 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 
 export default function CadastrarPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const referralFromUrl = (searchParams.get("ref") || searchParams.get("codigo") || "")
+    .trim()
+    .toUpperCase();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>(initialForm);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const codigoIndicacao = (form.codigoIndicacao || referralFromUrl).trim().toUpperCase();
+  const aderiuIndicacao = form.aderiuIndicacao || Boolean(referralFromUrl);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -165,13 +172,27 @@ export default function CadastrarPage() {
         locadora: form.locadora,
         placa: form.placa,
         chavePix: form.chavePix,
-        aderiuIndicacao: form.aderiuIndicacao,
-        codigoIndicacao: form.codigoIndicacao,
+        aderiuIndicacao,
+        codigoIndicacao,
         password: form.password,
       });
 
       if (!result.ok) {
         setError(result.error);
+        return;
+      }
+
+      try {
+        await ensureReferralProfile({
+          referralCode: codigoIndicacao,
+          joinCampaign: aderiuIndicacao,
+        });
+      } catch (referralError) {
+        setError(
+          referralError instanceof Error
+            ? referralError.message
+            : "Conta criada, mas não foi possível registrar a indicação.",
+        );
         return;
       }
 
@@ -521,30 +542,39 @@ export default function CadastrarPage() {
                   <input
                     type="checkbox"
                     className="mt-0.5 accent-green-700"
-                    checked={form.aderiuIndicacao}
+                    checked={aderiuIndicacao}
                     onChange={(e) => set("aderiuIndicacao", e.target.checked)}
                   />
                   <span className="text-[13px] text-ink-soft leading-relaxed">
                     <strong className="text-ink font-semibold">Indique e ganhe</strong> — R$ 150 a
-                    cada 3 indicações. Saque de bônus com carência de 90 dias.
+                    cada 3 parceiros que ativarem o cadastro. Ao aderir, os saques ficam em
+                    carência por 90 dias após a ativação.
                   </span>
                 </label>
 
-                {form.aderiuIndicacao && (
+                {(aderiuIndicacao || Boolean(codigoIndicacao)) && (
                   <>
                     <div>
                       <FieldLabel>Código de quem te indicou</FieldLabel>
                       <input
                         className="field"
                         placeholder="Opcional"
-                        value={form.codigoIndicacao}
-                        onChange={(e) => set("codigoIndicacao", e.target.value)}
+                        value={form.codigoIndicacao || referralFromUrl}
+                        onChange={(e) => set("codigoIndicacao", e.target.value.toUpperCase())}
+                        autoCapitalize="characters"
+                        readOnly={Boolean(referralFromUrl)}
                       />
+                      {referralFromUrl ? (
+                        <p className="mt-1 text-xs text-emerald-700">
+                          Código preenchido pelo link de indicação.
+                        </p>
+                      ) : null}
                     </div>
                     <div className="note-inline !mb-0 !bg-amber-50 !border-amber-100">
                       <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                       <p className="text-[12.5px] text-ink-soft">
-                        Ao aderir à campanha, o saque de bônus fica bloqueado por 90 dias.
+                        Ao aderir à campanha, qualquer solicitação de saque fica bloqueada por
+                        90 dias contados da ativação do cadastro.
                       </p>
                     </div>
                   </>

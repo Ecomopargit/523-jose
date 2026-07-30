@@ -83,8 +83,8 @@ export default function PerfilPage() {
       icon: CreditCard,
       label: "Indique e ganhe",
       value: member.aderiuIndicacao
-        ? member.codigoIndicacao
-          ? `Aderiu · código ${member.codigoIndicacao}`
+        ? member.referralCode
+          ? `Aderiu · seu código ${member.referralCode}`
           : "Aderiu ao plano"
         : "Não aderiu",
     },

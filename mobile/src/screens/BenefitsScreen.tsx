@@ -3,11 +3,17 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
+import {
+  ensureReferralProfile,
+  getReferralDashboard,
+  type ReferralDashboard,
+} from "../lib/referrals";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
 
@@ -21,10 +27,28 @@ const benefits = [
 export function BenefitsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { member } = useAuth();
-  const code = member?.codigoIndicacao || member?.id.slice(0, 6).toUpperCase() || "ECOMOPAR";
+  const [referral, setReferral] = useState<ReferralDashboard | null>(null);
+  const code = referral?.code || member?.referralCode || "CARREGANDO";
+
+  useEffect(() => {
+    let active = true;
+    void ensureReferralProfile(undefined, true)
+      .then(() => getReferralDashboard())
+      .then((data) => {
+        if (active) setReferral(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function share() {
-    await Share.share({ message: `Venha para a ECOMOPAR! Use meu código de indicação: ${code}` });
+    const link = `https://ecomopar-523.netlify.app/cadastrar?ref=${code}`;
+    await Share.share({
+      message: `Venha para a ECOMOPAR! Use meu código ${code} ou cadastre-se pelo link: ${link}`,
+      url: link,
+    });
   }
 
   return (
@@ -46,7 +70,10 @@ export function BenefitsScreen() {
           </View>
           <Text style={styles.referralKicker}>INDIQUE E GANHE</Text>
           <Text style={styles.referralTitle}>Sua rede também pode dirigir mais tranquila.</Text>
-          <Text style={styles.referralText}>Compartilhe seu código. O bônus entra após a ativação do novo associado.</Text>
+          <Text style={styles.referralText}>
+            Compartilhe seu código. A cada 3 parceiros ativados, você recebe R$ 150. Saques
+            ficam em carência por 90 dias após sua ativação.
+          </Text>
           <View style={styles.codeRow}>
             <View>
               <Text style={styles.codeLabel}>SEU CÓDIGO</Text>
@@ -56,6 +83,11 @@ export function BenefitsScreen() {
               <Feather color={colors.green900} name="share-2" size={17} />
               <Text style={styles.shareText}>Compartilhar</Text>
             </Pressable>
+          </View>
+          <View style={styles.referralStats}>
+            <Text style={styles.referralStat}>{referral?.total ?? 0} indicados</Text>
+            <Text style={styles.referralStat}>{referral?.valid ?? 0} ativados</Text>
+            <Text style={styles.referralStat}>R$ {referral?.bonus ?? 0} em bônus</Text>
           </View>
         </LinearGradient>
 
@@ -119,6 +151,8 @@ const styles = StyleSheet.create({
   codeRow: { alignItems: "center", backgroundColor: "rgba(255,255,255,0.075)", borderColor: "rgba(255,255,255,0.10)", borderRadius: 15, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", marginTop: 18, padding: 5, paddingLeft: 14 },
   codeLabel: { color: "rgba(255,255,255,0.42)", fontFamily: fonts.bold, fontSize: 7.5, letterSpacing: 1.1 },
   code: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 14, letterSpacing: 1.7, marginTop: 2 },
+  referralStats: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
+  referralStat: { backgroundColor: "rgba(255,255,255,0.09)", borderRadius: 10, color: colors.white, fontFamily: fonts.semibold, fontSize: 9, paddingHorizontal: 9, paddingVertical: 6 },
   share: { alignItems: "center", backgroundColor: "#DDF2E9", borderRadius: 11, flexDirection: "row", gap: 7, paddingHorizontal: 13, paddingVertical: 11 },
   shareText: { color: colors.green900, fontFamily: fonts.bold, fontSize: 10 },
   sectionHeading: { alignItems: "flex-end", flexDirection: "row", justifyContent: "space-between", marginBottom: 13, marginTop: 25 },

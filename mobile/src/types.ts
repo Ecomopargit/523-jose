@@ -21,6 +21,13 @@ export type MemberProfile = {
   chavePix: string;
   aderiuIndicacao: boolean;
   codigoIndicacao: string;
+  referralCode: string;
+  referredByUid: string;
+  referredByCode: string;
+  referralValidCount: number;
+  referralBonusPaidGroups: number;
+  activatedAt: string | null;
+  withdrawalLockedUntil: string | null;
   createdAt: string;
   updatedAt: string;
   status: MemberStatus;

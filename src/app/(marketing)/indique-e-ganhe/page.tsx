@@ -94,8 +94,8 @@ export default function IndiqueEGanhePage() {
                   <div>
                     <h4 className="font-bold text-brand">Indicação Válida</h4>
                     <p className="text-gray-600 text-sm mt-1">
-                      O indicado deve ser aprovado, ativar a conta e realizar 
-                      pelo menos 30 dias de contribuição.
+                      O cadastro entra no seu contador assim que o parceiro usa seu código.
+                      A indicação se torna válida quando ele ativa a conta.
                     </p>
                   </div>
                 </div>
@@ -141,8 +141,8 @@ export default function IndiqueEGanhePage() {
                     <span className="font-bold">Bloqueio de Saque: 90 dias</span>
                   </div>
                   <p className="text-sm">
-                    O associado só poderá solicitar saque após 90 dias da 
-                    ativação da campanha de indicação.
+                    O associado só poderá solicitar saque após 90 dias da
+                    ativação do próprio cadastro.
                   </p>
                 </div>
                 <p className="text-sm">

@@ -44,6 +44,13 @@ export type MemberProfile = {
   chavePix: string;
   aderiuIndicacao: boolean;
   codigoIndicacao: string;
+  referralCode: string;
+  referredByUid: string;
+  referredByCode: string;
+  referralValidCount: number;
+  referralBonusPaidGroups: number;
+  activatedAt: string | null;
+  withdrawalLockedUntil: string | null;
   createdAt: string;
   updatedAt: string;
   status: MemberStatus;
@@ -108,6 +115,15 @@ function mapUserDoc(id: string, data: Record<string, unknown>): MemberProfile {
     chavePix: String(data.chavePix ?? ""),
     aderiuIndicacao: Boolean(data.aderiuIndicacao),
     codigoIndicacao: String(data.codigoIndicacao ?? ""),
+    referralCode: String(data.referralCode ?? ""),
+    referredByUid: String(data.referredByUid ?? ""),
+    referredByCode: String(data.referredByCode ?? ""),
+    referralValidCount: Number(data.referralValidCount ?? 0),
+    referralBonusPaidGroups: Number(data.referralBonusPaidGroups ?? 0),
+    activatedAt: data.activatedAt ? tsToIso(data.activatedAt) : null,
+    withdrawalLockedUntil: data.withdrawalLockedUntil
+      ? tsToIso(data.withdrawalLockedUntil)
+      : null,
     createdAt: tsToIso(data.createdAt),
     updatedAt: tsToIso(data.updatedAt),
     status: (data.status as MemberStatus) || "pendente",
@@ -181,6 +197,13 @@ export type RegisterInput = Omit<
   | "saldoBonus"
   | "depositosCount"
   | "notasAdmin"
+  | "referralCode"
+  | "referredByUid"
+  | "referredByCode"
+  | "referralValidCount"
+  | "referralBonusPaidGroups"
+  | "activatedAt"
+  | "withdrawalLockedUntil"
 > & {
   password: string;
 };

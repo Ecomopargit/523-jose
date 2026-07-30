@@ -1,13 +1,13 @@
 # ECOMOPAR — Checklist de Desenvolvimento e Deploy
 
-## Identidade visual (protótipo UI/UX)
-- [x] Paleta verde/âmbar/brick (`#0B3D2C`, `#136148`, `#C68A3D`, `#B5502F`)
-- [x] Tipografia Space Grotesk + Inter + IBM Plex Mono
-- [x] Design system em `globals.css` (cards, botões, badges, heroes)
-- [x] Logo com brand-mark quadrado + tagline
-- [x] Theme color PWA `#0B3D2C`
+    ## Identidade visual (protótipo UI/UX)
+    - [x] Paleta verde/âmbar/brick (`#0B3D2C`, `#136148`, `#C68A3D`, `#B5502F`)
+    - [x] Tipografia Space Grotesk + Inter + IBM Plex Mono
+    - [x] Design system em `globals.css` (cards, botões, badges, heroes)
+    - [x] Logo com brand-mark quadrado + tagline
+    - [x] Theme color PWA `#0B3D2C`
 
-## Site institucional (marketing)
+    ## Site institucional (marketing)
 - [x] Home, Quem Somos, Benefícios, Como Funciona
 - [x] Indique e Ganhe, Contato, Associar-se
 - [x] Header / Footer alinhados ao novo visual
@@ -45,7 +45,8 @@
 - [ ] Firestore: users, balances, deposits, withdrawals
 - [ ] Regras de segurança Firestore
 - [ ] PIX real (ou confirmação manual no admin)
-- [ ] Indique e ganhe com crédito automático
+- [x] Indique e ganhe com código/link, contador e crédito automático de R$ 150 a cada 3 ativações
+- [x] Carência de saque de 90 dias para participantes da campanha
 
 ## Deploy Hostinger
 - [x] `output: "standalone"`
