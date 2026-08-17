@@ -21,6 +21,7 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { listAllActivationPayments } from "@/lib/activation-store";
 
 export type MemberStatus = "pendente" | "ativo" | "inadimplente" | "bloqueado";
 export type UserRole = "member" | "admin";
@@ -393,6 +394,64 @@ export async function getMemberById(id: string): Promise<MemberProfile | null> {
   return fetchMemberByUid(id);
 }
 
+/** Campos que o próprio associado pode manter atualizados. */
+export type MemberSelfUpdateInput = Pick<
+  MemberProfile,
+  | "nome"
+  | "cpf"
+  | "telefone"
+  | "dataNascimento"
+  | "endereco"
+  | "cidade"
+  | "estado"
+  | "cep"
+  | "tipoVeiculo"
+  | "modelo"
+  | "carroProprio"
+  | "locadora"
+  | "placa"
+  | "chavePix"
+>;
+
+export async function updateMemberSelf(
+  patch: MemberSelfUpdateInput,
+): Promise<{ ok: true; member: MemberProfile } | { ok: false; error: string }> {
+  const user = auth.currentUser;
+  if (!user) return { ok: false, error: "Sessão expirada. Entre novamente." };
+
+  try {
+    const clean = {
+      nome: patch.nome.trim(),
+      cpf: patch.cpf.trim(),
+      telefone: patch.telefone.trim(),
+      dataNascimento: patch.dataNascimento,
+      endereco: patch.endereco.trim(),
+      cidade: patch.cidade.trim(),
+      estado: patch.estado.trim().toUpperCase(),
+      cep: patch.cep.trim(),
+      tipoVeiculo: patch.tipoVeiculo.trim(),
+      modelo: patch.modelo.trim(),
+      carroProprio: patch.carroProprio,
+      locadora: patch.carroProprio === "nao" ? patch.locadora.trim() : "",
+      placa: patch.placa.trim().toUpperCase(),
+      chavePix: patch.chavePix.trim(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await updateDoc(doc(db, USERS, user.uid), clean);
+    if (clean.nome && clean.nome !== user.displayName) {
+      await updateProfile(user, { displayName: clean.nome });
+    }
+
+    const member = await fetchMemberByUid(user.uid);
+    if (!member) return { ok: false, error: "Salvo, mas não foi possível recarregar o perfil." };
+    return { ok: true, member };
+  } catch (err) {
+    console.error("Falha ao atualizar perfil:", err);
+    return { ok: false, error: "Não foi possível salvar seus dados. Tente novamente." };
+  }
+}
+
 export type AdminUpdateInput = Partial<
   Pick<
     MemberProfile,
@@ -448,7 +507,11 @@ export async function deleteMemberAdmin(
 }
 
 export async function getAdminStats() {
-  const members = await listMembers();
+  const [members, payments] = await Promise.all([
+    listMembers(),
+    listAllActivationPayments().catch(() => []),
+  ]);
+  const approvedPayments = payments.filter((payment) => payment.status === "approved");
   const total = members.length;
   const ativos = members.filter((m) => m.status === "ativo").length;
   const pendentes = members.filter((m) => m.status === "pendente").length;
@@ -458,6 +521,7 @@ export async function getAdminStats() {
   const totalBloqueado = members.reduce((s, m) => s + m.saldoBloqueado, 0);
   const totalBonus = members.reduce((s, m) => s + m.saldoBonus, 0);
   const totalDepositos = members.reduce((s, m) => s + m.depositosCount, 0);
+  const totalReceitaAdmin = approvedPayments.reduce((sum, payment) => sum + payment.feeAmount, 0);
   const today = new Date().toISOString().slice(0, 10);
   const novosHoje = members.filter((m) => m.createdAt.slice(0, 10) === today).length;
 
@@ -471,6 +535,8 @@ export async function getAdminStats() {
     totalBloqueado,
     totalBonus,
     totalDepositos,
+    totalReceitaAdmin,
+    pagamentosAprovados: approvedPayments.length,
     novosHoje,
     recentes: members.slice(0, 8),
   };

@@ -17,6 +17,7 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+*.apk
 
 # Metro
 .metro-health-check*
@@ -42,9 +43,14 @@ dist-chat-check/
 dist-account-check/
 dist-profile-features-check/
 
+# local prototype extracts
+.tmp-onboarding-proto/
+
 # typescript
 *.tsbuildinfo
 
 # generated native folders
 /ios
 /android
+
+dist-onboarding-premium-check/

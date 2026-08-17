@@ -1,325 +1,296 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
-  Shield,
-  TrendingUp,
-  Stethoscope,
-  Scale,
-  Car,
-  Users,
+  ArrowRight,
+  Banknote,
+  Check,
   ChevronRight,
-  Wallet,
-  PiggyBank,
+  CircleDollarSign,
   Gift,
-  ArrowDown,
-  CheckCircle2,
-  Clock3,
+  HeartHandshake,
+  PiggyBank,
+  Scale,
   ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Users,
+  WalletCards,
 } from "lucide-react";
 import ReserveSimulator from "@/components/home/ReserveSimulator";
 import HomeFaq from "@/components/home/HomeFaq";
+import { LOGO_MARK_LIGHT } from "@/lib/logo";
 
-const beneficios = [
-  { icon: PiggyBank, color: "bg-brand/10 text-brand", title: "Reserva Financeira", desc: "Acumule R$ 5,00 por dia na sua reserva pessoal. Ao final de 30 dias, são R$ 150,00 guardados." },
-  { icon: TrendingUp, color: "bg-accent/10 text-accent", title: "Empréstimo Subsidiado", desc: "Acesso a apoio financeiro em condições especiais, sujeito à análise interna da associação." },
-  { icon: Stethoscope, color: "bg-brand/10 text-brand", title: "Assistência Odontológica", desc: "Suporte para cuidados odontológicos conforme regras do plano da associação." },
-  { icon: Scale, color: "bg-accent/10 text-accent", title: "Assistência Jurídica", desc: "Orientação e apoio jurídico em situações relacionadas à sua atividade como motorista." },
-  { icon: Car, color: "bg-brand/10 text-brand", title: "Seguro da Franquia", desc: "Em caso de sinistro, pague uma taxa reduzida e o instituto cobre o valor da franquia." },
-  { icon: Users, color: "bg-accent/10 text-accent", title: "Indique e Ganhe", desc: "Indique 3 novos parceiros e receba R$ 150,00 de bônus. Quanto mais indicar, mais ganha!" },
+const benefits = [
+  {
+    icon: PiggyBank,
+    title: "Reserva que é sua",
+    text: "R$ 5,00 de cada contribuição diária formam sua reserva pessoal.",
+    tone: "lime",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Proteção na estrada",
+    text: "Apoio para a franquia do seguro quando um imprevisto acontece.",
+    tone: "forest",
+  },
+  {
+    icon: Stethoscope,
+    title: "Cuidado de verdade",
+    text: "Assistência odontológica para cuidar de quem passa o dia ao volante.",
+    tone: "coral",
+  },
+  {
+    icon: Scale,
+    title: "Orientação jurídica",
+    text: "Suporte especializado para situações relacionadas à sua atividade.",
+    tone: "blue",
+  },
+  {
+    icon: CircleDollarSign,
+    title: "Crédito subsidiado",
+    text: "Condições especiais, sujeitas à análise, para associados ativos.",
+    tone: "gold",
+  },
+  {
+    icon: Users,
+    title: "Indique e ganhe",
+    text: "A cada três parceiros ativos, você recebe R$ 150,00 em bônus.",
+    tone: "mint",
+  },
 ];
 
-const passos = [
-  { n: "1", title: "Cadastre-se", desc: "Preencha seus dados pessoais e do veículo em poucos minutos, direto pelo site ou pelo app." },
-  { n: "2", title: "Ative com PIX", desc: "Faça o PIX diário de R$ 7,00. R$ 5,00 vão para a sua reserva e R$ 2,00 para o custeio." },
-  { n: "3", title: "Use os benefícios", desc: "Acompanhe seu saldo, indique parceiros e solicite saque conforme as regras da associação." },
+const appActions = [
+  { icon: Banknote, label: "Sacar" },
+  { icon: WalletCards, label: "Depositar" },
+  { icon: Gift, label: "Indicar" },
 ];
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      {/* Hero */}
-      <section className="relative bg-gradient-to-br from-brand via-brand-dark to-brand-deep text-white overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0aDR2NGgtNHpNMjAgMjBoNHY0aC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_20%,rgba(255,255,255,0.12),transparent)]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28 relative">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-            <div className="space-y-6 sm:space-y-8 animate-fade-up">
-              <div className="inline-flex items-center gap-2 bg-white/12 backdrop-blur-md rounded-full px-4 py-2 border border-white/10">
-                <Shield className="w-5 h-5 text-brand-100" />
-                <span className="text-sm font-semibold">
-                  Proteção para Motoristas Autônomos
-                </span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight text-balance">
-                Proteção, reserva e apoio para o{" "}
-                <span className="text-brand-100">motorista autônomo</span>
-              </h1>
-              <p className="text-base sm:text-xl text-white/75 leading-relaxed max-w-xl">
-                A ECOMOPAR é o instituto que ajuda você a construir sua reserva
-                financeira, enfrentar imprevistos e ter acesso a benefícios
-                importantes para o seu dia a dia.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <Link href="/cadastrar" className="btn-accent btn-lg w-full sm:w-auto">
-                  <span>Cadastrar-se</span>
-                  <ChevronRight className="w-5 h-5" />
-                </Link>
-                <Link
-                  href="/login"
-                  className="btn border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white btn-lg w-full sm:w-auto"
-                >
-                  Área do Associado
-                </Link>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-1 text-sm text-white/70">
-                <span className="inline-flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-accent" />
-                  Sem mensalidade fixa
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <Clock3 className="w-4 h-4 text-accent" />
-                  Cadastro em minutos
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-accent" />
-                  Pagamento via PIX
-                </span>
-              </div>
+    <main className="landing-home overflow-hidden bg-[#f8f7f2]">
+      <section className="landing-hero relative min-h-[calc(100dvh-4rem)] overflow-hidden text-white sm:min-h-[calc(100dvh-4.5rem)]">
+        <div className="landing-grain" aria-hidden="true" />
+        <div className="landing-road-lines" aria-hidden="true" />
+        <div className="relative mx-auto grid min-h-[calc(100dvh-4rem)] max-w-7xl items-center gap-10 px-4 pb-16 pt-12 sm:min-h-[calc(100dvh-4.5rem)] sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.02fr_.98fr] lg:gap-8 lg:px-8 lg:py-20">
+          <div className="relative z-10 max-w-2xl landing-reveal">
+            <div className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#d7ef77]">
+              <span className="h-px w-8 bg-[#d7ef77]" aria-hidden="true" />
+              Feito para quem vive da direção
+            </div>
+            <h1 className="font-display text-[clamp(2.8rem,7vw,5.8rem)] font-semibold leading-[0.93] text-balance">
+              Seu corre merece <span className="landing-highlight">reserva.</span>
+            </h1>
+            <p className="mt-7 max-w-xl text-base leading-relaxed text-white/72 sm:text-lg">
+              A ECOMOPAR reúne proteção, benefícios e uma reserva financeira que cresce com você,
+              direto pelo aplicativo.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="/cadastrar" className="landing-cta-primary group">
+                Quero me associar
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link href="#como-funciona" className="landing-cta-secondary">
+                Entender como funciona
+              </Link>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-white/68">
+              <span className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-[#d7ef77]" /> Cadastro digital</span>
+              <span className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-[#d7ef77]" /> Pagamento via PIX</span>
+              <span className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-[#d7ef77]" /> Acompanhe pelo app</span>
+            </div>
+          </div>
+
+          <div className="relative z-10 flex items-center justify-center lg:justify-end landing-reveal landing-delay">
+            <div className="absolute left-0 top-[15%] hidden w-44 rotate-[-7deg] rounded-lg bg-[#d7ef77] p-4 text-[#123d31] shadow-2xl lg:block xl:-left-4">
+              <p className="text-xs font-bold uppercase">Todo dia conta</p>
+              <p className="mt-1 font-display text-3xl font-bold">R$ 5</p>
+              <p className="text-xs leading-snug">vão direto para a sua reserva pessoal.</p>
             </div>
 
-            <div className="relative animate-fade-up" style={{ animationDelay: "0.15s" }}>
-              <div className="bg-white/8 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/15 shadow-2xl shadow-black/10">
-                <div className="flex items-center justify-between mb-5">
-                  <p className="text-xs uppercase tracking-wider font-semibold text-white/60">
-                    Plano Adesão Um
-                  </p>
-                  <span className="text-[11px] font-semibold bg-accent/20 text-accent border border-accent/30 rounded-full px-3 py-1">
-                    R$ 7,00 / dia
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <div className="bg-white/10 rounded-2xl p-5 sm:p-6 text-center transition-transform duration-300 hover:-translate-y-1">
-                    <PiggyBank className="w-8 h-8 sm:w-10 sm:h-10 text-accent mx-auto mb-3" />
-                    <div className="text-2xl sm:text-3xl font-bold font-mono-num">R$ 5,00</div>
-                    <div className="text-xs sm:text-sm text-white/55">por dia na reserva</div>
-                  </div>
-                  <div className="bg-white/10 rounded-2xl p-5 sm:p-6 text-center transition-transform duration-300 hover:-translate-y-1">
-                    <Gift className="w-8 h-8 sm:w-10 sm:h-10 text-accent mx-auto mb-3" />
-                    <div className="text-2xl sm:text-3xl font-bold font-mono-num">R$ 150</div>
-                    <div className="text-xs sm:text-sm text-white/55">bônus por indicação</div>
-                  </div>
-                  <div className="bg-white/10 rounded-2xl p-5 sm:p-6 text-center col-span-2 transition-transform duration-300 hover:-translate-y-1">
-                    <Wallet className="w-8 h-8 sm:w-10 sm:h-10 text-accent mx-auto mb-3" />
-                    <div className="text-2xl sm:text-3xl font-bold font-mono-num">R$ 2,00</div>
-                    <div className="text-xs sm:text-sm text-white/55">
-                      custeio diário da associação
+            <div className="app-phone" aria-label="Prévia da tela inicial do aplicativo ECOMOPAR">
+              <div className="app-phone-island" aria-hidden="true" />
+              <div className="app-screen">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Image src={LOGO_MARK_LIGHT} alt="" width={34} height={34} className="rounded-[9px]" unoptimized />
+                    <div>
+                      <p className="text-[10px] text-white/55">Boa tarde,</p>
+                      <p className="text-[13px] font-semibold">José parceiro</p>
                     </div>
                   </div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/8">
+                    <Sparkles className="h-3.5 w-3.5 text-[#d7ef77]" />
+                  </div>
                 </div>
-                <Link
-                  href="#simulador"
-                  className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
-                >
-                  <span>Simular minha reserva</span>
-                  <ArrowDown className="w-4 h-4" />
-                </Link>
+
+                <div className="app-balance">
+                  <div className="flex items-center justify-between text-[10px] text-white/55">
+                    <span>Minha reserva</span>
+                    <span className="rounded-full bg-[#d7ef77]/15 px-2 py-1 text-[#d7ef77]">Ativa</span>
+                  </div>
+                  <p className="mt-2 font-display text-[32px] font-semibold leading-none">R$ 1.350<span className="text-lg text-white/55">,00</span></p>
+                  <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-3 text-[10px]">
+                    <span className="text-white/45">Acumulado em 9 meses</span>
+                    <span className="font-semibold text-[#d7ef77]">+ R$ 150 este mês</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {appActions.map((action) => (
+                    <div key={action.label} className="flex flex-col items-center gap-2 rounded-xl bg-white p-2.5 text-[#123d31]">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#e9f2c8]">
+                        <action.icon className="h-3.5 w-3.5" />
+                      </div>
+                      <span className="text-[9px] font-semibold">{action.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 rounded-2xl bg-[#f0eee6] p-3.5 text-[#123d31]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[9px] text-[#63746b]">Meta da reserva</p>
+                      <p className="mt-0.5 text-[12px] font-bold">Fundo para imprevistos</p>
+                    </div>
+                    <span className="font-mono text-[10px] font-bold">54%</span>
+                  </div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#d9ddd4]">
+                    <div className="h-full w-[54%] rounded-full bg-[#1d7558]" />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/7 p-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ef795c] text-white">
+                    <Gift className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold">Indique 3 parceiros</p>
+                    <p className="text-[9px] text-white/45">Ganhe R$ 150 em bônus</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-white/40" />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Como Funciona */}
-      <section className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">
-              Simples e Acessível
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand mt-3">
-              Comece em 3 passos
-            </h2>
-            <p className="text-ink-soft mt-4 text-base sm:text-lg">
-              Com apenas <strong className="text-brand">R$ 7,00 por dia</strong>, você participa
-              da ECOMOPAR e ainda acumula{" "}
-              <strong className="text-accent">R$ 5,00 por dia</strong> em sua reserva pessoal.
-            </p>
-          </div>
+      <section className="border-b border-[#dfe3d8] bg-[#d7ef77] text-[#123d31]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 px-4 sm:grid-cols-3 sm:px-6 lg:px-8">
+          {[
+            ["R$ 7,00", "contribuição por dia"],
+            ["R$ 5,00", "para a sua reserva"],
+            ["R$ 2,00", "para manter os benefícios"],
+          ].map(([value, label], index) => (
+            <div key={value + label} className={`flex items-baseline gap-3 py-5 sm:justify-center sm:py-6 ${index > 0 ? "border-t border-[#123d31]/15 sm:border-l sm:border-t-0" : ""}`}>
+              <strong className="font-display text-2xl sm:text-3xl">{value}</strong>
+              <span className="max-w-28 text-xs font-semibold leading-tight sm:text-sm">{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <ol className="relative grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <div
-              aria-hidden
-              className="hidden lg:block absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-brand/20 via-accent/40 to-brand/20"
-            />
-            {passos.map((step) => (
-              <li
-                key={step.n}
-                className="relative bg-gradient-to-br from-green-50 to-white rounded-2xl p-6 sm:p-8 border border-line-soft text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-brand rounded-2xl flex items-center justify-center mx-auto mb-6 ring-8 ring-white">
-                  <span className="text-white text-xl sm:text-2xl font-bold">{step.n}</span>
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-brand mb-3">{step.title}</h3>
-                <p className="text-ink-soft text-sm sm:text-base">{step.desc}</p>
-              </li>
-            ))}
-          </ol>
+      <section id="como-funciona" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid items-start gap-12 lg:grid-cols-[.78fr_1.22fr] lg:gap-20">
+            <div className="lg:sticky lg:top-28">
+              <p className="landing-eyebrow">Um plano simples</p>
+              <h2 className="landing-section-title mt-4">Seu dinheiro trabalha a favor do seu caminho.</h2>
+              <p className="mt-5 max-w-md text-base leading-relaxed text-[#5a6961]">
+                Uma contribuição pequena e transparente cria uma rede de apoio para os dias em que você mais precisa.
+              </p>
+              <Link href="/como-funciona" className="landing-text-link mt-7">
+                Ver regras do plano <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
 
-          <div className="text-center mt-10">
-            <Link
-              href="/como-funciona"
-              className="inline-flex items-center gap-2 text-brand font-semibold hover:text-accent transition-colors"
-            >
-              <span>Ver como funciona em detalhes</span>
-              <ChevronRight className="w-5 h-5" />
-            </Link>
+            <ol className="space-y-0">
+              {[
+                { n: "01", title: "Faça seu cadastro", text: "Informe seus dados e os do veículo. Pode ser próprio ou alugado." },
+                { n: "02", title: "Ative pelo PIX", text: "Contribua com R$ 7,00 por dia, com divisão clara de cada centavo." },
+                { n: "03", title: "Acompanhe e use", text: "Veja sua reserva crescer e acesse benefícios direto no aplicativo." },
+              ].map((step) => (
+                <li key={step.n} className="landing-step grid grid-cols-[auto_1fr] gap-5 border-t border-[#ccd3ca] py-8 sm:grid-cols-[72px_1fr_auto] sm:items-center sm:gap-7">
+                  <span className="font-mono text-xs font-semibold text-[#1d7558]">{step.n}</span>
+                  <div>
+                    <h3 className="font-display text-xl font-semibold text-[#123d31] sm:text-2xl">{step.title}</h3>
+                    <p className="mt-2 max-w-lg text-sm leading-relaxed text-[#68766e] sm:text-base">{step.text}</p>
+                  </div>
+                  <div className="hidden h-11 w-11 items-center justify-center rounded-full border border-[#b7c0b6] text-[#1d7558] sm:flex">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>
 
-      {/* Simulador interativo */}
-      <div id="simulador" className="scroll-mt-24">
+      <section className="bg-[#123d31] px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <p className="landing-eyebrow text-[#d7ef77]">Muito além da reserva</p>
+              <h2 className="mt-4 max-w-3xl font-display text-3xl font-semibold leading-tight text-balance sm:text-5xl">
+                Um ecossistema pensado para proteger seu trabalho.
+              </h2>
+            </div>
+            <Link href="/beneficios" className="landing-text-link text-white hover:text-[#d7ef77]">
+              Conhecer todos <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="landing-benefits-grid">
+            {benefits.map((benefit, index) => (
+              <article key={benefit.title} className={`landing-benefit landing-benefit-${benefit.tone} ${index === 0 ? "landing-benefit-featured" : ""}`}>
+                <benefit.icon className="h-7 w-7" strokeWidth={1.8} />
+                <div>
+                  <h3 className="font-display text-xl font-semibold sm:text-2xl">{benefit.title}</h3>
+                  <p className="mt-2 max-w-sm text-sm leading-relaxed opacity-70">{benefit.text}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div id="simulador" className="scroll-mt-20 landing-simulator">
         <ReserveSimulator />
       </div>
 
-      {/* Benefícios */}
-      <section className="py-16 sm:py-20 bg-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">
-              Vantagens Exclusivas
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand mt-3">
-              Mais segurança para quem vive da direção
+      <section className="relative overflow-hidden bg-[#ef795c] px-4 py-20 text-[#123d31] sm:px-6 sm:py-28 lg:px-8">
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full border-[48px] border-[#123d31]/8" aria-hidden="true" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[1fr_.72fr]">
+          <div>
+            <p className="text-sm font-bold uppercase">Força de comunidade</p>
+            <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[1.02] text-balance sm:text-6xl">
+              Três indicações. R$ 150 para seguir em frente.
             </h2>
-            <p className="text-ink-soft mt-4 text-base sm:text-lg">
-              A ECOMOPAR oferece benefícios pensados para a realidade do motorista autônomo
+          </div>
+          <div className="border-l border-[#123d31]/20 pl-0 lg:pl-10">
+            <p className="max-w-md text-base leading-relaxed text-[#123d31]/75">
+              Compartilhe seu link. Quando três parceiros ativarem o cadastro, o bônus entra na sua conta, conforme as regras da campanha.
             </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {beneficios.map((b) => (
-              <div
-                key={b.title}
-                className="card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${b.color}`}>
-                  <b.icon className="w-7 h-7" />
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-brand mb-2">{b.title}</h3>
-                <p className="text-ink-soft text-sm">{b.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link
-              href="/beneficios"
-              className="inline-flex items-center gap-2 text-brand font-semibold hover:text-accent transition-colors"
-            >
-              <span>Conhecer todos os benefícios</span>
-              <ChevronRight className="w-5 h-5" />
+            <Link href="/indique-e-ganhe" className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-md bg-[#123d31] px-6 font-semibold text-white transition-transform hover:-translate-y-0.5">
+              Conhecer a campanha <ArrowRight className="h-4 w-4" />
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Indique e Ganhe */}
-      <section className="py-16 sm:py-20 bg-gradient-to-br from-brand to-brand-dark text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-            <div className="space-y-6">
-              <span className="text-accent font-semibold text-sm uppercase tracking-wider">
-                Programa de Indicação
-              </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-                Indique e ganhe <span className="text-accent">R$ 150,00</span>
-              </h2>
-              <p className="text-white/70 text-base sm:text-lg leading-relaxed">
-                Participe do plano de alavancagem da ECOMOPAR. Compartilhe seu link, indique 3
-                novos parceiros e, cumpridas as regras da campanha, receba{" "}
-                <strong className="text-white">R$ 150,00</strong> em bônus.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "Compartilhe seu código ou link exclusivo",
-                  "Seus indicados se associam e ativam a conta",
-                  "Receba R$ 150,00 a cada 3 indicações válidas",
-                ].map((text, i) => (
-                  <li key={text} className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-accent rounded-full flex items-center justify-center shrink-0">
-                      <span className="text-white text-sm font-bold">{i + 1}</span>
-                    </div>
-                    <span>{text}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <p className="text-sm text-white/70">
-                  <strong className="text-white">Importante:</strong> Ao aderir à campanha, o
-                  associado só poderá solicitar saque após 90 dias da ativação.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl p-6 sm:p-8 text-ink">
-              <div className="text-center">
-                <Gift className="w-14 h-14 sm:w-16 sm:h-16 text-accent mx-auto mb-4" />
-                <h3 className="text-xl sm:text-2xl font-bold text-brand mb-2">
-                  Quanto você pode ganhar?
-                </h3>
-                <p className="text-ink-soft mb-6 text-sm sm:text-base">
-                  Veja o potencial de ganhos com indicações
-                </p>
-              </div>
-              <div className="space-y-3 sm:space-y-4">
-                {[
-                  { qtd: "3 indicações", valor: "R$ 150,00" },
-                  { qtd: "6 indicações", valor: "R$ 300,00" },
-                  { qtd: "12 indicações", valor: "R$ 600,00" },
-                ].map((item) => (
-                  <div
-                    key={item.qtd}
-                    className="flex justify-between items-center p-4 bg-bg rounded-xl transition-colors hover:bg-green-50"
-                  >
-                    <span className="font-medium">{item.qtd}</span>
-                    <span className="text-lg sm:text-xl font-bold text-accent font-mono-num">
-                      {item.valor}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/indique-e-ganhe" className="btn-primary btn-md w-full mt-6">
-                Saiba Mais
-              </Link>
-            </div>
           </div>
         </div>
       </section>
 
       <HomeFaq />
 
-      {/* CTA Final */}
-      <section className="py-16 sm:py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand mb-6">
-            Pronto para começar a construir sua reserva?
+      <section className="bg-[#f8f7f2] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <div className="mx-auto max-w-7xl border-t border-[#cdd4cb] pt-16 text-center">
+          <HeartHandshake className="mx-auto h-10 w-10 text-[#1d7558]" strokeWidth={1.5} />
+          <h2 className="mx-auto mt-6 max-w-4xl font-display text-4xl font-semibold leading-tight text-[#123d31] text-balance sm:text-6xl">
+            Quem move a cidade também merece apoio.
           </h2>
-          <p className="text-ink-soft text-base sm:text-lg mb-8 max-w-2xl mx-auto">
-            Junte-se aos motoristas autônomos que já contam com a proteção da ECOMOPAR. Comece
-            hoje com apenas R$ 7,00 por dia.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-            <Link href="/cadastrar" className="btn-primary btn-lg">
-              <span>Cadastrar-se agora</span>
-              <ChevronRight className="w-5 h-5" />
-            </Link>
-            <Link href="/contato" className="btn-outline btn-lg">
-              Falar com a equipe
-            </Link>
-          </div>
-          <p className="text-sm text-ink-faint mt-6">
-            Cadastro simples e aprovação em até 48 horas úteis
-          </p>
+          <p className="mx-auto mt-5 max-w-xl text-[#65736b]">Cadastre-se em poucos minutos e comece a construir sua reserva.</p>
+          <Link href="/cadastrar" className="landing-cta-dark group mt-8">
+            Fazer meu cadastro <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+          </Link>
+          <p className="mt-4 text-xs text-[#7b877f]">Análise em até 48 horas úteis</p>
         </div>
       </section>
     </main>

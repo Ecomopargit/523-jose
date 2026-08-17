@@ -196,15 +196,29 @@ export async function register(input: Registration) {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    await ensureReferralProfile(input.codigoIndicacao, Boolean(input.codigoIndicacao.trim()));
-    return { ok: true as const };
+    try {
+      await ensureReferralProfile(input.codigoIndicacao, Boolean(input.codigoIndicacao.trim()));
+      return { ok: true as const };
+    } catch (error) {
+      return {
+        ok: true as const,
+        warning: error instanceof Error
+          ? error.message
+          : "Sua conta foi criada, mas a indicação ainda não foi vinculada.",
+      };
+    }
   } catch (error) {
-    return { ok: false as const, error: messageFor((error as { code?: string }).code) };
+    const code = (error as { code?: string }).code;
+    return {
+      ok: false as const,
+      error: code ? messageFor(code) : error instanceof Error ? error.message : messageFor(),
+    };
   }
 }
 
 export type MemberProfileUpdate = {
   nome: string;
+  cpf: string;
   telefone: string;
   dataNascimento: string;
   endereco: string;
@@ -223,6 +237,7 @@ export async function updateMemberProfile(input: MemberProfileUpdate) {
   try {
     const clean = {
       nome: input.nome.trim(),
+      cpf: input.cpf.trim(),
       telefone: input.telefone.trim(),
       dataNascimento: input.dataNascimento.trim(),
       endereco: input.endereco.trim(),

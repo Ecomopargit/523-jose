@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
 import { useMemberSession } from "@/hooks/useMemberSession";
 import {
   formatMemberSince,
   initialsFromName,
+  updateMemberSelf,
   vehicleLabel,
+  type MemberProfile,
+  type MemberSelfUpdateInput,
 } from "@/lib/member-store";
+import { formatCpf, isValidCpf } from "@/lib/cpf";
 import {
   Car,
   CreditCard,
@@ -18,10 +23,41 @@ import {
   Calendar,
   Building2,
   KeyRound,
+  Pencil,
+  X,
+  Check,
 } from "lucide-react";
 
+const ESTADOS = [
+  "SP", "RJ", "MG", "RS", "PR", "SC", "BA", "PE", "CE", "DF", "GO", "ES",
+  "MT", "MS", "PA", "AM", "MA", "PB", "RN", "AL", "SE", "TO", "RO", "AC", "AP", "RR", "PI",
+];
+
+function toForm(member: MemberProfile): MemberSelfUpdateInput {
+  return {
+    nome: member.nome,
+    cpf: formatCpf(member.cpf),
+    telefone: member.telefone,
+    dataNascimento: member.dataNascimento,
+    endereco: member.endereco,
+    cidade: member.cidade,
+    estado: member.estado,
+    cep: member.cep,
+    tipoVeiculo: member.tipoVeiculo,
+    modelo: member.modelo,
+    carroProprio: member.carroProprio,
+    locadora: member.locadora,
+    placa: member.placa,
+    chavePix: member.chavePix,
+  };
+}
+
 export default function PerfilPage() {
-  const { member, ready } = useMemberSession();
+  const { member, ready, refresh } = useMemberSession();
+  const [form, setForm] = useState<MemberSelfUpdateInput | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
 
   if (!ready) {
     return (
@@ -46,6 +82,45 @@ export default function PerfilPage() {
       </DashboardShell>
     );
   }
+
+  const set = <K extends keyof MemberSelfUpdateInput>(
+    key: K,
+    value: MemberSelfUpdateInput[K],
+  ) => {
+    setForm((current) => (current ? { ...current, [key]: value } : current));
+    setError("");
+  };
+
+  const startEdit = () => {
+    setForm(toForm(member));
+    setError("");
+    setSaved(false);
+  };
+
+  const cancelEdit = () => {
+    setForm(null);
+    setError("");
+  };
+
+  const handleSave = async () => {
+    if (!form) return;
+    if (!form.nome.trim()) return setError("Informe seu nome completo.");
+    if (!isValidCpf(form.cpf)) return setError("CPF inválido. Confira os 11 dígitos.");
+    if (!form.telefone.trim()) return setError("Informe um telefone para contato.");
+
+    setSaving(true);
+    setError("");
+    const result = await updateMemberSelf(form);
+    setSaving(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    await refresh();
+    setForm(null);
+    setSaved(true);
+  };
 
   const rows = [
     { icon: Mail, label: "E-mail", value: member.email },
@@ -120,34 +195,276 @@ export default function PerfilPage() {
               <h3 className="font-display text-xl sm:text-2xl font-semibold tracking-tight">Suas informações</h3>
               <p className="text-sm text-ink-soft mt-1">Dados utilizados na sua conta e nos serviços ECOMOPAR.</p>
             </div>
-            <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-green-50 border border-green-100 items-center justify-center">
-              <IdCard className="w-5 h-5 text-green-700" strokeWidth={1.8} />
-            </div>
+            {form ? (
+              <button type="button" onClick={cancelEdit} className="btn-ghost btn-sm text-ink-soft shrink-0">
+                <X className="w-4 h-4" />
+                <span className="hidden sm:inline">Cancelar</span>
+              </button>
+            ) : (
+              <button type="button" onClick={startEdit} className="btn-outline btn-sm shrink-0">
+                <Pencil className="w-4 h-4" />
+                <span>Editar</span>
+              </button>
+            )}
           </div>
 
-          <div className="grid md:grid-cols-2 md:gap-x-8">
-            {rows.map((item) => (
-              <div key={item.label} className={`info-row ${item.label === "Endereço" ? "md:col-span-2" : ""}`}>
-                <div className="icon-badge-lg">
-                  <item.icon className="w-[16px] h-[16px] text-green-700" strokeWidth={1.9} />
+          {saved && !form ? (
+            <div className="mt-5 flex items-center gap-2 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+              <Check className="w-4 h-4 shrink-0" />
+              Dados atualizados com sucesso.
+            </div>
+          ) : null}
+
+          {form ? (
+            <form
+              className="mt-6 space-y-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSave();
+              }}
+            >
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label htmlFor="perfil-nome" className="text-[13px] font-semibold block mb-1.5">
+                    Nome completo
+                  </label>
+                  <input
+                    id="perfil-nome"
+                    className="field"
+                    value={form.nome}
+                    onChange={(e) => set("nome", e.target.value)}
+                  />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[10.5px] uppercase tracking-[0.09em] text-ink-faint font-semibold mb-1">
-                    {item.label}
-                  </p>
-                  <p className="text-sm font-semibold break-words text-ink">{item.value}</p>
+
+                <div>
+                  <label htmlFor="perfil-cpf" className="text-[13px] font-semibold block mb-1.5">
+                    CPF
+                  </label>
+                  <input
+                    id="perfil-cpf"
+                    className="field font-mono-num"
+                    inputMode="numeric"
+                    placeholder="000.000.000-00"
+                    value={form.cpf}
+                    onChange={(e) => set("cpf", formatCpf(e.target.value))}
+                  />
                 </div>
+
+                <div>
+                  <label htmlFor="perfil-telefone" className="text-[13px] font-semibold block mb-1.5">
+                    Telefone / WhatsApp
+                  </label>
+                  <input
+                    id="perfil-telefone"
+                    className="field"
+                    inputMode="tel"
+                    value={form.telefone}
+                    onChange={(e) => set("telefone", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-nascimento" className="text-[13px] font-semibold block mb-1.5">
+                    Data de nascimento
+                  </label>
+                  <input
+                    id="perfil-nascimento"
+                    type="date"
+                    className="field"
+                    value={form.dataNascimento}
+                    onChange={(e) => set("dataNascimento", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-pix" className="text-[13px] font-semibold block mb-1.5">
+                    Chave PIX
+                  </label>
+                  <input
+                    id="perfil-pix"
+                    className="field"
+                    value={form.chavePix}
+                    onChange={(e) => set("chavePix", e.target.value)}
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label htmlFor="perfil-endereco" className="text-[13px] font-semibold block mb-1.5">
+                    Endereço
+                  </label>
+                  <input
+                    id="perfil-endereco"
+                    className="field"
+                    value={form.endereco}
+                    onChange={(e) => set("endereco", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-cidade" className="text-[13px] font-semibold block mb-1.5">
+                    Cidade
+                  </label>
+                  <input
+                    id="perfil-cidade"
+                    className="field"
+                    value={form.cidade}
+                    onChange={(e) => set("cidade", e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="perfil-estado" className="text-[13px] font-semibold block mb-1.5">
+                      Estado
+                    </label>
+                    <select
+                      id="perfil-estado"
+                      className="field"
+                      value={form.estado}
+                      onChange={(e) => set("estado", e.target.value)}
+                    >
+                      <option value="">UF</option>
+                      {ESTADOS.map((uf) => (
+                        <option key={uf} value={uf}>
+                          {uf}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="perfil-cep" className="text-[13px] font-semibold block mb-1.5">
+                      CEP
+                    </label>
+                    <input
+                      id="perfil-cep"
+                      className="field"
+                      inputMode="numeric"
+                      value={form.cep}
+                      onChange={(e) => set("cep", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-tipo" className="text-[13px] font-semibold block mb-1.5">
+                    Tipo de veículo
+                  </label>
+                  <input
+                    id="perfil-tipo"
+                    className="field"
+                    placeholder="Carro, moto, van…"
+                    value={form.tipoVeiculo}
+                    onChange={(e) => set("tipoVeiculo", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-modelo" className="text-[13px] font-semibold block mb-1.5">
+                    Modelo
+                  </label>
+                  <input
+                    id="perfil-modelo"
+                    className="field"
+                    value={form.modelo}
+                    onChange={(e) => set("modelo", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-placa" className="text-[13px] font-semibold block mb-1.5">
+                    Placa
+                  </label>
+                  <input
+                    id="perfil-placa"
+                    className="field uppercase"
+                    value={form.placa}
+                    onChange={(e) => set("placa", e.target.value.toUpperCase())}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="perfil-propriedade" className="text-[13px] font-semibold block mb-1.5">
+                    Propriedade do veículo
+                  </label>
+                  <select
+                    id="perfil-propriedade"
+                    className="field"
+                    value={form.carroProprio}
+                    onChange={(e) =>
+                      set("carroProprio", e.target.value as MemberProfile["carroProprio"])
+                    }
+                  >
+                    <option value="">Não informado</option>
+                    <option value="sim">Veículo próprio</option>
+                    <option value="nao">Alugado</option>
+                  </select>
+                </div>
+
+                {form.carroProprio === "nao" ? (
+                  <div className="sm:col-span-2">
+                    <label htmlFor="perfil-locadora" className="text-[13px] font-semibold block mb-1.5">
+                      Locadora
+                    </label>
+                    <input
+                      id="perfil-locadora"
+                      className="field"
+                      value={form.locadora}
+                      onChange={(e) => set("locadora", e.target.value)}
+                    />
+                  </div>
+                ) : null}
               </div>
-            ))}
-          </div>
 
-          <div className="mt-7 rounded-2xl border border-green-100 bg-green-50/70 px-5 py-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-ink">Precisa corrigir alguma informação?</p>
-              <p className="text-xs text-ink-soft mt-1">A equipe pode atualizar seus dados cadastrais com segurança.</p>
-            </div>
-            <span className="hidden sm:inline-flex text-xs font-semibold text-green-700 whitespace-nowrap">Fale com o suporte</span>
-          </div>
+              {error ? (
+                <div className="rounded-[14px] border border-brick-100 bg-brick-100/40 px-3.5 py-3 text-[13px] text-brick-600">
+                  {error}
+                </div>
+              ) : null}
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button type="submit" disabled={saving} className="btn-primary btn-md sm:w-auto">
+                  {saving ? "Salvando…" : "Salvar alterações"}
+                </button>
+                <button type="button" onClick={cancelEdit} className="btn-outline btn-md sm:w-auto">
+                  Cancelar
+                </button>
+              </div>
+
+              <p className="text-xs text-ink-faint">
+                O e-mail de acesso e os saldos não podem ser alterados por aqui.
+              </p>
+            </form>
+          ) : (
+            <>
+              <div className="grid md:grid-cols-2 md:gap-x-8">
+                {rows.map((item) => (
+                  <div key={item.label} className={`info-row ${item.label === "Endereço" ? "md:col-span-2" : ""}`}>
+                    <div className="icon-badge-lg">
+                      <item.icon className="w-[16px] h-[16px] text-green-700" strokeWidth={1.9} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10.5px] uppercase tracking-[0.09em] text-ink-faint font-semibold mb-1">
+                        {item.label}
+                      </p>
+                      <p className="text-sm font-semibold break-words text-ink">{item.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-7 rounded-2xl border border-green-100 bg-green-50/70 px-5 py-4 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-ink">Precisa corrigir alguma informação?</p>
+                  <p className="text-xs text-ink-soft mt-1">
+                    Use o botão Editar para atualizar CPF, contato, endereço e veículo.
+                  </p>
+                </div>
+                <button type="button" onClick={startEdit} className="btn-outline btn-sm shrink-0">
+                  Editar dados
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </DashboardShell>

@@ -19,6 +19,150 @@ export function getMercadoPagoClient() {
   return new MercadoPagoConfig({ accessToken: getMercadoPagoAccessToken() });
 }
 
+type PixPaymentResult = {
+  mpPaymentId: string;
+  status: string;
+  qrCode: string;
+  qrCodeBase64: string;
+  ticketUrl: string;
+  expiresAt: string | null;
+  simulated: boolean;
+};
+
+type MercadoPagoOrder = {
+  id?: string;
+  status?: string;
+  status_detail?: string;
+  expiration_time?: string;
+  transactions?: {
+    payments?: Array<{
+      id?: string;
+      status?: string;
+      status_detail?: string;
+      payment_method?: {
+        qr_code?: string;
+        qr_code_base64?: string;
+        ticket_url?: string;
+      };
+    }>;
+  };
+};
+
+/**
+ * A API de Orders usa outro vocabulário de status ("processed", "canceled").
+ * Traduzimos para o vocabulário de Payments consumido por mapMpStatus.
+ */
+function normalizeOrderStatus(order: MercadoPagoOrder) {
+  const candidates = [
+    order.status,
+    order.status_detail,
+    ...(order.transactions?.payments ?? []).flatMap((payment) => [
+      payment.status,
+      payment.status_detail,
+    ]),
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+
+  if (candidates.some((value) => ["processed", "approved", "accredited"].includes(value))) {
+    return "approved";
+  }
+  if (candidates.some((value) => ["canceled", "cancelled"].includes(value))) return "cancelled";
+  if (candidates.some((value) => ["failed", "rejected"].includes(value))) return "rejected";
+  if (candidates.some((value) => value === "expired")) return "expired";
+  return "pending";
+}
+
+let cachedTestCredential: Promise<boolean> | null = null;
+
+/**
+ * Credenciais de teste não podem emitir PIX pela API de Payments (401
+ * "Unauthorized use of live credentials"); nesse caso usamos a API de Orders.
+ * A detecção é automática para não depender de variável de ambiente em runtime,
+ * mas MERCADOPAGO_TEST_MODE continua valendo como override explícito.
+ */
+async function isMercadoPagoTestMode() {
+  const explicit = process.env.MERCADOPAGO_TEST_MODE?.trim().toLowerCase();
+  if (explicit === "true") return true;
+  if (explicit === "false") return false;
+
+  if (!cachedTestCredential) {
+    cachedTestCredential = fetch("https://api.mercadopago.com/users/me", {
+      headers: { Authorization: `Bearer ${getMercadoPagoAccessToken()}` },
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) return false;
+        const account = (await response.json()) as { tags?: string[] };
+        return Array.isArray(account.tags) && account.tags.includes("test_user");
+      })
+      .catch(() => false);
+  }
+  return cachedTestCredential;
+}
+
+async function createTestPixOrder(input: {
+  memberId: string;
+  amount: number;
+  type: "activation" | "deposit";
+  idempotencyKey: string;
+}): Promise<PixPaymentResult> {
+  const response = await fetch("https://api.mercadopago.com/v1/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": input.idempotencyKey,
+    },
+    body: JSON.stringify({
+      type: "online",
+      external_reference: `${input.type}:${input.memberId}`,
+      total_amount: input.amount.toFixed(2),
+      payer: {
+        email: "test_user_br@testuser.com",
+        first_name: "APRO",
+      },
+      transactions: {
+        payments: [
+          {
+            amount: input.amount.toFixed(2),
+            payment_method: {
+              id: "pix",
+              type: "bank_transfer",
+            },
+          },
+        ],
+      },
+    }),
+    cache: "no-store",
+  });
+
+  const result = (await response.json().catch(() => ({}))) as MercadoPagoOrder & {
+    message?: string;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(result.message || result.error || "Mercado Pago recusou o PIX de teste.");
+  }
+
+  const transaction = result.transactions?.payments?.[0];
+  const paymentMethod = transaction?.payment_method;
+  if (!result.id || !paymentMethod?.qr_code) {
+    throw new Error("Mercado Pago não retornou o QR Code PIX de teste.");
+  }
+
+  return {
+    // No Checkout API Orders, a consulta deve usar o ID ORD da ordem.
+    mpPaymentId: String(result.id),
+    status: normalizeOrderStatus(result),
+    qrCode: String(paymentMethod.qr_code),
+    qrCodeBase64: String(paymentMethod.qr_code_base64 || ""),
+    ticketUrl: String(paymentMethod.ticket_url || ""),
+    expiresAt: result.expiration_time ? String(result.expiration_time) : null,
+    simulated: true,
+  };
+}
+
 export async function createActivationPixPayment(input: {
   memberId: string;
   email: string;
@@ -26,6 +170,15 @@ export async function createActivationPixPayment(input: {
   notificationUrl?: string;
   idempotencyKey: string;
 }) {
+  if (await isMercadoPagoTestMode()) {
+    return createTestPixOrder({
+      memberId: input.memberId,
+      amount: ACTIVATION_AMOUNT,
+      type: "activation",
+      idempotencyKey: input.idempotencyKey,
+    });
+  }
+
   const payment = new Payment(getMercadoPagoClient());
   const result = await payment.create({
     body: {
@@ -45,6 +198,7 @@ export async function createActivationPixPayment(input: {
         first_name: input.nome.split(" ")[0] || "Associado",
         last_name: input.nome.split(" ").slice(1).join(" ") || "ECOMOPAR",
       },
+      date_of_expiration: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     },
     requestOptions: {
       idempotencyKey: input.idempotencyKey,
@@ -63,10 +217,83 @@ export async function createActivationPixPayment(input: {
     qrCodeBase64: String(transactionData.qr_code_base64 || ""),
     ticketUrl: String(transactionData.ticket_url || ""),
     expiresAt: result.date_of_expiration ? String(result.date_of_expiration) : null,
+    simulated: false,
+  };
+}
+
+export async function createDepositPixPayment(input: {
+  memberId: string;
+  email: string;
+  nome: string;
+  amount: number;
+  notificationUrl?: string;
+  idempotencyKey: string;
+}) {
+  if (await isMercadoPagoTestMode()) {
+    return createTestPixOrder({
+      memberId: input.memberId,
+      amount: input.amount,
+      type: "deposit",
+      idempotencyKey: input.idempotencyKey,
+    });
+  }
+
+  const payment = new Payment(getMercadoPagoClient());
+  const result = await payment.create({
+    body: {
+      transaction_amount: input.amount,
+      description: "Depósito na reserva ECOMOPAR",
+      payment_method_id: "pix",
+      notification_url: input.notificationUrl,
+      external_reference: `deposit:${input.memberId}`,
+      metadata: { type: "deposit", memberId: input.memberId },
+      payer: {
+        email: input.email,
+        first_name: input.nome.split(" ")[0] || "Associado",
+        last_name: input.nome.split(" ").slice(1).join(" ") || "ECOMOPAR",
+      },
+      date_of_expiration: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    },
+    requestOptions: { idempotencyKey: input.idempotencyKey },
+  });
+
+  const transactionData = result.point_of_interaction?.transaction_data;
+  if (!result.id || !transactionData?.qr_code) {
+    throw new Error("Mercado Pago não retornou o QR Code do depósito.");
+  }
+  return {
+    mpPaymentId: String(result.id),
+    status: String(result.status || "pending"),
+    qrCode: String(transactionData.qr_code),
+    qrCodeBase64: String(transactionData.qr_code_base64 || ""),
+    ticketUrl: String(transactionData.ticket_url || ""),
+    expiresAt: result.date_of_expiration ? String(result.date_of_expiration) : null,
+    simulated: false,
   };
 }
 
 export async function getMercadoPagoPayment(mpPaymentId: string) {
+  if (mpPaymentId.startsWith("ORD")) {
+    const response = await fetch(
+      `https://api.mercadopago.com/v1/orders/${encodeURIComponent(mpPaymentId)}`,
+      {
+        headers: { Authorization: `Bearer ${getMercadoPagoAccessToken()}` },
+        cache: "no-store",
+      },
+    );
+    const order = (await response.json().catch(() => ({}))) as MercadoPagoOrder & {
+      message?: string;
+      error?: string;
+    };
+    if (!response.ok) {
+      throw new Error(order.message || order.error || "Falha ao consultar o PIX de teste.");
+    }
+    return {
+      id: order.id || mpPaymentId,
+      status: normalizeOrderStatus(order),
+    };
+  }
+
   const payment = new Payment(getMercadoPagoClient());
   return payment.get({ id: mpPaymentId });
 }

@@ -18,6 +18,7 @@ import {
   createActivationPayment,
   fetchActivationReceipt,
   getActivationPayment,
+  replaceActivationPayment,
   type PublicActivationPayment,
 } from "../lib/activation";
 import { colors, fonts, shadow } from "../theme";
@@ -46,6 +47,7 @@ export function ActivationFlowModal({ visible, memberEmail, onClose, onActivated
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   const handleActivated = useCallback(async () => {
     await onActivated();
@@ -111,6 +113,34 @@ export function ActivationFlowModal({ visible, memberEmail, onClose, onActivated
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function checkPayment() {
+    if (!payment?.id) return;
+    setChecking(true);
+    setError("");
+    try {
+      const next = await getActivationPayment(payment.id);
+      setPayment(next);
+      if (next.status === "approved") await handleActivated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao consultar o PIX.");
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function generateAnotherPix() {
+    if (!payment?.id) return;
+    setLoading(true);
+    setError("");
+    try {
+      setPayment(await replaceActivationPayment(payment.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao gerar outro PIX.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function shareReceipt() {
     if (!payment?.id) return;
     setSharing(true);
@@ -138,6 +168,10 @@ export function ActivationFlowModal({ visible, memberEmail, onClose, onActivated
   }
 
   const approved = payment?.status === "approved";
+  const failed = payment?.status === "expired" || payment?.status === "rejected" || payment?.status === "cancelled";
+  const expiresAt = payment?.expiresAt
+    ? new Date(payment.expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : null;
 
   return (
     <Modal animationType="fade" onRequestClose={onClose} presentationStyle="overFullScreen" statusBarTranslucent transparent visible={visible}>
@@ -183,6 +217,17 @@ export function ActivationFlowModal({ visible, memberEmail, onClose, onActivated
                   <Text style={styles.ghostBtnText}>Fechar</Text>
                 </Pressable>
               </View>
+            ) : payment && failed ? (
+              <View style={styles.center}>
+                <View style={styles.failedIcon}>
+                  <Feather color={colors.brick500} name="clock" size={26} />
+                </View>
+                <Text style={styles.successTitle}>Este PIX não está mais válido</Text>
+                <Text style={styles.description}>Gere uma nova cobrança para concluir a ativação do cadastro.</Text>
+                <Pressable onPress={() => void generateAnotherPix()} style={({ pressed }) => [styles.primaryBtn, styles.fullButton, pressed && styles.pressed]}>
+                  <Text style={styles.primaryBtnText}>Gerar novo PIX</Text>
+                </Pressable>
+              </View>
             ) : payment ? (
               <View>
                 <Text style={styles.amount}>{money(payment.amount)}</Text>
@@ -208,10 +253,15 @@ export function ActivationFlowModal({ visible, memberEmail, onClose, onActivated
                   <Text style={styles.secondaryBtnText}>{copied ? "Código copiado" : "Copiar código PIX"}</Text>
                 </Pressable>
 
+                {expiresAt ? <Text style={styles.expiration}>Código válido até {expiresAt}</Text> : null}
+
                 <View style={styles.waiting}>
                   <ActivityIndicator color={colors.amber500} />
                   <Text style={styles.waitingText}>Aguardando confirmação do pagamento…</Text>
                 </View>
+                <Pressable disabled={checking} onPress={() => void checkPayment()} style={({ pressed }) => [styles.primaryBtn, pressed && styles.pressed]}>
+                  {checking ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryBtnText}>Já paguei, verificar agora</Text>}
+                </Pressable>
               </View>
             ) : (
               <Text style={styles.description}>Não foi possível iniciar a ativação.</Text>
@@ -262,6 +312,9 @@ const styles = StyleSheet.create({
   ghostBtn: { alignItems: "center", marginTop: 10, paddingVertical: 12 },
   ghostBtnText: { color: colors.inkSoft, fontFamily: fonts.semibold, fontSize: 13 },
   successIcon: { alignItems: "center", alignSelf: "center", backgroundColor: colors.green100, borderRadius: 40, height: 64, justifyContent: "center", marginBottom: 14, width: 64 },
+  failedIcon: { alignItems: "center", backgroundColor: colors.brick100, borderRadius: 40, height: 64, justifyContent: "center", marginBottom: 2, width: 64 },
+  fullButton: { alignSelf: "stretch", width: "100%" },
+  expiration: { color: colors.inkFaint, fontFamily: fonts.medium, fontSize: 10.5, marginTop: 8, textAlign: "center" },
   successTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 20, textAlign: "center" },
   description: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 13, lineHeight: 19, marginTop: 8, textAlign: "center" },
   error: { color: colors.danger, fontFamily: fonts.medium, fontSize: 12.5, marginTop: 14 },

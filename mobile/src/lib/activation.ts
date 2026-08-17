@@ -1,4 +1,6 @@
 import { auth } from "./firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "./firebase";
 
 export type PublicActivationPayment = {
   id: string;
@@ -17,7 +19,11 @@ export type PublicActivationPayment = {
 };
 
 function apiBase() {
-  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar-523.netlify.app").replace(/\/$/, "");
+  const url = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (!url) {
+    throw new Error("Servidor de pagamentos não configurado no aplicativo.");
+  }
+  return url.replace(/\/$/, "");
 }
 
 async function authHeaders() {
@@ -46,6 +52,16 @@ export async function createActivationPayment() {
   return data.payment;
 }
 
+export async function replaceActivationPayment(id: string) {
+  const headers = await authHeaders();
+  const res = await fetch(`${apiBase()}/api/payments/activation/${id}`, {
+    method: "DELETE",
+    headers,
+  });
+  await parseJson<{ ok: true }>(res);
+  return createActivationPayment();
+}
+
 export async function getActivationPayment(id: string) {
   const headers = await authHeaders();
   const res = await fetch(`${apiBase()}/api/payments/activation/${id}`, {
@@ -67,4 +83,32 @@ export async function fetchActivationReceipt(id: string) {
     throw new Error(data.error || "Falha ao baixar comprovante.");
   }
   return res.arrayBuffer();
+}
+
+export async function listMyActivationPayments() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Faça login para consultar o extrato.");
+  const snapshot = await getDocs(
+    query(collection(db, "activationPayments"), where("memberId", "==", user.uid)),
+  );
+  return snapshot.docs
+    .map((item) => {
+      const data = item.data();
+      return {
+        id: item.id,
+        amount: Number(data.amount ?? 0),
+        feeAmount: Number(data.feeAmount ?? 0),
+        reserveAmount: Number(data.reserveAmount ?? 0),
+        status: (data.status ?? "pending") as PublicActivationPayment["status"],
+        qrCode: "",
+        qrCodeBase64: "",
+        ticketUrl: "",
+        expiresAt: data.expiresAt ? String(data.expiresAt) : null,
+        emailSentAt: data.emailSentAt ? String(data.emailSentAt) : null,
+        receiptAvailable: Boolean(data.receiptGeneratedAt || data.status === "approved"),
+        approvedAt: data.approvedAt ? String(data.approvedAt) : null,
+        createdAt: String(data.createdAt ?? ""),
+      } satisfies PublicActivationPayment;
+    })
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

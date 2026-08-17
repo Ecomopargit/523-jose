@@ -69,6 +69,16 @@ export async function getActivationPayment(id: string) {
   return mapDoc(snap.id, snap.data() as Record<string, unknown>);
 }
 
+export async function cancelPendingActivationPayment(id: string, memberId: string) {
+  const ref = adminDb.collection(ACTIVATION_COLLECTION).doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  const payment = mapDoc(snap.id, snap.data() as Record<string, unknown>);
+  if (payment.memberId !== memberId || payment.status !== "pending") return false;
+  await ref.set({ status: "cancelled", updatedAt: nowIso() }, { merge: true });
+  return true;
+}
+
 export async function getActivationPaymentByMpId(mpPaymentId: string) {
   const snap = await adminDb
     .collection(ACTIVATION_COLLECTION)
@@ -173,6 +183,10 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
     tx.update(paymentRef, {
       status: "approved",
       approvedAt: stamp,
+      reserveCredited: true,
+      reserveCreditedAt: stamp,
+      adminFeeCredited: true,
+      adminFeeCreditedAt: stamp,
       updatedAt: stamp,
     });
     tx.set(
@@ -184,6 +198,8 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
         withdrawalLockedUntil: lockedUntil,
         activationPaymentId: payment.id,
         activationMpPaymentId: payment.mpPaymentId,
+        saldoDisponivel: FieldValue.increment(payment.reserveAmount),
+        depositosCount: FieldValue.increment(1),
       },
       { merge: true },
     );

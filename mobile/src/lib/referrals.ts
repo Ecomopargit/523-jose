@@ -16,17 +16,29 @@ function baseUrl() {
 
 async function request<T>(method: "GET" | "POST", body?: object): Promise<T> {
   if (!auth.currentUser) throw new Error("Faça login para continuar.");
-  const response = await fetch(`${baseUrl()}/api/referrals`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${await auth.currentUser.getIdToken()}`,
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = (await response.json().catch(() => ({}))) as T & { error?: string };
-  if (!response.ok) throw new Error(data.error || "Falha ao processar indicação.");
-  return data;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(`${baseUrl()}/api/referrals`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${await auth.currentUser.getIdToken()}`,
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+    const data = (await response.json().catch(() => ({}))) as T & { error?: string };
+    if (!response.ok) throw new Error(data.error || "Falha ao processar indicação.");
+    return data;
+  } catch (error) {
+    if ((error as { name?: string }).name === "AbortError") {
+      throw new Error("O servidor demorou para responder. Tente novamente.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export function ensureReferralProfile(referralCode?: string, joinCampaign = false) {

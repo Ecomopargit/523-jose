@@ -1,6 +1,7 @@
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import {
   Manrope_400Regular,
@@ -12,6 +13,7 @@ import {
 } from "@expo-google-fonts/manrope";
 
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import { hasCompletedOnboarding } from "./src/features/onboarding";
 import { AppTabs } from "./src/navigation/AppTabs";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
@@ -46,8 +48,19 @@ const navigationTheme = {
 
 function RootNavigator() {
   const { user, member, initializing } = useAuth();
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
-  if (initializing) {
+  useEffect(() => {
+    let active = true;
+    void hasCompletedOnboarding().then((done) => {
+      if (active) setOnboardingDone(done);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (initializing || onboardingDone === null) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.green500} size="large" />
@@ -57,7 +70,10 @@ function RootNavigator() {
 
   return (
     <NavigationContainer theme={navigationTheme}>
-      <Stack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
+      <Stack.Navigator
+        initialRouteName={user ? undefined : onboardingDone ? "Login" : "Welcome"}
+        screenOptions={{ headerShown: false, animation: "fade" }}
+      >
         {user ? (
           member?.role === "admin" ? (
             <>

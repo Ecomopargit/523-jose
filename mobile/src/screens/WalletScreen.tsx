@@ -11,14 +11,16 @@ import { TransactionFlowModal, type TransactionFlow } from "../components/Transa
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts, shadow } from "../theme";
 import type { AppTabParamList } from "../types";
+import { listMyActivationPayments, type PublicActivationPayment } from "../lib/activation";
 
 const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 type Props = BottomTabScreenProps<AppTabParamList, "Carteira">;
 
 export function WalletScreen({ navigation, route }: Props) {
-  const { member } = useAuth();
+  const { member, refresh } = useAuth();
   const [flow, setFlow] = useState<TransactionFlow | null>(null);
+  const [pixPayments, setPixPayments] = useState<PublicActivationPayment[]>([]);
   const total = (member?.saldoDisponivel || 0) + (member?.saldoBloqueado || 0) + (member?.saldoBonus || 0);
   const lockedUntil = member?.withdrawalLockedUntil
     ? new Date(member.withdrawalLockedUntil)
@@ -45,6 +47,11 @@ export function WalletScreen({ navigation, route }: Props) {
     else setFlow(route.params.flow);
     navigation.setParams({ flow: undefined });
   }, [navigation, route.params?.flow]);
+
+  useEffect(() => {
+    if (!member?.id) return;
+    void listMyActivationPayments().then(setPixPayments).catch(() => setPixPayments([]));
+  }, [member?.id, member?.depositosCount]);
 
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
@@ -82,12 +89,18 @@ export function WalletScreen({ navigation, route }: Props) {
 
         <View style={styles.sectionHeading}><View><Text style={styles.section}>Movimentações recentes</Text><Text style={styles.sectionHint}>Seu histórico financeiro</Text></View><Pressable accessibilityRole="button" hitSlop={10} onPress={() => Alert.alert("Extrato completo", "O histórico completo estará disponível assim que suas primeiras movimentações forem processadas.")}><Text style={styles.seeAll}>Ver extrato</Text></Pressable></View>
         <View style={styles.transactionsCard}>
-          {member?.depositosCount ? (
-            <>
-              <Transaction date="Último registro" icon="arrow-down-left" title="Contribuição diária" value="+ R$ 5,00" />
-              <View style={styles.rule} />
-              <Transaction date="Programa de indicação" icon="gift" title="Bônus acumulado" value={money(member?.saldoBonus)} />
-            </>
+          {pixPayments.length ? (
+            pixPayments.slice(0, 4).map((payment, index) => (
+              <View key={payment.id}>
+                {index > 0 ? <View style={styles.rule} /> : null}
+                <Transaction
+                  date={payment.status === "approved" ? "PIX confirmado" : "Aguardando confirmação"}
+                  icon={payment.status === "approved" ? "check-circle" : "clock"}
+                  title={`Reserva ${money(payment.reserveAmount)} · taxa ${money(payment.feeAmount)}`}
+                  value={money(payment.amount)}
+                />
+              </View>
+            ))
           ) : (
             <View style={styles.empty}>
               <View style={styles.emptyIcon}><Feather color={colors.green700} name="inbox" size={21} /></View>
@@ -103,6 +116,7 @@ export function WalletScreen({ navigation, route }: Props) {
         flow={flow}
         onClose={() => setFlow(null)}
         pixKey={member?.chavePix || ""}
+        onCompleted={refresh}
       />
     </SafeAreaView>
   );

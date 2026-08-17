@@ -1,4 +1,5 @@
 import { FieldValue } from "firebase-admin/firestore";
+import { createHash } from "crypto";
 
 import { adminDb } from "@/lib/firebase-admin";
 
@@ -15,7 +16,8 @@ function normalizeCode(value: string) {
 }
 
 function ownCode(uid: string) {
-  return `EC${uid.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase()}`;
+  const fingerprint = createHash("sha256").update(uid).digest("hex").slice(0, 10);
+  return `EC${fingerprint.toUpperCase()}`;
 }
 
 export function withdrawalLockUntil(activatedAt: string) {
@@ -164,27 +166,38 @@ export async function getReferralDashboard(uid: string) {
   const userSnap = await adminDb.collection("users").doc(uid).get();
   if (!userSnap.exists) throw new Error("Associado não encontrado.");
   const user = userSnap.data()!;
-  const referralsSnap = await adminDb
-    .collection("referrals")
-    .where("referrerId", "==", uid)
-    .orderBy("createdAt", "desc")
-    .get();
+  const referralQuery = adminDb.collection("referrals").where("referrerId", "==", uid);
 
-  const referrals = await Promise.all(
-    referralsSnap.docs.map(async (item) => {
-      const data = item.data();
-      const referred = await adminDb.collection("users").doc(String(data.referredId)).get();
-      const profile = referred.data() || {};
-      return {
-        id: item.id,
-        nome: String(profile.nome || "Associado"),
-        email: String(profile.email || ""),
-        status: String(data.status || "pending"),
-        createdAt: String(data.createdAt || ""),
-        activatedAt: data.activatedAt ? String(data.activatedAt) : null,
-      };
-    }),
+  async function loadReferrals() {
+    const snapshot = await referralQuery.get();
+    const items = await Promise.all(
+      snapshot.docs.map(async (item) => {
+        const data = item.data();
+        const referred = await adminDb.collection("users").doc(String(data.referredId)).get();
+        const profile = referred.data() || {};
+        return {
+          id: item.id,
+          referredId: String(data.referredId || item.id),
+          nome: String(profile.nome || "Associado"),
+          email: String(profile.email || ""),
+          memberStatus: String(profile.status || "pendente"),
+          status: String(data.status || "pending"),
+          createdAt: String(data.createdAt || ""),
+          activatedAt: data.activatedAt ? String(data.activatedAt) : null,
+        };
+      }),
+    );
+    return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  let referrals = await loadReferrals();
+  const pendingActive = referrals.filter(
+    (item) => item.status !== "activated" && item.memberStatus === "ativo",
   );
+  if (pendingActive.length) {
+    await Promise.all(pendingActive.map((item) => activateReferralForMember(item.referredId)));
+    referrals = await loadReferrals();
+  }
 
   const valid = referrals.filter((item) => item.status === "activated").length;
   return {
@@ -197,6 +210,6 @@ export async function getReferralDashboard(uid: string) {
     withdrawalLockedUntil: user.withdrawalLockedUntil
       ? String(user.withdrawalLockedUntil)
       : null,
-    referrals,
+    referrals: referrals.map(({ referredId: _referredId, memberStatus: _memberStatus, ...item }) => item),
   };
 }

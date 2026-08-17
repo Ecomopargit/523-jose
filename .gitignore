@@ -35,3 +35,11 @@ next-env.d.ts
 
 # Netlify
 .netlify
+
+# Firebase Admin credentials
+firebase-service-account.json
+*firebase-adminsdk*.json
+
+# local prototype extracts
+.tmp-onboarding-proto/
+

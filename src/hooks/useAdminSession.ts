@@ -51,6 +51,8 @@ export function useAdminSession() {
       totalBloqueado: 0,
       totalBonus: 0,
       totalDepositos: 0,
+      totalReceitaAdmin: 0,
+      pagamentosAprovados: 0,
       novosHoje: 0,
       recentes: [] as MemberProfile[],
     },

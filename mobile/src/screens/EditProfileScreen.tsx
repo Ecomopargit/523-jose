@@ -31,6 +31,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "EditProfile">;
 
 const emptyForm: MemberProfileUpdate = {
   nome: "",
+  cpf: "",
   telefone: "",
   dataNascimento: "",
   endereco: "",
@@ -43,6 +44,30 @@ const emptyForm: MemberProfileUpdate = {
   chavePix: "",
 };
 
+function formatCpf(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  return digits
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
+
+function isValidCpf(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false;
+
+  const calculateDigit = (length: number) => {
+    let sum = 0;
+    for (let index = 0; index < length; index += 1) {
+      sum += Number(digits[index]) * (length + 1 - index);
+    }
+    const remainder = (sum * 10) % 11;
+    return remainder === 10 ? 0 : remainder;
+  };
+
+  return calculateDigit(9) === Number(digits[9]) && calculateDigit(10) === Number(digits[10]);
+}
+
 export function EditProfileScreen({ navigation }: Props) {
   const { member, refresh } = useAuth();
   const [form, setForm] = useState(emptyForm);
@@ -52,20 +77,24 @@ export function EditProfileScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (!member) return;
-    setForm({
-      nome: member.nome,
-      telefone: member.telefone,
-      dataNascimento: member.dataNascimento,
-      endereco: member.endereco,
-      cidade: member.cidade,
-      estado: member.estado,
-      cep: member.cep,
-      tipoVeiculo: member.tipoVeiculo,
-      modelo: member.modelo,
-      placa: member.placa,
-      chavePix: member.chavePix,
-    });
-    setLocalPhoto(member.photoURL);
+    const timer = setTimeout(() => {
+      setForm({
+        nome: member.nome,
+        cpf: formatCpf(member.cpf),
+        telefone: member.telefone,
+        dataNascimento: member.dataNascimento,
+        endereco: member.endereco,
+        cidade: member.cidade,
+        estado: member.estado,
+        cep: member.cep,
+        tipoVeiculo: member.tipoVeiculo,
+        modelo: member.modelo,
+        placa: member.placa,
+        chavePix: member.chavePix,
+      });
+      setLocalPhoto(member.photoURL);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [member]);
 
   const set = (key: keyof MemberProfileUpdate) => (value: string) =>
@@ -99,8 +128,12 @@ export function EditProfileScreen({ navigation }: Props) {
   }
 
   async function save() {
-    if (!form.nome.trim() || !form.telefone.trim()) {
-      Alert.alert("Dados incompletos", "Nome e telefone são obrigatórios.");
+    if (!form.nome.trim() || !form.cpf.trim() || !form.telefone.trim()) {
+      Alert.alert("Dados incompletos", "Nome, CPF e telefone são obrigatórios.");
+      return;
+    }
+    if (!isValidCpf(form.cpf)) {
+      Alert.alert("CPF inválido", "Confira os 11 dígitos do CPF antes de salvar.");
       return;
     }
     setSaving(true);
@@ -156,9 +189,9 @@ export function EditProfileScreen({ navigation }: Props) {
 
           <Section title="Dados pessoais" subtitle="Informações principais da sua conta">
             <Field autoCapitalize="words" icon="user" label="Nome completo" onChangeText={set("nome")} value={form.nome} />
+            <Field icon="file-text" keyboardType="numeric" label="CPF" onChangeText={(value) => set("cpf")(formatCpf(value))} placeholder="000.000.000-00" value={form.cpf} />
             <Field icon="phone" keyboardType="phone-pad" label="Telefone / WhatsApp" onChangeText={set("telefone")} value={form.telefone} />
             <Field icon="calendar" label="Data de nascimento" onChangeText={set("dataNascimento")} placeholder="DD/MM/AAAA" value={form.dataNascimento} />
-            <ReadOnly label="CPF verificado" value={member?.cpf || "Não informado"} />
             <ReadOnly label="E-mail de acesso" value={member?.email || ""} />
           </Section>
 
@@ -179,7 +212,7 @@ export function EditProfileScreen({ navigation }: Props) {
           </Section>
 
           <Button icon="check" label="Salvar alterações" loading={saving} onPress={save} />
-          <Text style={styles.legal}>CPF e e-mail são dados verificados. Para alterá-los, entre em contato com o suporte.</Text>
+          <Text style={styles.legal}>Confira seu CPF antes de salvar. O e-mail de acesso continua protegido e só pode ser alterado pelo suporte.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

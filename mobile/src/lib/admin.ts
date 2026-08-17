@@ -12,10 +12,15 @@ export type AdminStats = {
   total: number;
   totalAssets: number;
   totalAvailable: number;
+  approvedPix: number;
+  adminRevenue: number;
 };
 
 export async function getAdminStats(): Promise<AdminStats> {
-  const snapshot = await getDocs(collection(db, "users"));
+  const [snapshot, paymentSnapshot] = await Promise.all([
+    getDocs(collection(db, "users")),
+    getDocs(collection(db, "activationPayments")),
+  ]);
   const members = snapshot.docs
     .map((item) => {
       const data = item.data();
@@ -58,6 +63,9 @@ export async function getAdminStats(): Promise<AdminStats> {
     (sum, member) => sum + member.saldoDisponivel + member.saldoBloqueado + member.saldoBonus,
     0,
   );
+  const approvedPayments = paymentSnapshot.docs
+    .map((item) => item.data())
+    .filter((payment) => payment.status === "approved");
 
   return {
     active: members.filter((member) => member.status === "ativo").length,
@@ -68,6 +76,8 @@ export async function getAdminStats(): Promise<AdminStats> {
     total: members.length,
     totalAssets,
     totalAvailable,
+    approvedPix: approvedPayments.length,
+    adminRevenue: approvedPayments.reduce((sum, payment) => sum + Number(payment.feeAmount ?? 0), 0),
   };
 }
 

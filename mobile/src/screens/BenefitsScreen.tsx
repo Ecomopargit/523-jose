@@ -1,14 +1,13 @@
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
-import { useAuth } from "../context/AuthContext";
 import {
   ensureReferralProfile,
   getReferralDashboard,
@@ -26,29 +25,48 @@ const benefits = [
 
 export function BenefitsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { member } = useAuth();
   const [referral, setReferral] = useState<ReferralDashboard | null>(null);
-  const code = referral?.code || member?.referralCode || "CARREGANDO";
+  const [loadingReferral, setLoadingReferral] = useState(true);
+  const [referralError, setReferralError] = useState("");
+  const code = referral?.code || "";
+  const progress = (referral?.valid ?? 0) % 3;
+  const remaining = progress === 0 && (referral?.valid ?? 0) > 0 ? 3 : 3 - progress;
 
-  useEffect(() => {
-    let active = true;
-    void ensureReferralProfile(undefined, true)
-      .then(() => getReferralDashboard())
-      .then((data) => {
-        if (active) setReferral(data);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
+  const loadReferral = useCallback(async () => {
+    setLoadingReferral(true);
+    setReferralError("");
+    try {
+      await ensureReferralProfile(undefined, true);
+      setReferral(await getReferralDashboard());
+    } catch (error) {
+      setReferralError(
+        error instanceof Error ? error.message : "Não foi possível carregar seu código.",
+      );
+    } finally {
+      setLoadingReferral(false);
+    }
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      void loadReferral();
+    }, [loadReferral]),
+  );
+
   async function share() {
+    if (!code) {
+      Alert.alert("Código indisponível", "Tente carregar seu código novamente antes de compartilhar.");
+      return;
+    }
     const link = `https://ecomopar-523.netlify.app/cadastrar?ref=${code}`;
-    await Share.share({
-      message: `Venha para a ECOMOPAR! Use meu código ${code} ou cadastre-se pelo link: ${link}`,
-      url: link,
-    });
+    try {
+      await Share.share({
+        message: `Venha para a ECOMOPAR! Use meu código ${code} ou cadastre-se pelo link: ${link}`,
+        url: link,
+      });
+    } catch {
+      Alert.alert("Não foi possível compartilhar", "Tente novamente em alguns instantes.");
+    }
   }
 
   return (
@@ -59,7 +77,7 @@ export function BenefitsScreen() {
         <ScreenHeader
           eyebrow="Cuidado completo"
           title="Benefícios"
-          action={<View style={styles.headerMark}><Image source={require("../../assets/ecomopar-mark.png")} style={styles.headerMarkImage} /></View>}
+          action={<View style={styles.headerMark}><Image alt="Símbolo ECOMOPAR" source={require("../../assets/ecomopar-mark.png")} style={styles.headerMarkImage} /></View>}
         />
 
         <LinearGradient colors={["#0F5D45", colors.green900, "#073125"]} end={{ x: 1, y: 1 }} style={styles.referral}>
@@ -77,17 +95,30 @@ export function BenefitsScreen() {
           <View style={styles.codeRow}>
             <View>
               <Text style={styles.codeLabel}>SEU CÓDIGO</Text>
-              <Text style={styles.code}>{code}</Text>
+              <Text style={styles.code}>{code || (loadingReferral ? "GERANDO..." : "INDISPONÍVEL")}</Text>
             </View>
-            <Pressable onPress={share} style={({ pressed }) => [styles.share, pressed && styles.pressed]}>
-              <Feather color={colors.green900} name="share-2" size={17} />
+            <Pressable disabled={!code || loadingReferral} onPress={share} style={({ pressed }) => [styles.share, (!code || loadingReferral) && styles.shareDisabled, pressed && styles.pressed]}>
+              {loadingReferral ? <ActivityIndicator color={colors.green900} size="small" /> : <Feather color={colors.green900} name="share-2" size={17} />}
               <Text style={styles.shareText}>Compartilhar</Text>
             </Pressable>
           </View>
+          {referralError ? (
+            <Pressable accessibilityRole="button" onPress={() => void loadReferral()} style={styles.referralError}>
+              <Feather color="#FFD5CC" name="alert-circle" size={15} />
+              <Text numberOfLines={2} style={styles.referralErrorText}>{referralError}</Text>
+              <Text style={styles.retryText}>Tentar novamente</Text>
+            </Pressable>
+          ) : null}
           <View style={styles.referralStats}>
             <Text style={styles.referralStat}>{referral?.total ?? 0} indicados</Text>
             <Text style={styles.referralStat}>{referral?.valid ?? 0} ativados</Text>
-            <Text style={styles.referralStat}>R$ {referral?.bonus ?? 0} em bônus</Text>
+            <Text style={styles.referralStat}>R$ {(referral?.bonus ?? 0).toLocaleString("pt-BR")} em bônus</Text>
+          </View>
+          <View style={styles.bonusProgress}>
+            <View style={styles.progressBars}>
+              {[0, 1, 2].map((step) => <View key={step} style={[styles.progressBar, step < progress && styles.progressBarActive]} />)}
+            </View>
+            <Text style={styles.progressText}>{remaining === 1 ? "Falta 1 ativação para o próximo bônus" : `Faltam ${remaining} ativações para o próximo bônus`}</Text>
           </View>
         </LinearGradient>
 
@@ -151,9 +182,18 @@ const styles = StyleSheet.create({
   codeRow: { alignItems: "center", backgroundColor: "rgba(255,255,255,0.075)", borderColor: "rgba(255,255,255,0.10)", borderRadius: 15, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", marginTop: 18, padding: 5, paddingLeft: 14 },
   codeLabel: { color: "rgba(255,255,255,0.42)", fontFamily: fonts.bold, fontSize: 7.5, letterSpacing: 1.1 },
   code: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 14, letterSpacing: 1.7, marginTop: 2 },
+  referralError: { alignItems: "center", backgroundColor: "rgba(189,62,39,0.24)", borderColor: "rgba(255,213,204,0.18)", borderRadius: 11, borderWidth: 1, flexDirection: "row", gap: 7, marginTop: 10, paddingHorizontal: 10, paddingVertical: 9 },
+  referralErrorText: { color: "#FFE4DE", flex: 1, fontFamily: fonts.medium, fontSize: 8.5, lineHeight: 12 },
+  retryText: { color: colors.white, fontFamily: fonts.bold, fontSize: 8.5 },
   referralStats: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
   referralStat: { backgroundColor: "rgba(255,255,255,0.09)", borderRadius: 10, color: colors.white, fontFamily: fonts.semibold, fontSize: 9, paddingHorizontal: 9, paddingVertical: 6 },
+  bonusProgress: { marginTop: 13 },
+  progressBars: { flexDirection: "row", gap: 5 },
+  progressBar: { backgroundColor: "rgba(255,255,255,0.14)", borderRadius: 2, flex: 1, height: 4 },
+  progressBarActive: { backgroundColor: colors.green400 },
+  progressText: { color: "rgba(255,255,255,0.55)", fontFamily: fonts.medium, fontSize: 8.5, marginTop: 6 },
   share: { alignItems: "center", backgroundColor: "#DDF2E9", borderRadius: 11, flexDirection: "row", gap: 7, paddingHorizontal: 13, paddingVertical: 11 },
+  shareDisabled: { opacity: 0.58 },
   shareText: { color: colors.green900, fontFamily: fonts.bold, fontSize: 10 },
   sectionHeading: { alignItems: "flex-end", flexDirection: "row", justifyContent: "space-between", marginBottom: 13, marginTop: 25 },
   section: { color: colors.ink, fontFamily: fonts.bold, fontSize: 16 },

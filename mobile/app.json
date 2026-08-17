@@ -31,6 +31,12 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "581d3c92-f5cb-4960-86df-e7c12a6a04da"
+      }
+    },
+    "owner": "lcmonteiro7"
   }
 }

@@ -25,7 +25,14 @@ export function RegisterScreen({ navigation }: Props) {
     setLoading(true);
     const result = await register(form);
     setLoading(false);
-    if (!result.ok) Alert.alert("Não foi possível cadastrar", result.error);
+    if (!result.ok) {
+      Alert.alert("Não foi possível cadastrar", result.error);
+    } else if ("warning" in result) {
+      Alert.alert(
+        "Conta criada",
+        `${result.warning} Você poderá tentar novamente na área de Benefícios.`,
+      );
+    }
   }
 
   return (

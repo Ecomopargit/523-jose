@@ -90,6 +90,7 @@ export function AdminDashboardScreen({ navigation }: Props) {
           <View style={styles.heroFooter}>
             <View><Text style={styles.heroMetaLabel}>DISPONÍVEL</Text><Text style={styles.heroMetaValue}>{money(stats?.totalAvailable)}</Text></View>
             <View><Text style={styles.heroMetaLabel}>ASSOCIADOS</Text><Text style={styles.heroMetaValue}>{stats?.total || 0}</Text></View>
+            <View><Text style={styles.heroMetaLabel}>RECEITA PIX</Text><Text style={styles.heroMetaValue}>{money(stats?.adminRevenue)}</Text></View>
           </View>
         </LinearGradient>
 
@@ -105,6 +106,7 @@ export function AdminDashboardScreen({ navigation }: Props) {
               <Stat icon="check-circle" label="Ativos" tone="green" value={stats?.active || 0} />
               <Stat icon="clock" label="Pendentes" tone="amber" value={stats?.pending || 0} />
               <Stat icon="alert-circle" label="Inadimplentes" tone="brick" value={stats?.overdue || 0} />
+              <Stat icon="zap" label="PIX aprovados" tone="green" value={stats?.approvedPix || 0} />
             </View>
 
             <View style={styles.sectionHeader}><View><Text style={styles.sectionTitle}>Aprovações pendentes</Text><Text style={styles.sectionHint}>Cadastros aguardando análise</Text></View><View style={styles.countBadge}><Text style={styles.countText}>{stats?.pending || 0}</Text></View></View>

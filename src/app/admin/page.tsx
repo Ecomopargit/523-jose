@@ -136,6 +136,14 @@ export default function AdminPage() {
                 <span className="text-ink-soft">Depósitos registrados</span>
                 <span className="font-semibold font-mono-num">{stats.totalDepositos}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-ink-soft">PIX aprovados</span>
+                <span className="font-semibold font-mono-num">{stats.pagamentosAprovados}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-soft">Receita administrativa</span>
+                <span className="font-semibold font-mono-num text-green-700">{brl(stats.totalReceitaAdmin)}</span>
+              </div>
               <div className="flex justify-between border-t border-line-soft pt-2.5">
                 <span className="text-ink-soft">Patrimônio sob custódia</span>
                 <span className="font-semibold font-mono-num text-green-700">

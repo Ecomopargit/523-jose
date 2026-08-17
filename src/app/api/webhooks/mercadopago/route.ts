@@ -6,6 +6,7 @@ import {
   syncActivationPaymentStatus,
 } from "@/lib/activation-payments";
 import { getMercadoPagoPayment, mapMpStatus, verifyMercadoPagoWebhook } from "@/lib/mercadopago";
+import { applyApprovedDeposit, getDepositByMpId, syncDeposit } from "@/lib/deposit-payments";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -39,19 +40,23 @@ export async function POST(request: NextRequest) {
     // Sempre reconsulta o pagamento na API MP (fonte da verdade).
     const mp = await getMercadoPagoPayment(dataId);
     const status = mapMpStatus(mp.status);
-    const payment = await getActivationPaymentByMpId(String(mp.id || dataId));
+    const mpId = String(mp.id || dataId);
+    const payment = await getActivationPaymentByMpId(mpId);
 
-    if (!payment) {
-      return NextResponse.json({ ok: true, ignored: "payment_not_found" });
+    if (payment) {
+      if (status === "approved") await applyApprovedActivation(payment);
+      else await syncActivationPaymentStatus(payment);
+      return NextResponse.json({ ok: true, type: "activation" });
     }
 
-    if (status === "approved") {
-      await applyApprovedActivation(payment);
-    } else {
-      await syncActivationPaymentStatus(payment);
+    const deposit = await getDepositByMpId(mpId);
+    if (deposit) {
+      if (status === "approved") await applyApprovedDeposit(deposit);
+      else await syncDeposit(deposit);
+      return NextResponse.json({ ok: true, type: "deposit" });
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, ignored: "payment_not_found" });
   } catch (error) {
     console.error("mercadopago webhook", error);
     // Retorna 200 para evitar retries agressivos em erros de parsing já logados;
