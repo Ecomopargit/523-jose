@@ -9,10 +9,10 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc, type Timestamp } from "firebase/firestore";
 
 import { auth, db } from "./firebase";
+import { uploadProfilePhoto as uploadProfilePhotoToStorage } from "./profile-photo";
 import type { MemberProfile } from "../types";
 import { ensureReferralProfile } from "./referrals";
 
@@ -156,10 +156,18 @@ export type Registration = {
   password: string;
   cpf: string;
   telefone: string;
-  tipoVeiculo: string;
-  modelo: string;
-  placa: string;
-  codigoIndicacao: string;
+  dataNascimento?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  tipoVeiculo?: string;
+  modelo?: string;
+  placa?: string;
+  carroProprio?: "sim" | "nao" | "";
+  locadora?: string;
+  chavePix?: string;
+  codigoIndicacao?: string;
 };
 
 export async function register(input: Registration) {
@@ -167,24 +175,25 @@ export async function register(input: Registration) {
     const email = input.email.trim().toLowerCase();
     const credential = await createUserWithEmailAndPassword(auth, email, input.password);
     await updateProfile(credential.user, { displayName: input.nome.trim() });
+    const codigoIndicacao = (input.codigoIndicacao ?? "").trim().toUpperCase();
     await setDoc(doc(db, "users", credential.user.uid), {
       nome: input.nome.trim(),
       email,
-      cpf: input.cpf.trim(),
+      cpf: input.cpf.replace(/\D/g, ""),
       telefone: input.telefone.trim(),
-      dataNascimento: "",
-      endereco: "",
-      cidade: "",
-      estado: "",
-      cep: "",
-      tipoVeiculo: input.tipoVeiculo,
-      modelo: input.modelo.trim(),
-      placa: input.placa.trim().toUpperCase(),
-      carroProprio: "",
-      locadora: "",
-      chavePix: "",
-      aderiuIndicacao: Boolean(input.codigoIndicacao.trim()),
-      codigoIndicacao: input.codigoIndicacao.trim().toUpperCase(),
+      dataNascimento: (input.dataNascimento ?? "").trim(),
+      endereco: (input.endereco ?? "").trim(),
+      cidade: (input.cidade ?? "").trim(),
+      estado: (input.estado ?? "").trim().toUpperCase(),
+      cep: (input.cep ?? "").trim(),
+      tipoVeiculo: (input.tipoVeiculo ?? "").trim(),
+      modelo: (input.modelo ?? "").trim(),
+      placa: (input.placa ?? "").trim().toUpperCase(),
+      carroProprio: input.carroProprio || "",
+      locadora: (input.locadora ?? "").trim(),
+      chavePix: (input.chavePix ?? "").trim(),
+      aderiuIndicacao: Boolean(codigoIndicacao),
+      codigoIndicacao,
       status: "pendente",
       role: "member",
       saldoDisponivel: 0,
@@ -197,7 +206,7 @@ export async function register(input: Registration) {
       updatedAt: serverTimestamp(),
     });
     try {
-      await ensureReferralProfile(input.codigoIndicacao, Boolean(input.codigoIndicacao.trim()));
+      await ensureReferralProfile(codigoIndicacao, Boolean(codigoIndicacao));
       return { ok: true as const };
     } catch (error) {
       return {
@@ -259,21 +268,7 @@ export async function updateMemberProfile(input: MemberProfileUpdate) {
 }
 
 export async function uploadMemberPhoto(uri: string) {
-  const user = auth.currentUser;
-  if (!user) return { ok: false as const, error: "Sessão expirada. Entre novamente." };
-  try {
-    const optimized = await manipulateAsync(
-      uri,
-      [{ resize: { width: 420 } }],
-      { base64: true, compress: 0.62, format: SaveFormat.JPEG },
-    );
-    if (!optimized.base64) throw new Error("Imagem não processada");
-    const photoURL = `data:image/jpeg;base64,${optimized.base64}`;
-    await updateDoc(doc(db, "users", user.uid), { photoURL, updatedAt: serverTimestamp() });
-    return { ok: true as const, photoURL };
-  } catch {
-    return { ok: false as const, error: "Não foi possível enviar a foto. Tente novamente." };
-  }
+  return uploadProfilePhotoToStorage(uri);
 }
 
 export async function resetPassword(email: string) {

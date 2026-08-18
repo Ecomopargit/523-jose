@@ -1,19 +1,69 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { useState } from "react";
 
 import { ScreenAtmosphere, ScreenHeader } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
+import { chooseAndUploadProfilePhoto, removeProfilePhoto } from "../lib/profile-photo";
 import { colors, fonts, shadow } from "../theme";
 
 export function ProfileScreen() {
   const navigation = useNavigation();
-  const { member, logout } = useAuth();
+  const { member, logout, refresh } = useAuth();
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const initials = member?.nome.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "EC";
   const memberId = member?.id.slice(0, 8).toUpperCase() || "NOVO";
+
+  function openPhotoOptions() {
+    Alert.alert("Foto de perfil", "Como deseja adicionar sua foto?", [
+      { text: "Galeria", onPress: () => void handlePhoto("library") },
+      { text: "Câmera", onPress: () => void handlePhoto("camera") },
+      member?.photoURL
+        ? {
+            text: "Remover foto",
+            style: "destructive",
+            onPress: () => {
+              void (async () => {
+                setUploadingPhoto(true);
+                const removed = await removeProfilePhoto();
+                setUploadingPhoto(false);
+                if (!removed.ok) {
+                  Alert.alert("Erro", removed.error);
+                  return;
+                }
+                await refresh();
+              })();
+            },
+          }
+        : undefined,
+      { text: "Cancelar", style: "cancel" },
+    ].filter(Boolean) as Parameters<typeof Alert.alert>[2]);
+  }
+
+  async function handlePhoto(source: "library" | "camera") {
+    setUploadingPhoto(true);
+    try {
+      const result = await chooseAndUploadProfilePhoto(source);
+      if ("cancelled" in result && result.cancelled) return;
+      if (!result.ok) {
+        Alert.alert("Foto não atualizada", result.error);
+        return;
+      }
+      await refresh();
+      Alert.alert("Foto atualizada", "Sua imagem de perfil foi salva com sucesso.");
+    } catch (error) {
+      Alert.alert(
+        "Foto não atualizada",
+        error instanceof Error ? error.message : "Não foi possível enviar a foto.",
+      );
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
 
   function confirmLogout() {
     Alert.alert("Sair da conta?", "Você precisará entrar novamente para acessar sua reserva.", [
@@ -33,9 +83,15 @@ export function ProfileScreen() {
           <View pointerEvents="none" style={styles.identityGlow} />
           <Image source={require("../../assets/ecomopar-mark.png")} style={styles.identityWatermark} />
           <View style={styles.identityTop}>
-            <Pressable onPress={() => navigation.getParent()?.navigate("EditProfile" as never)} style={styles.avatar}>
+            <Pressable disabled={uploadingPhoto} onPress={openPhotoOptions} style={styles.avatar}>
               {member?.photoURL ? <Image source={{ uri: member.photoURL }} style={styles.avatarImage} /> : <Text style={styles.avatarText}>{initials}</Text>}
-              <View style={styles.cameraBadge}><Feather color={colors.green900} name="camera" size={9} /></View>
+              <View style={styles.cameraBadge}>
+                {uploadingPhoto ? (
+                  <ActivityIndicator color={colors.green900} size="small" />
+                ) : (
+                  <Feather color={colors.green900} name="camera" size={9} />
+                )}
+              </View>
               <View style={styles.avatarStatus} />
             </Pressable>
             <View style={styles.memberChip}><Feather color={colors.green400} name="shield" size={11} /><Text style={styles.memberChipText}>ASSOCIADO</Text></View>
@@ -55,6 +111,16 @@ export function ProfileScreen() {
           <Info icon="phone" label="Telefone" value={member?.telefone || "Não informado"} />
           <Info icon="truck" label="Veículo" value={[member?.modelo, member?.placa].filter(Boolean).join(" • ") || "Não informado"} />
           <Info icon="zap" label="Chave PIX" value={member?.chavePix || "Não cadastrada"} last />
+        </View>
+
+        <View style={styles.sectionHeading}><View><Text style={styles.section}>Preferências</Text><Text style={styles.sectionHint}>Personalize sua experiência</Text></View></View>
+        <View style={styles.menuCard}>
+          <Menu
+            icon="bell"
+            label="Lembretes de depósito"
+            onPress={() => navigation.getParent()?.navigate("NotificationSettings" as never)}
+            subtitle="Horário do aviso diário e teste"
+          />
         </View>
 
         <View style={styles.sectionHeading}><View><Text style={styles.section}>Atendimento</Text><Text style={styles.sectionHint}>Estamos ao seu lado</Text></View></View>

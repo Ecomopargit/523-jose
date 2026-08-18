@@ -34,7 +34,13 @@ export function LoginScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Pressable onPress={navigation.goBack} style={styles.back}>
+          <Pressable
+            onPress={() => {
+              if (navigation.canGoBack()) navigation.goBack();
+              else navigation.navigate("Welcome");
+            }}
+            style={styles.back}
+          >
             <Feather color={colors.green800} name="arrow-left" size={21} />
           </Pressable>
           <View style={styles.intro}>

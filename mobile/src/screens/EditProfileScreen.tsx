@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import * as ImagePicker from "expo-image-picker";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
@@ -21,9 +20,9 @@ import { Button, Field, ScreenAtmosphere } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
 import {
   updateMemberProfile,
-  uploadMemberPhoto,
   type MemberProfileUpdate,
 } from "../lib/members";
+import { chooseAndUploadProfilePhoto, removeProfilePhoto } from "../lib/profile-photo";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
 
@@ -100,31 +99,55 @@ export function EditProfileScreen({ navigation }: Props) {
   const set = (key: keyof MemberProfileUpdate) => (value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
 
-  async function choosePhoto() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permissão necessária", "Permita o acesso às fotos para escolher sua imagem de perfil.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.78,
-    });
-    if (result.canceled) return;
-
-    const uri = result.assets[0].uri;
-    setLocalPhoto(uri);
+  async function choosePhoto(source: "library" | "camera") {
     setUploading(true);
-    const uploaded = await uploadMemberPhoto(uri);
-    setUploading(false);
-    if (!uploaded.ok) {
+    try {
+      const result = await chooseAndUploadProfilePhoto(source);
+      if ("cancelled" in result && result.cancelled) return;
+      if (!result.ok) {
+        setLocalPhoto(member?.photoURL || "");
+        Alert.alert("Foto não atualizada", result.error);
+        return;
+      }
+      setLocalPhoto(result.photoURL);
+      await refresh();
+      Alert.alert("Foto atualizada", "Sua imagem de perfil foi salva com sucesso.");
+    } catch (error) {
       setLocalPhoto(member?.photoURL || "");
-      Alert.alert("Foto não atualizada", uploaded.error);
-      return;
+      Alert.alert(
+        "Foto não atualizada",
+        error instanceof Error ? error.message : "Não foi possível enviar a foto.",
+      );
+    } finally {
+      setUploading(false);
     }
-    await refresh();
+  }
+
+  function openPhotoOptions() {
+    Alert.alert("Foto de perfil", "Como deseja adicionar sua foto?", [
+      { text: "Galeria", onPress: () => void choosePhoto("library") },
+      { text: "Câmera", onPress: () => void choosePhoto("camera") },
+      member?.photoURL
+        ? {
+            text: "Remover foto",
+            style: "destructive",
+            onPress: () => {
+              void (async () => {
+                setUploading(true);
+                const removed = await removeProfilePhoto();
+                setUploading(false);
+                if (!removed.ok) {
+                  Alert.alert("Erro", removed.error);
+                  return;
+                }
+                setLocalPhoto("");
+                await refresh();
+              })();
+            },
+          }
+        : undefined,
+      { text: "Cancelar", style: "cancel" },
+    ].filter(Boolean) as Parameters<typeof Alert.alert>[2]);
   }
 
   async function save() {
@@ -181,9 +204,9 @@ export function EditProfileScreen({ navigation }: Props) {
               <Text style={styles.photoTitle}>Foto de perfil</Text>
               <Text style={styles.photoHint}>Use uma foto nítida e de frente.</Text>
             </View>
-            <Pressable disabled={uploading} onPress={choosePhoto} style={styles.photoButton}>
+            <Pressable disabled={uploading} onPress={openPhotoOptions} style={styles.photoButton}>
               <Feather color={colors.green700} name="camera" size={16} />
-              <Text style={styles.photoButtonText}>Alterar</Text>
+              <Text style={styles.photoButtonText}>{localPhoto ? "Alterar" : "Adicionar"}</Text>
             </Pressable>
           </View>
 

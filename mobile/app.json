@@ -26,11 +26,19 @@
         "expo-image-picker",
         {
           "photosPermission": "A ECOMOPAR precisa acessar suas fotos para atualizar sua imagem de perfil.",
-          "cameraPermission": false,
+          "cameraPermission": "A ECOMOPAR precisa acessar a câmera para tirar sua foto de perfil.",
           "microphonePermission": false
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0B3D2C"
+        }
+      ]
     ],
     "extra": {
       "eas": {

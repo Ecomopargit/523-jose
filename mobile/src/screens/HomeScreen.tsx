@@ -3,7 +3,7 @@ import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ActivationFlowModal } from "../components/ActivationFlowModal";
@@ -44,7 +44,14 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.hello}>Olá, {firstName}</Text>
             <Text style={styles.date}>Veja como está sua jornada financeira</Text>
           </View>
-          <Pressable style={styles.avatar}><Text style={styles.avatarText}>{firstName.slice(0, 2).toUpperCase()}</Text><View style={styles.avatarDot} /></Pressable>
+          <Pressable onPress={() => navigation.navigate("Perfil")} style={styles.avatar}>
+            {member?.photoURL ? (
+              <Image source={{ uri: member.photoURL }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>{firstName.slice(0, 2).toUpperCase()}</Text>
+            )}
+            <View style={styles.avatarDot} />
+          </Pressable>
         </View>
 
         <LinearGradient colors={[colors.green600, colors.green800, colors.green950]} end={{ x: 1, y: 1 }} style={styles.hero}>
@@ -158,7 +165,8 @@ const styles = StyleSheet.create({
   welcomeLabel: { color: colors.green600, fontFamily: fonts.bold, fontSize: 7.5, letterSpacing: 1.15 },
   hello: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 25, letterSpacing: -0.8 },
   date: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 10.5, marginTop: 2 },
-  avatar: { alignItems: "center", backgroundColor: colors.green100, borderColor: colors.surface, borderRadius: 15, borderWidth: 3, height: 48, justifyContent: "center", shadowColor: colors.green950, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.09, shadowRadius: 10, width: 48 },
+  avatar: { alignItems: "center", backgroundColor: colors.green100, borderColor: colors.surface, borderRadius: 15, borderWidth: 3, height: 48, justifyContent: "center", overflow: "hidden", shadowColor: colors.green950, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.09, shadowRadius: 10, width: 48 },
+  avatarImage: { height: "100%", width: "100%" },
   avatarText: { color: colors.green800, fontFamily: fonts.bold, fontSize: 14 },
   avatarDot: { backgroundColor: colors.green500, borderColor: colors.surface, borderRadius: 5, borderWidth: 2, bottom: -2, height: 10, position: "absolute", right: -2, width: 10 },
   hero: { borderRadius: 25, overflow: "hidden", padding: 22, ...shadow },

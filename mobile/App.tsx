@@ -20,6 +20,7 @@ import { RegisterScreen } from "./src/screens/RegisterScreen";
 import { SupportScreen } from "./src/screens/SupportScreen";
 import { EditProfileScreen } from "./src/screens/EditProfileScreen";
 import { PrivacySecurityScreen } from "./src/screens/PrivacySecurityScreen";
+import { NotificationSettingsScreen } from "./src/screens/NotificationSettingsScreen";
 import { PrivacyPolicyScreen } from "./src/screens/PrivacyPolicyScreen";
 import { HelpCenterScreen } from "./src/screens/HelpCenterScreen";
 import { BenefitDetailScreen } from "./src/screens/BenefitDetailScreen";
@@ -31,6 +32,7 @@ import { AdminWithdrawalScreen } from "./src/screens/AdminWithdrawalScreen";
 import { AdminChatScreen } from "./src/screens/AdminChatScreen";
 import { colors } from "./src/theme";
 import type { RootStackParamList } from "./src/types";
+import { configureNotificationHandler, syncDepositReminderFromStorage } from "./src/lib/notifications";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -51,6 +53,10 @@ function RootNavigator() {
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
   useEffect(() => {
+    configureNotificationHandler();
+  }, []);
+
+  useEffect(() => {
     let active = true;
     void hasCompletedOnboarding().then((done) => {
       if (active) setOnboardingDone(done);
@@ -59,6 +65,11 @@ function RootNavigator() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!user || member?.role === "admin") return;
+    void syncDepositReminderFromStorage();
+  }, [member?.id, member?.role, user]);
 
   if (initializing || onboardingDone === null) {
     return (
@@ -89,6 +100,7 @@ function RootNavigator() {
               <Stack.Screen name="Support" component={SupportScreen} options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="BenefitDetail" component={BenefitDetailScreen} options={{ animation: "slide_from_right" }} />

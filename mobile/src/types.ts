@@ -53,6 +53,7 @@ export type RootStackParamList = {
   Support: undefined;
   EditProfile: undefined;
   PrivacySecurity: undefined;
+  NotificationSettings: undefined;
   PrivacyPolicy: undefined;
   HelpCenter: undefined;
   BenefitDetail: {
