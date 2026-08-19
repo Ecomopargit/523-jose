@@ -52,11 +52,11 @@ export function LoginScreen({ navigation }: Props) {
             <Field icon="mail" keyboardType="email-address" label="E-mail" onChangeText={setEmail} placeholder="voce@email.com" value={email} />
             <Field icon="lock" label="Senha" onChangeText={setPassword} placeholder="Sua senha" secureTextEntry value={password} />
             <Pressable onPress={recover}><Text style={styles.forgot}>Esqueci minha senha</Text></Pressable>
-            <Button icon="arrow-right" label="Entrar" loading={loading} onPress={submit} />
+            <Button icon="log-in" label="Entrar na minha conta" loading={loading} onPress={submit} />
           </View>
-          <View style={styles.registerRow}>
+          <View style={styles.registerBlock}>
             <Text style={styles.muted}>Ainda não é associado?</Text>
-            <Pressable onPress={() => navigation.navigate("Register")}><Text style={styles.link}> Cadastre-se</Text></Pressable>
+            <Button label="Quero me cadastrar" onPress={() => navigation.push("Register")} variant="outline" />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -74,7 +74,6 @@ const styles = StyleSheet.create({
   subtitle: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 15, lineHeight: 23, marginTop: 13, maxWidth: 330 },
   form: { gap: 17 },
   forgot: { color: colors.green700, fontFamily: fonts.semibold, fontSize: 13, marginTop: -4, textAlign: "right" },
-  registerRow: { flexDirection: "row", justifyContent: "center", marginTop: 32 },
-  muted: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 13 },
-  link: { color: colors.green700, fontFamily: fonts.bold, fontSize: 13 },
+  registerBlock: { gap: 12, marginTop: 28 },
+  muted: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 13, textAlign: "center" },
 });

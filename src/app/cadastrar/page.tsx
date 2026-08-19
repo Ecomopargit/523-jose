@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -16,6 +16,23 @@ import {
   EyeOff,
 } from "lucide-react";
 import Logo from "@/components/Logo";
+import {
+  clearCadastroDraft,
+  clearCadastroReturn,
+  loadCadastroDraft,
+  markCadastroReturn,
+  saveCadastroDraft,
+} from "@/lib/cadastro-draft";
+import {
+  birthDateFromIso,
+  birthDateToIso,
+  formatBirthDate,
+  formatCep,
+  formatCpf,
+  formatPhone,
+  formatPlaca,
+  isValidCpf,
+} from "@/lib/input-format";
 import { registerMember } from "@/lib/member-store";
 import { ensureReferralProfile } from "@/lib/referral-client";
 
@@ -97,13 +114,53 @@ export default function CadastrarPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
   const codigoIndicacao = (form.codigoIndicacao || referralFromUrl).trim().toUpperCase();
   const aderiuIndicacao = form.aderiuIndicacao || Boolean(referralFromUrl);
+
+  const restoreDraft = () => {
+    const draft = loadCadastroDraft();
+    if (!draft) return;
+    setForm({
+      ...draft.form,
+      cpf: formatCpf(draft.form.cpf),
+      telefone: formatPhone(draft.form.telefone),
+      cep: formatCep(draft.form.cep),
+      dataNascimento: birthDateFromIso(draft.form.dataNascimento),
+      placa: formatPlaca(draft.form.placa),
+      codigoIndicacao: draft.form.codigoIndicacao.toUpperCase(),
+    });
+    setStep(draft.step);
+  };
+
+  useEffect(() => {
+    restoreDraft();
+    setDraftReady(true);
+  }, []);
+
+  useEffect(() => {
+    function handlePageShow() {
+      restoreDraft();
+    }
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    saveCadastroDraft({ form, step });
+  }, [draftReady, form, step]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setError("");
   };
+
+  function openTerms() {
+    saveCadastroDraft({ form, step });
+    markCadastroReturn("/cadastrar");
+    router.push("/politica-de-privacidade?return=/cadastrar");
+  }
 
   const progress = useMemo(() => ((step - 1) / (steps.length - 1)) * 100, [step]);
 
@@ -117,6 +174,10 @@ export default function CadastrarPage() {
         !form.email.trim()
       ) {
         setError("Preencha os campos obrigatórios dos dados pessoais.");
+        return false;
+      }
+      if (!isValidCpf(form.cpf)) {
+        setError("CPF inválido. Confira os 11 dígitos.");
         return false;
       }
       if (!form.endereco.trim() || !form.cidade.trim() || !form.estado || !form.cep.trim()) {
@@ -161,7 +222,7 @@ export default function CadastrarPage() {
         cpf: form.cpf,
         telefone: form.telefone,
         email: form.email,
-        dataNascimento: form.dataNascimento,
+        dataNascimento: birthDateToIso(form.dataNascimento),
         endereco: form.endereco,
         cidade: form.cidade,
         estado: form.estado,
@@ -197,6 +258,8 @@ export default function CadastrarPage() {
       }
 
       setDone(true);
+      clearCadastroDraft();
+      clearCadastroReturn();
     } finally {
       setSubmitting(false);
     }
@@ -311,21 +374,23 @@ export default function CadastrarPage() {
                   <div>
                     <FieldLabel required>CPF</FieldLabel>
                     <input
-                      className="field"
+                      className="field font-mono-num"
                       required
+                      inputMode="numeric"
                       placeholder="000.000.000-00"
                       value={form.cpf}
-                      onChange={(e) => set("cpf", e.target.value)}
+                      onChange={(e) => set("cpf", formatCpf(e.target.value))}
                     />
                   </div>
                   <div>
                     <FieldLabel required>Nascimento</FieldLabel>
                     <input
-                      type="date"
-                      className="field"
+                      className="field font-mono-num"
                       required
+                      inputMode="numeric"
+                      placeholder="DD/MM/AAAA"
                       value={form.dataNascimento}
-                      onChange={(e) => set("dataNascimento", e.target.value)}
+                      onChange={(e) => set("dataNascimento", formatBirthDate(e.target.value))}
                     />
                   </div>
                 </div>
@@ -336,9 +401,10 @@ export default function CadastrarPage() {
                     <input
                       className="field"
                       required
+                      inputMode="tel"
                       placeholder="(11) 90000-0000"
                       value={form.telefone}
-                      onChange={(e) => set("telefone", e.target.value)}
+                      onChange={(e) => set("telefone", formatPhone(e.target.value))}
                     />
                   </div>
                   <div>
@@ -394,11 +460,12 @@ export default function CadastrarPage() {
                   <div>
                     <FieldLabel required>CEP</FieldLabel>
                     <input
-                      className="field"
+                      className="field font-mono-num"
                       required
+                      inputMode="numeric"
                       placeholder="00000-000"
                       value={form.cep}
-                      onChange={(e) => set("cep", e.target.value)}
+                      onChange={(e) => set("cep", formatCep(e.target.value))}
                     />
                   </div>
                 </div>
@@ -480,7 +547,7 @@ export default function CadastrarPage() {
                     required
                     placeholder="ABC1D23"
                     value={form.placa}
-                    onChange={(e) => set("placa", e.target.value)}
+                    onChange={(e) => set("placa", formatPlaca(e.target.value))}
                   />
                 </div>
               </div>
@@ -590,12 +657,13 @@ export default function CadastrarPage() {
                   />
                   <span className="text-[13px] text-ink-soft">
                     Li e aceito os{" "}
-                    <Link
-                      href="/politica-de-privacidade"
+                    <button
+                      type="button"
+                      onClick={openTerms}
                       className="text-green-700 font-semibold underline"
                     >
                       Termos e a Política de Privacidade
-                    </Link>
+                    </button>
                     .
                   </span>
                 </label>

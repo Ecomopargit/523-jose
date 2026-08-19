@@ -61,6 +61,7 @@ export type MemberProfile = {
   saldoBonus: number;
   depositosCount: number;
   notasAdmin: string;
+  photoURL: string;
 };
 
 export const ADMIN_EMAIL = "admin@ecomopar.org";
@@ -134,6 +135,7 @@ function mapUserDoc(id: string, data: Record<string, unknown>): MemberProfile {
     saldoBonus: Number(data.saldoBonus ?? 0),
     depositosCount: Number(data.depositosCount ?? 0),
     notasAdmin: String(data.notasAdmin ?? ""),
+    photoURL: String(data.photoURL ?? ""),
   };
 }
 
@@ -205,6 +207,7 @@ export type RegisterInput = Omit<
   | "referralBonusPaidGroups"
   | "activatedAt"
   | "withdrawalLockedUntil"
+  | "photoURL"
 > & {
   password: string;
 };
@@ -250,6 +253,7 @@ export async function registerMember(
       saldoBonus: 0,
       depositosCount: 0,
       notasAdmin: "",
+      photoURL: "",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -296,6 +300,7 @@ async function ensureAdminProfile(uid: string, email: string) {
       saldoBonus: 0,
       depositosCount: 0,
       notasAdmin: "Conta administrativa",
+      photoURL: "",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     },

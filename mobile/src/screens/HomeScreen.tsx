@@ -9,7 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivationFlowModal } from "../components/ActivationFlowModal";
 import { Card, IconBadge, ScreenAtmosphere } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
-import { colors, fonts, shadow } from "../theme";
+import { buttonShadowPrimary, colors, fonts, shadow } from "../theme";
 import type { AppTabParamList } from "../types";
 
 type Props = BottomTabScreenProps<AppTabParamList, "Início">;
@@ -69,8 +69,12 @@ export function HomeScreen({ navigation }: Props) {
           </View>
           {!isActive ? (
             <Pressable onPress={() => setActivationOpen(true)} style={({ pressed }) => [styles.activateBtn, pressed && styles.pressed]}>
-              <Feather color={colors.green900} name="zap" size={16} />
-              <Text style={styles.activateBtnText}>Ativar cadastro · R$ 7</Text>
+              <View style={styles.activateBtnIcon}><Feather color={colors.white} name="zap" size={16} /></View>
+              <View style={styles.activateBtnCopy}>
+                <Text style={styles.activateBtnLabel}>Ativar cadastro</Text>
+                <Text style={styles.activateBtnHint}>PIX de R$ 7 · libera benefícios</Text>
+              </View>
+              <Feather color={colors.green900} name="arrow-right" size={18} />
             </Pressable>
           ) : null}
           <View style={styles.heroRule} />
@@ -139,8 +143,8 @@ export function HomeScreen({ navigation }: Props) {
 
 function Shortcut({ icon, label, onPress }: { icon: keyof typeof Feather.glyphMap; label: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}>
-      <View style={styles.shortcutIcon}><Feather color={colors.white} name={icon} size={20} /></View>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.shortcut, pressed && styles.pressed]}>
+      <View style={styles.shortcutIcon}><Feather color={colors.white} name={icon} size={21} /></View>
       <Text style={styles.shortcutText}>{label}</Text>
     </Pressable>
   );
@@ -177,9 +181,31 @@ const styles = StyleSheet.create({
   status: { alignItems: "center", flexDirection: "row", gap: 6, marginTop: 5 },
   statusDot: { backgroundColor: colors.amber500, borderRadius: 4, height: 7, width: 7 },
   statusText: { color: "rgba(255,255,255,0.72)", fontFamily: fonts.medium, fontSize: 11 },
-  activateBtn: { alignItems: "center", alignSelf: "flex-start", backgroundColor: colors.white, borderRadius: 999, flexDirection: "row", gap: 8, marginTop: 14, paddingHorizontal: 14, paddingVertical: 10 },
-  activateBtnText: { color: colors.green900, fontFamily: fonts.bold, fontSize: 12.5 },
-  activateBanner: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 18, borderWidth: 1, flexDirection: "row", gap: 12, marginTop: 16, padding: 14 },
+  activateBtn: {
+    alignItems: "center",
+    alignSelf: "stretch",
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
+    minHeight: 58,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    ...buttonShadowPrimary,
+  },
+  activateBtnIcon: {
+    alignItems: "center",
+    backgroundColor: colors.green700,
+    borderRadius: 14,
+    height: 40,
+    justifyContent: "center",
+    width: 40,
+  },
+  activateBtnCopy: { flex: 1 },
+  activateBtnLabel: { color: colors.green900, fontFamily: fonts.extraBold, fontSize: 14 },
+  activateBtnHint: { color: colors.inkSoft, fontFamily: fonts.medium, fontSize: 10.5, marginTop: 2 },
+  activateBanner: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.green100, borderRadius: 18, borderWidth: 1.5, flexDirection: "row", gap: 12, marginTop: 16, padding: 16, ...shadow },
   heroRule: { backgroundColor: "rgba(255,255,255,0.12)", height: 1, marginVertical: 18 },
   heroStats: { flexDirection: "row", gap: 24 },
   heroStatLabel: { color: "rgba(255,255,255,0.54)", fontFamily: fonts.medium, fontSize: 10 },
@@ -187,10 +213,18 @@ const styles = StyleSheet.create({
   statDivider: { backgroundColor: "rgba(255,255,255,0.14)", width: 1 },
   sectionTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 16, marginBottom: 13, marginTop: 25 },
   shortcuts: { flexDirection: "row", justifyContent: "space-between" },
-  shortcut: { alignItems: "center", gap: 8, width: "23%" },
-  shortcutIcon: { alignItems: "center", backgroundColor: colors.green800, borderRadius: 15, height: 51, justifyContent: "center", width: 51 },
-  shortcutText: { color: colors.inkSoft, fontFamily: fonts.semibold, fontSize: 10.5 },
-  pressed: { opacity: 0.7, transform: [{ scale: 0.96 }] },
+  shortcut: { alignItems: "center", gap: 10, width: "23%" },
+  shortcutIcon: {
+    alignItems: "center",
+    backgroundColor: colors.green700,
+    borderRadius: 18,
+    height: 58,
+    justifyContent: "center",
+    width: 58,
+    ...buttonShadowPrimary,
+  },
+  shortcutText: { color: colors.ink, fontFamily: fonts.bold, fontSize: 11, textAlign: "center" },
+  pressed: { opacity: 0.82, transform: [{ scale: 0.96 }] },
   sectionRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   sectionCaption: { color: colors.inkFaint, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 0.8, marginTop: 13 },
   seeAll: { color: colors.green700, fontFamily: fonts.bold, fontSize: 11, marginTop: 13 },

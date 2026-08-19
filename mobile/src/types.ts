@@ -54,7 +54,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   PrivacySecurity: undefined;
   NotificationSettings: undefined;
-  PrivacyPolicy: undefined;
+  PrivacyPolicy: { origin?: "register" } | undefined;
   HelpCenter: undefined;
   BenefitDetail: {
     benefitId: "financial" | "health" | "legal" | "vehicle";

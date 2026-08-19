@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -20,9 +21,11 @@ import {
   formatCep,
   formatCpf,
   formatPhone,
+  formatPlaca,
   isValidCpf,
 } from "../features/intake/format";
 import { INTAKE_PHASES, OPTIONAL_PHASES, PHASE_COPY, VEHICLE_TYPES, type IntakePhase } from "../features/intake/types";
+import { clearRegisterDraft, loadRegisterDraft, saveRegisterDraft } from "../features/intake/draft";
 import { Button, Field } from "../components/UI";
 import { register } from "../lib/members";
 import { colors, fonts, shadow } from "../theme";
@@ -56,8 +59,48 @@ export function RegisterScreen({ navigation }: Props) {
   const [form, setForm] = useState(initial);
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
   const set = (key: keyof typeof initial) => (value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
+
+  useEffect(() => {
+    let active = true;
+    void loadRegisterDraft().then((draft) => {
+      if (!active || !draft) {
+        if (active) setDraftReady(true);
+        return;
+      }
+      setPhase(draft.phase);
+      setForm(draft.form);
+      setAccepted(draft.accepted);
+      setDraftReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    void saveRegisterDraft({ phase, form, accepted });
+  }, [accepted, draftReady, form, phase]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadRegisterDraft().then((draft) => {
+        if (!draft) return;
+        setPhase(draft.phase);
+        setForm(draft.form);
+        setAccepted(draft.accepted);
+        setDraftReady(true);
+      });
+    }, []),
+  );
+
+  function openTerms() {
+    void saveRegisterDraft({ phase, form, accepted });
+    navigation.push("PrivacyPolicy", { origin: "register" });
+  }
 
   const copy = PHASE_COPY[phase];
   const optionalIndex = OPTIONAL_PHASES.indexOf(phase);
@@ -165,6 +208,17 @@ export function RegisterScreen({ navigation }: Props) {
     if ("warning" in result) {
       Alert.alert("Conta criada", `${result.warning} Você poderá tentar novamente na área de Benefícios.`);
     }
+    await clearRegisterDraft();
+  }
+
+  if (!draftReady) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.loading}>
+          <Text style={styles.loadingText}>Carregando cadastro…</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -275,7 +329,7 @@ export function RegisterScreen({ navigation }: Props) {
               {form.carroProprio === "nao" ? (
                 <Field autoCapitalize="words" icon="briefcase" label="Locadora" onChangeText={set("locadora")} placeholder="Nome da locadora" value={form.locadora} />
               ) : null}
-              <Field autoCapitalize="characters" icon="hash" label="Placa" onChangeText={(value) => set("placa")(value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 7).toUpperCase())} placeholder="ABC1D23" value={form.placa} />
+              <Field autoCapitalize="characters" icon="hash" label="Placa" onChangeText={(value) => set("placa")(formatPlaca(value))} placeholder="ABC1D23" value={form.placa} />
             </View>
           ) : null}
 
@@ -300,14 +354,20 @@ export function RegisterScreen({ navigation }: Props) {
               <Field icon="mail" keyboardType="email-address" label="E-mail" onChangeText={set("email")} placeholder="voce@email.com" value={form.email} />
               <Field icon="lock" label="Crie uma senha" onChangeText={set("password")} placeholder="Mínimo de 6 caracteres" secureTextEntry value={form.password} />
               <Field icon="lock" label="Confirme a senha" onChangeText={set("confirmPassword")} secureTextEntry value={form.confirmPassword} />
-              <Pressable onPress={() => setAccepted((current) => !current)} style={styles.termsRow}>
-                <View style={[styles.checkbox, accepted && styles.checkboxOn]}>
-                  {accepted ? <Feather color={colors.white} name="check" size={14} /> : null}
-                </View>
+              <View style={styles.termsRow}>
+                <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={() => setAccepted((current) => !current)}>
+                  <View style={[styles.checkbox, accepted && styles.checkboxOn]}>
+                    {accepted ? <Feather color={colors.white} name="check" size={14} /> : null}
+                  </View>
+                </Pressable>
                 <Text style={styles.termsText}>
-                  Li e aceito os termos de uso e a política de privacidade da ECOMOPAR.
+                  Li e aceito os{" "}
+                  <Text onPress={openTerms} style={styles.termsLink}>
+                    termos de uso e a política de privacidade
+                  </Text>
+                  {" "}da ECOMOPAR.
                 </Text>
-              </Pressable>
+              </View>
             </View>
           ) : null}
         </ScrollView>
@@ -315,22 +375,20 @@ export function RegisterScreen({ navigation }: Props) {
         <View style={styles.footer}>
           {phase === "intro" ? (
             <>
-              <Button icon="arrow-right" label="Começar" onPress={() => goTo("you")} />
-              <Pressable onPress={skipAll} style={styles.skipPhaseHit}>
-                <Text style={styles.skipPhase}>Pular tudo e só criar a conta</Text>
-              </Pressable>
+              <Button icon="arrow-right" label="Começar cadastro" onPress={() => goTo("you")} />
+              <Button label="Pular etapas · ir direto para a conta" onPress={skipAll} variant="ghost" />
             </>
           ) : phase === "account" ? (
-            <Button icon="check" label="Criar conta" loading={loading} onPress={() => void submit()} />
+            <Button icon="check" label="Criar minha conta" loading={loading} onPress={() => void submit()} />
           ) : (
             <View style={styles.footerRow}>
               {showSkipPhase ? (
-                <Pressable onPress={skipPhase} style={({ pressed }) => [styles.skipBtn, pressed && styles.pressed]}>
-                  <Text style={styles.skipBtnText}>Pular</Text>
-                </Pressable>
+                <View style={styles.skipWrap}>
+                  <Button fullWidth label="Pular" onPress={skipPhase} size="lg" variant="outline" />
+                </View>
               ) : null}
-              <View style={{ flex: 1 }}>
-                <Button icon="arrow-right" label="Continuar" onPress={continuePhase} />
+              <View style={styles.continueWrap}>
+                <Button fullWidth icon="arrow-right" label="Continuar" onPress={continuePhase} />
               </View>
             </View>
           )}
@@ -411,20 +469,12 @@ const styles = StyleSheet.create({
   },
   checkboxOn: { backgroundColor: colors.green600, borderColor: colors.green600 },
   termsText: { color: colors.inkSoft, flex: 1, fontFamily: fonts.regular, fontSize: 13, lineHeight: 19 },
-  footer: { gap: 10, paddingHorizontal: 24, paddingBottom: 12, paddingTop: 8 },
-  footerRow: { flexDirection: "row", gap: 10 },
-  skipBtn: {
-    alignItems: "center",
-    borderColor: colors.line,
-    borderRadius: 15,
-    borderWidth: 1,
-    height: 54,
-    justifyContent: "center",
-    paddingHorizontal: 18,
-  },
-  skipBtnText: { color: colors.ink, fontFamily: fonts.bold, fontSize: 14 },
-  skipPhaseHit: { minHeight: 44, justifyContent: "center" },
-  skipPhase: { color: colors.green700, fontFamily: fonts.semibold, fontSize: 14, textAlign: "center" },
+  termsLink: { color: colors.green700, fontFamily: fonts.bold, textDecorationLine: "underline" },
+  loading: { alignItems: "center", flex: 1, justifyContent: "center" },
+  loadingText: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 14 },
+  footer: { gap: 12, paddingHorizontal: 24, paddingBottom: 16, paddingTop: 10 },
+  footerRow: { alignItems: "stretch", flexDirection: "row", gap: 10 },
+  skipWrap: { width: 108 },
+  continueWrap: { flex: 1 },
   legal: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 11, lineHeight: 16, textAlign: "center" },
-  pressed: { opacity: 0.8 },
 });

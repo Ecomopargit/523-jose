@@ -38,3 +38,19 @@ export const shadow = {
   shadowRadius: 18,
   elevation: 3,
 };
+
+export const buttonShadow = {
+  shadowColor: "#082A1F",
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.14,
+  shadowRadius: 16,
+  elevation: 5,
+};
+
+export const buttonShadowPrimary = {
+  shadowColor: "#136148",
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.28,
+  shadowRadius: 18,
+  elevation: 6,
+};

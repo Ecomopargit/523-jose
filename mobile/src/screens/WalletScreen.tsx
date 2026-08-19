@@ -9,7 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
 import { TransactionFlowModal, type TransactionFlow } from "../components/TransactionFlowModal";
 import { useAuth } from "../context/AuthContext";
-import { colors, fonts, shadow } from "../theme";
+import { buttonShadowPrimary, colors, fonts, shadow } from "../theme";
 import type { AppTabParamList } from "../types";
 import { listMyActivationPayments, type PublicActivationPayment } from "../lib/activation";
 
@@ -106,7 +106,10 @@ export function WalletScreen({ navigation, route }: Props) {
               <View style={styles.emptyIcon}><Feather color={colors.green700} name="inbox" size={21} /></View>
               <Text style={styles.emptyTitle}>Sua jornada começa aqui</Text>
               <Text style={styles.emptyText}>Quando você fizer sua primeira contribuição, ela aparecerá neste histórico.</Text>
-              <Pressable onPress={() => setFlow("deposit")} style={styles.emptyAction}><Text style={styles.emptyActionText}>Fazer primeiro depósito</Text><Feather color={colors.green700} name="arrow-right" size={14} /></Pressable>
+              <Pressable accessibilityRole="button" onPress={() => setFlow("deposit")} style={({ pressed }) => [styles.emptyAction, pressed && styles.pressed]}>
+                <Text style={styles.emptyActionText}>Fazer primeiro depósito</Text>
+                <View style={styles.emptyActionIcon}><Feather color={colors.white} name="arrow-right" size={14} /></View>
+              </Pressable>
             </View>
           )}
         </View>
@@ -123,7 +126,13 @@ export function WalletScreen({ navigation, route }: Props) {
 }
 
 function Action({ icon, label, hint, onPress, primary }: { icon: keyof typeof Feather.glyphMap; label: string; hint: string; onPress: () => void; primary?: boolean }) {
-  return <Pressable onPress={onPress} style={({ pressed }) => [styles.action, primary && styles.actionPrimary, pressed && styles.pressed]}><View style={[styles.actionIcon, primary && styles.actionIconPrimary]}><Feather color={primary ? colors.white : colors.green700} name={icon} size={18} /></View><View><Text style={[styles.actionText, primary && styles.actionTextPrimary]}>{label}</Text><Text style={[styles.actionHint, primary && styles.actionHintPrimary]}>{hint}</Text></View><Feather color={primary ? "rgba(255,255,255,0.62)" : colors.inkFaint} name="chevron-right" size={16} /></Pressable>;
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={`${label} ${hint}`} onPress={onPress} style={({ pressed }) => [styles.action, primary && styles.actionPrimary, pressed && styles.pressed]}>
+      <View style={[styles.actionIcon, primary && styles.actionIconPrimary]}><Feather color={primary ? colors.white : colors.green700} name={icon} size={19} /></View>
+      <View style={styles.actionCopy}><Text style={[styles.actionText, primary && styles.actionTextPrimary]}>{label}</Text><Text style={[styles.actionHint, primary && styles.actionHintPrimary]}>{hint}</Text></View>
+      <View style={[styles.actionArrow, primary && styles.actionArrowPrimary]}><Feather color={primary ? colors.white : colors.green700} name="arrow-right" size={16} /></View>
+    </Pressable>
+  );
 }
 
 function Balance({ color, icon, label, value, featured }: { color: string; icon: keyof typeof Feather.glyphMap; label: string; value: string; featured?: boolean }) {
@@ -154,14 +163,34 @@ const styles = StyleSheet.create({
   heroMetaLabel: { color: "rgba(255,255,255,0.38)", fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1 },
   heroMetaValue: { color: colors.white, fontFamily: fonts.bold, fontSize: 11.5, marginTop: 3, textTransform: "capitalize" },
   actions: { flexDirection: "row", gap: 10, marginTop: 12 },
-  action: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 16, borderWidth: 1, flex: 1, flexDirection: "row", gap: 8, height: 58, paddingHorizontal: 10, ...shadow },
-  actionPrimary: { backgroundColor: colors.green600, borderColor: colors.green600 },
-  actionIcon: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 10, height: 35, justifyContent: "center", width: 35 },
-  actionIconPrimary: { backgroundColor: "rgba(255,255,255,0.13)" },
-  actionText: { color: colors.green800, fontFamily: fonts.bold, fontSize: 10.5 },
+  action: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    flex: 1,
+    flexDirection: "row",
+    gap: 10,
+    minHeight: 64,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    ...shadow,
+  },
+  actionPrimary: {
+    backgroundColor: colors.green700,
+    borderColor: colors.green700,
+    ...buttonShadowPrimary,
+  },
+  actionIcon: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 12, height: 40, justifyContent: "center", width: 40 },
+  actionIconPrimary: { backgroundColor: "rgba(255,255,255,0.14)" },
+  actionCopy: { flex: 1 },
+  actionText: { color: colors.green800, fontFamily: fonts.extraBold, fontSize: 13 },
   actionTextPrimary: { color: colors.white },
-  actionHint: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 8.5, marginTop: 1 },
-  actionHintPrimary: { color: "rgba(255,255,255,0.56)" },
+  actionHint: { color: colors.inkFaint, fontFamily: fonts.medium, fontSize: 9.5, marginTop: 2 },
+  actionHintPrimary: { color: "rgba(255,255,255,0.68)" },
+  actionArrow: { alignItems: "center", backgroundColor: colors.green50, borderRadius: 10, height: 32, justifyContent: "center", width: 32 },
+  actionArrowPrimary: { backgroundColor: colors.green900 },
   sectionHeading: { alignItems: "flex-end", flexDirection: "row", justifyContent: "space-between", marginBottom: 12, marginTop: 25 },
   section: { color: colors.ink, fontFamily: fonts.bold, fontSize: 15.5 },
   sectionHint: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 9.5, marginTop: 3 },
@@ -186,7 +215,19 @@ const styles = StyleSheet.create({
   emptyIcon: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 14, height: 48, justifyContent: "center", width: 48 },
   emptyTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 13.5, marginTop: 11 },
   emptyText: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 10, lineHeight: 15, marginTop: 4, maxWidth: 270, textAlign: "center" },
-  emptyAction: { alignItems: "center", flexDirection: "row", gap: 6, marginTop: 13 },
-  emptyActionText: { color: colors.green700, fontFamily: fonts.bold, fontSize: 10 },
-  pressed: { opacity: 0.74, transform: [{ scale: 0.985 }] },
+  emptyAction: {
+    alignItems: "center",
+    backgroundColor: colors.green700,
+    borderRadius: 16,
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 16,
+    minHeight: 48,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    ...buttonShadowPrimary,
+  },
+  emptyActionText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
+  emptyActionIcon: { alignItems: "center", backgroundColor: colors.green900, borderRadius: 10, height: 28, justifyContent: "center", width: 28 },
+  pressed: { opacity: 0.84, transform: [{ scale: 0.985 }] },
 });

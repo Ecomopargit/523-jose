@@ -10,35 +10,72 @@ import {
   type KeyboardTypeOptions,
 } from "react-native";
 
-import { colors, fonts, shadow } from "../theme";
+import { buttonShadow, buttonShadowPrimary, colors, fonts, shadow } from "../theme";
 
 type FeatherName = ComponentProps<typeof Feather>["name"];
+type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
+type ButtonSize = "md" | "lg";
 
 export function Button({
   label,
   onPress,
   icon,
   variant = "primary",
+  size = "lg",
   loading,
+  disabled,
+  fullWidth = true,
 }: {
   label: string;
   onPress: () => void;
   icon?: FeatherName;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
 }) {
+  const isDisabled = disabled || loading;
+  const isPrimary = variant === "primary";
+  const iconColor = isPrimary ? colors.green900 : colors.green700;
+  const spinnerColor = isPrimary ? colors.white : colors.green700;
+
   return (
     <Pressable
-      disabled={loading}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled }}
+      disabled={isDisabled}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, styles[variant], pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.button,
+        styles[size],
+        styles[variant],
+        fullWidth && styles.fullWidth,
+        isDisabled && styles.disabled,
+        pressed && !isDisabled && styles.pressed,
+      ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "primary" ? colors.white : colors.green700} />
+        <ActivityIndicator color={spinnerColor} />
       ) : (
         <>
-          <Text style={[styles.buttonText, variant !== "primary" && styles.buttonTextAlt]}>{label}</Text>
-          {icon && <Feather color={variant === "primary" ? colors.white : colors.green700} name={icon} size={18} />}
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.buttonText,
+              styles[`${size}Text` as "mdText" | "lgText"],
+              !isPrimary && styles.buttonTextAlt,
+              variant === "outline" && styles.buttonTextOutline,
+              variant === "ghost" && styles.buttonTextGhost,
+            ]}
+          >
+            {label}
+          </Text>
+          {icon ? (
+            <View style={[styles.iconChip, isPrimary ? styles.iconChipPrimary : styles.iconChipAlt]}>
+              <Feather color={isPrimary ? colors.green400 : iconColor} name={icon} size={size === "lg" ? 18 : 16} />
+            </View>
+          ) : null}
         </>
       )}
     </Pressable>
@@ -130,19 +167,61 @@ export function IconBadge({ name, tone = "green" }: { name: FeatherName; tone?: 
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    borderRadius: 15,
+    borderRadius: 18,
     flexDirection: "row",
-    gap: 9,
-    height: 54,
-    justifyContent: "center",
-    paddingHorizontal: 22,
+    gap: 12,
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
   },
-  primary: { backgroundColor: colors.green600 },
-  secondary: { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 },
-  ghost: { backgroundColor: colors.green50 },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.985 }] },
-  buttonText: { color: colors.white, fontFamily: fonts.bold, fontSize: 15 },
-  buttonTextAlt: { color: colors.green700 },
+  fullWidth: { width: "100%" },
+  lg: { minHeight: 58, paddingVertical: 10 },
+  md: { minHeight: 52, paddingVertical: 8 },
+  primary: {
+    backgroundColor: colors.green700,
+    ...buttonShadowPrimary,
+  },
+  secondary: {
+    backgroundColor: colors.surface,
+    borderColor: colors.green100,
+    borderWidth: 1.5,
+    ...buttonShadow,
+  },
+  outline: {
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderWidth: 1.5,
+  },
+  ghost: {
+    backgroundColor: colors.green50,
+    borderColor: "rgba(19,97,72,0.12)",
+    borderWidth: 1,
+  },
+  disabled: { opacity: 0.55 },
+  pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
+  buttonText: {
+    color: colors.white,
+    flex: 1,
+    fontFamily: fonts.extraBold,
+    letterSpacing: -0.2,
+  },
+  lgText: { fontSize: 16 },
+  mdText: { fontSize: 14 },
+  buttonTextAlt: { color: colors.green800 },
+  buttonTextOutline: { color: colors.ink, fontFamily: fonts.bold },
+  buttonTextGhost: { color: colors.green700, fontFamily: fonts.bold },
+  iconChip: {
+    alignItems: "center",
+    borderRadius: 13,
+    height: 38,
+    justifyContent: "center",
+    width: 38,
+  },
+  iconChipPrimary: {
+    backgroundColor: colors.green900,
+  },
+  iconChipAlt: {
+    backgroundColor: colors.green100,
+  },
   fieldGroup: { gap: 7 },
   label: { color: colors.ink, fontFamily: fonts.semibold, fontSize: 13 },
   field: {

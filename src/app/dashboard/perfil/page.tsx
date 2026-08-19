@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import DashboardShell from "@/components/DashboardShell";
 import { useMemberSession } from "@/hooks/useMemberSession";
@@ -12,7 +12,17 @@ import {
   type MemberProfile,
   type MemberSelfUpdateInput,
 } from "@/lib/member-store";
-import { formatCpf, isValidCpf } from "@/lib/cpf";
+import {
+  birthDateFromIso,
+  birthDateToIso,
+  formatBirthDate,
+  formatCep,
+  formatCpf,
+  formatPhone,
+  formatPlaca,
+  isValidCpf,
+} from "@/lib/input-format";
+import { removeMemberPhotoWeb, uploadMemberPhotoWeb } from "@/lib/profile-photo";
 import {
   Car,
   CreditCard,
@@ -26,6 +36,8 @@ import {
   Pencil,
   X,
   Check,
+  Camera,
+  Trash2,
 } from "lucide-react";
 
 const ESTADOS = [
@@ -37,17 +49,17 @@ function toForm(member: MemberProfile): MemberSelfUpdateInput {
   return {
     nome: member.nome,
     cpf: formatCpf(member.cpf),
-    telefone: member.telefone,
-    dataNascimento: member.dataNascimento,
+    telefone: formatPhone(member.telefone),
+    dataNascimento: birthDateFromIso(member.dataNascimento),
     endereco: member.endereco,
     cidade: member.cidade,
     estado: member.estado,
-    cep: member.cep,
+    cep: formatCep(member.cep),
     tipoVeiculo: member.tipoVeiculo,
     modelo: member.modelo,
     carroProprio: member.carroProprio,
     locadora: member.locadora,
-    placa: member.placa,
+    placa: formatPlaca(member.placa),
     chavePix: member.chavePix,
   };
 }
@@ -58,6 +70,9 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!ready) {
     return (
@@ -110,7 +125,10 @@ export default function PerfilPage() {
 
     setSaving(true);
     setError("");
-    const result = await updateMemberSelf(form);
+    const result = await updateMemberSelf({
+      ...form,
+      dataNascimento: birthDateToIso(form.dataNascimento),
+    });
     setSaving(false);
 
     if (!result.ok) {
@@ -120,6 +138,35 @@ export default function PerfilPage() {
     await refresh();
     setForm(null);
     setSaved(true);
+  };
+
+  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setPhotoBusy(true);
+    setPhotoError("");
+    const result = await uploadMemberPhotoWeb(file);
+    setPhotoBusy(false);
+
+    if (!result.ok) {
+      setPhotoError(result.error);
+      return;
+    }
+    await refresh();
+  };
+
+  const handleRemovePhoto = async () => {
+    setPhotoBusy(true);
+    setPhotoError("");
+    const result = await removeMemberPhotoWeb();
+    setPhotoBusy(false);
+    if (!result.ok) {
+      setPhotoError(result.error);
+      return;
+    }
+    await refresh();
   };
 
   const rows = [
@@ -174,8 +221,55 @@ export default function PerfilPage() {
             <span className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-green-100">
               Perfil verificado
             </span>
-            <div className="mt-8 w-20 h-20 rounded-[24px] bg-white/12 border border-white/15 flex items-center justify-center font-display font-bold text-2xl text-white shadow-inner">
-              {initialsFromName(member.nome)}
+            <div className="mt-8 flex flex-col items-center gap-3">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-[24px] bg-white/12 border border-white/15 flex items-center justify-center font-display font-bold text-2xl text-white shadow-inner overflow-hidden">
+                  {member.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt="" className="h-full w-full object-cover" src={member.photoURL} />
+                  ) : (
+                    initialsFromName(member.nome)
+                  )}
+                </div>
+                <button
+                  type="button"
+                  disabled={photoBusy}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-green-500 text-white shadow-md transition hover:bg-green-400 disabled:opacity-60"
+                  aria-label="Adicionar foto de perfil"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => void handlePhotoChange(event)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={photoBusy}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs font-semibold text-green-100 hover:text-white disabled:opacity-60"
+                >
+                  {photoBusy ? "Enviando…" : member.photoURL ? "Alterar foto" : "Adicionar foto"}
+                </button>
+                {member.photoURL ? (
+                  <button
+                    type="button"
+                    disabled={photoBusy}
+                    onClick={() => void handleRemovePhoto()}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-white/45 hover:text-white/75 disabled:opacity-60"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remover
+                  </button>
+                ) : null}
+              </div>
+              {photoError ? <p className="text-xs text-red-200 text-center max-w-[220px]">{photoError}</p> : null}
             </div>
             <h2 className="font-display text-2xl font-semibold tracking-tight mt-5 break-words">{member.nome}</h2>
             <p className="text-sm text-white/58 mt-1.5">
@@ -258,8 +352,9 @@ export default function PerfilPage() {
                     id="perfil-telefone"
                     className="field"
                     inputMode="tel"
+                    placeholder="(11) 90000-0000"
                     value={form.telefone}
-                    onChange={(e) => set("telefone", e.target.value)}
+                    onChange={(e) => set("telefone", formatPhone(e.target.value))}
                   />
                 </div>
 
@@ -269,10 +364,11 @@ export default function PerfilPage() {
                   </label>
                   <input
                     id="perfil-nascimento"
-                    type="date"
-                    className="field"
+                    className="field font-mono-num"
+                    inputMode="numeric"
+                    placeholder="DD/MM/AAAA"
                     value={form.dataNascimento}
-                    onChange={(e) => set("dataNascimento", e.target.value)}
+                    onChange={(e) => set("dataNascimento", formatBirthDate(e.target.value))}
                   />
                 </div>
 
@@ -337,10 +433,11 @@ export default function PerfilPage() {
                     </label>
                     <input
                       id="perfil-cep"
-                      className="field"
+                      className="field font-mono-num"
                       inputMode="numeric"
+                      placeholder="00000-000"
                       value={form.cep}
-                      onChange={(e) => set("cep", e.target.value)}
+                      onChange={(e) => set("cep", formatCep(e.target.value))}
                     />
                   </div>
                 </div>
@@ -376,9 +473,10 @@ export default function PerfilPage() {
                   </label>
                   <input
                     id="perfil-placa"
-                    className="field uppercase"
+                    className="field font-mono-num uppercase"
+                    placeholder="ABC1D23"
                     value={form.placa}
-                    onChange={(e) => set("placa", e.target.value.toUpperCase())}
+                    onChange={(e) => set("placa", formatPlaca(e.target.value))}
                   />
                 </div>
 

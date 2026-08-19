@@ -18,9 +18,12 @@ function getServiceAccount() {
       };
     }
 
-    // Conveniência exclusiva do desenvolvimento local. O arquivo está no
-    // .gitignore e nunca deve ser enviado ao repositório ou ao deploy.
-    if (process.env.NODE_ENV !== "production") {
+    // Conveniência exclusiva do desenvolvimento local (`next dev` / `next start`).
+    // O arquivo está no .gitignore e nunca deve ir para o repositório ou deploy.
+    const isHostedRuntime = Boolean(
+      process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME,
+    );
+    if (!isHostedRuntime) {
       const localPath = join(process.cwd(), "src", "firebase-service-account.json");
       if (existsSync(localPath)) {
         try {

@@ -23,6 +23,16 @@ import {
   type MemberProfileUpdate,
 } from "../lib/members";
 import { chooseAndUploadProfilePhoto, removeProfilePhoto } from "../lib/profile-photo";
+import {
+  birthDateFromIso,
+  birthDateToIso,
+  formatBirthDate,
+  formatCep,
+  formatCpf,
+  formatPhone,
+  formatPlaca,
+  isValidCpf,
+} from "../features/intake/format";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
 
@@ -43,30 +53,6 @@ const emptyForm: MemberProfileUpdate = {
   chavePix: "",
 };
 
-function formatCpf(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  return digits
-    .replace(/^(\d{3})(\d)/, "$1.$2")
-    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1-$2");
-}
-
-function isValidCpf(value: string) {
-  const digits = value.replace(/\D/g, "");
-  if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false;
-
-  const calculateDigit = (length: number) => {
-    let sum = 0;
-    for (let index = 0; index < length; index += 1) {
-      sum += Number(digits[index]) * (length + 1 - index);
-    }
-    const remainder = (sum * 10) % 11;
-    return remainder === 10 ? 0 : remainder;
-  };
-
-  return calculateDigit(9) === Number(digits[9]) && calculateDigit(10) === Number(digits[10]);
-}
-
 export function EditProfileScreen({ navigation }: Props) {
   const { member, refresh } = useAuth();
   const [form, setForm] = useState(emptyForm);
@@ -80,15 +66,15 @@ export function EditProfileScreen({ navigation }: Props) {
       setForm({
         nome: member.nome,
         cpf: formatCpf(member.cpf),
-        telefone: member.telefone,
-        dataNascimento: member.dataNascimento,
+        telefone: formatPhone(member.telefone),
+        dataNascimento: birthDateFromIso(member.dataNascimento),
         endereco: member.endereco,
         cidade: member.cidade,
         estado: member.estado,
-        cep: member.cep,
+        cep: formatCep(member.cep),
         tipoVeiculo: member.tipoVeiculo,
         modelo: member.modelo,
-        placa: member.placa,
+        placa: formatPlaca(member.placa),
         chavePix: member.chavePix,
       });
       setLocalPhoto(member.photoURL);
@@ -160,7 +146,10 @@ export function EditProfileScreen({ navigation }: Props) {
       return;
     }
     setSaving(true);
-    const result = await updateMemberProfile(form);
+    const result = await updateMemberProfile({
+      ...form,
+      dataNascimento: birthDateToIso(form.dataNascimento),
+    });
     setSaving(false);
     if (!result.ok) {
       Alert.alert("Não foi possível salvar", result.error);
@@ -213,8 +202,8 @@ export function EditProfileScreen({ navigation }: Props) {
           <Section title="Dados pessoais" subtitle="Informações principais da sua conta">
             <Field autoCapitalize="words" icon="user" label="Nome completo" onChangeText={set("nome")} value={form.nome} />
             <Field icon="file-text" keyboardType="numeric" label="CPF" onChangeText={(value) => set("cpf")(formatCpf(value))} placeholder="000.000.000-00" value={form.cpf} />
-            <Field icon="phone" keyboardType="phone-pad" label="Telefone / WhatsApp" onChangeText={set("telefone")} value={form.telefone} />
-            <Field icon="calendar" label="Data de nascimento" onChangeText={set("dataNascimento")} placeholder="DD/MM/AAAA" value={form.dataNascimento} />
+            <Field icon="phone" keyboardType="phone-pad" label="Telefone / WhatsApp" onChangeText={(value) => set("telefone")(formatPhone(value))} placeholder="(11) 90000-0000" value={form.telefone} />
+            <Field icon="calendar" keyboardType="numeric" label="Data de nascimento" onChangeText={(value) => set("dataNascimento")(formatBirthDate(value))} placeholder="DD/MM/AAAA" value={form.dataNascimento} />
             <ReadOnly label="E-mail de acesso" value={member?.email || ""} />
           </Section>
 
@@ -223,14 +212,14 @@ export function EditProfileScreen({ navigation }: Props) {
             <Field autoCapitalize="words" icon="navigation" label="Cidade" onChangeText={set("cidade")} value={form.cidade} />
             <View style={styles.twoColumns}>
               <View style={{ flex: 1 }}><Field autoCapitalize="characters" label="Estado" onChangeText={set("estado")} placeholder="UF" value={form.estado} /></View>
-              <View style={{ flex: 1.5 }}><Field keyboardType="numeric" label="CEP" onChangeText={set("cep")} value={form.cep} /></View>
+              <View style={{ flex: 1.5 }}><Field keyboardType="numeric" label="CEP" onChangeText={(value) => set("cep")(formatCep(value))} placeholder="00000-000" value={form.cep} /></View>
             </View>
           </Section>
 
           <Section title="Veículo e pagamento" subtitle="Dados usados nos seus benefícios">
             <Field autoCapitalize="words" icon="truck" label="Tipo de veículo" onChangeText={set("tipoVeiculo")} placeholder="Carro, moto, van..." value={form.tipoVeiculo} />
             <Field autoCapitalize="words" icon="tag" label="Modelo" onChangeText={set("modelo")} value={form.modelo} />
-            <Field autoCapitalize="characters" icon="hash" label="Placa" onChangeText={set("placa")} value={form.placa} />
+            <Field autoCapitalize="characters" icon="hash" label="Placa" onChangeText={(value) => set("placa")(formatPlaca(value))} placeholder="ABC1D23" value={form.placa} />
             <Field icon="zap" label="Chave PIX" onChangeText={set("chavePix")} value={form.chavePix} />
           </Section>
 

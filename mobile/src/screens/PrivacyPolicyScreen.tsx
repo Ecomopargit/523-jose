@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenAtmosphere } from "../components/UI";
@@ -43,14 +44,36 @@ const sections: Array<{
   },
 ];
 
-export function PrivacyPolicyScreen({ navigation }: Props) {
+export function PrivacyPolicyScreen({ navigation, route }: Props) {
+  const fromRegister = route.params?.origin === "register";
+
+  function handleBack() {
+    if (fromRegister) {
+      navigation.navigate("Register");
+      return;
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    navigation.navigate("Login");
+  }
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      handleBack();
+      return true;
+    });
+    return () => sub.remove();
+  }, [fromRegister]);
+
   return (
     <SafeAreaView edges={["top"]} style={styles.safe}>
       <StatusBar style="dark" />
       <ScreenAtmosphere />
 
       <View style={styles.header}>
-        <Pressable accessibilityLabel="Voltar" onPress={navigation.goBack} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
+        <Pressable accessibilityLabel="Voltar" onPress={handleBack} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
           <Feather color={colors.green800} name="arrow-left" size={19} />
         </Pressable>
         <View style={styles.headerText}>

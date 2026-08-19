@@ -101,6 +101,23 @@ async function isMercadoPagoTestMode() {
   return cachedTestCredential;
 }
 
+function buildExternalReference(type: "activation" | "deposit", memberId: string) {
+  // Orders API (credenciais de teste) não aceita ":" no external_reference.
+  return `${type}_${memberId}`.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
+}
+
+function mercadoPagoErrorMessage(result: {
+  message?: string;
+  error?: string;
+  errors?: Array<{ message?: string; details?: string[] }>;
+}) {
+  const details = (result.errors ?? [])
+    .flatMap((entry) => [entry.message, ...(entry.details ?? [])])
+    .filter(Boolean)
+    .join(" · ");
+  return details || result.message || result.error || "Mercado Pago recusou o PIX.";
+}
+
 async function createTestPixOrder(input: {
   memberId: string;
   amount: number;
@@ -116,7 +133,7 @@ async function createTestPixOrder(input: {
     },
     body: JSON.stringify({
       type: "online",
-      external_reference: `${input.type}:${input.memberId}`,
+      external_reference: buildExternalReference(input.type, input.memberId),
       total_amount: input.amount.toFixed(2),
       payer: {
         email: "test_user_br@testuser.com",
@@ -142,7 +159,7 @@ async function createTestPixOrder(input: {
     error?: string;
   };
   if (!response.ok) {
-    throw new Error(result.message || result.error || "Mercado Pago recusou o PIX de teste.");
+    throw new Error(mercadoPagoErrorMessage(result));
   }
 
   const transaction = result.transactions?.payments?.[0];

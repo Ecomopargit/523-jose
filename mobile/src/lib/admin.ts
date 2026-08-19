@@ -1,7 +1,17 @@
 import { collection, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 import type { MemberProfile } from "../types";
+
+function apiBase() {
+  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar-523.netlify.app").replace(/\/$/, "");
+}
+
+async function adminHeaders() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Faça login para continuar.");
+  return { Authorization: `Bearer ${await user.getIdToken()}` };
+}
 
 export type AdminStats = {
   active: number;
@@ -43,6 +53,13 @@ export async function getAdminStats(): Promise<AdminStats> {
         chavePix: String(data.chavePix ?? ""),
         aderiuIndicacao: Boolean(data.aderiuIndicacao),
         codigoIndicacao: String(data.codigoIndicacao ?? ""),
+        referralCode: String(data.referralCode ?? ""),
+        referredByUid: String(data.referredByUid ?? ""),
+        referredByCode: String(data.referredByCode ?? ""),
+        referralValidCount: Number(data.referralValidCount ?? 0),
+        referralBonusPaidGroups: Number(data.referralBonusPaidGroups ?? 0),
+        activatedAt: data.activatedAt?.toDate?.()?.toISOString() ?? (typeof data.activatedAt === "string" ? data.activatedAt : null),
+        withdrawalLockedUntil: data.withdrawalLockedUntil?.toDate?.()?.toISOString() ?? (typeof data.withdrawalLockedUntil === "string" ? data.withdrawalLockedUntil : null),
         status: data.status || "pendente",
         role: data.role || "member",
         saldoDisponivel: Number(data.saldoDisponivel ?? 0),
@@ -81,6 +98,39 @@ export async function getAdminStats(): Promise<AdminStats> {
   };
 }
 
+export async function activateMember(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const response = await fetch(`${apiBase()}/api/admin/members/${id}/activate`, {
+      method: "POST",
+      headers: await adminHeaders(),
+    });
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) {
+      throw new Error(data.error || "Não foi possível ativar a conta.");
+    }
+    return { ok: true };
+  } catch (error) {
+    try {
+      await updateDoc(doc(db, "users", id), { status: "ativo", updatedAt: serverTimestamp() });
+      return { ok: true };
+    } catch (fallbackError) {
+      const code = (fallbackError as { code?: string }).code;
+      const message =
+        code === "permission-denied" || code === "firestore/permission-denied"
+          ? "O Firebase recusou a operação. Saia e entre novamente na conta administrativa."
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível ativar a conta.";
+      return { ok: false, error: message };
+    }
+  }
+}
+
 export async function setMemberStatus(id: string, status: "ativo" | "bloqueado") {
+  if (status === "ativo") {
+    const result = await activateMember(id);
+    if (!result.ok) throw new Error(result.error);
+    return;
+  }
   await updateDoc(doc(db, "users", id), { status, updatedAt: serverTimestamp() });
 }

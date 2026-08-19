@@ -32,7 +32,17 @@ import {
   UserCheck,
   UserRoundX,
   LoaderCircle,
+  Gift,
+  Share2,
+  CheckCircle2,
 } from "lucide-react";
+import {
+  getMemberReferralDossier,
+  REFERRAL_BONUS,
+  REFERRALS_PER_BONUS,
+  type AdminReferralDossier,
+  type AdminReferredPerson,
+} from "@/lib/referral-admin";
 
 const statusOptions: { value: MemberStatus | "todos"; label: string }[] = [
   { value: "todos", label: "Todos" },
@@ -328,6 +338,8 @@ function MemberDrawer({
             <InfoLine icon={KeyRound} label="Chave PIX" value={member.chavePix || "—"} />
           </section>
 
+          <ReferralAdminSection member={member} />
+
           <section className="space-y-3 pt-2 border-t border-line-soft">
             <h3 className="font-display text-[15px] font-semibold">Gestão</h3>
 
@@ -389,6 +401,148 @@ function MemberDrawer({
           </section>
         </div>
       </aside>
+    </div>
+  );
+}
+
+function ReferralAdminSection({ member }: { member: MemberProfile }) {
+  const [dossier, setDossier] = useState<AdminReferralDossier | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    void getMemberReferralDossier(member.id, member)
+      .then((data) => {
+        if (active) setDossier(data);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [member]);
+
+  if (loading) {
+    return (
+      <section className="space-y-3 pt-2 border-t border-line-soft">
+        <h3 className="font-display text-[15px] font-semibold">Programa de indicação</h3>
+        <div className="card p-4 flex items-center gap-2 text-sm text-ink-soft">
+          <LoaderCircle className="w-4 h-4 animate-spin" /> Carregando indicações…
+        </div>
+      </section>
+    );
+  }
+
+  if (!dossier) return null;
+
+  return (
+    <section className="space-y-4 pt-2 border-t border-line-soft">
+      <h3 className="font-display text-[15px] font-semibold">Programa de indicação</h3>
+
+      <div className="withdraw-hero !p-4">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="icon-badge-lg mb-0">
+            <Gift className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] opacity-55 uppercase tracking-wide font-semibold">Código do associado</p>
+            <p className="font-mono-num text-lg font-semibold truncate">{dossier.referralCode || "—"}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-sm">
+          <div>
+            <p className="text-[11px] opacity-55">Válidas</p>
+            <p className="font-semibold">{dossier.validCount}</p>
+          </div>
+          <div>
+            <p className="text-[11px] opacity-55">Pendentes</p>
+            <p className="font-semibold">{dossier.pendingCount}</p>
+          </div>
+          <div>
+            <p className="text-[11px] opacity-55">Bônus pago</p>
+            <p className="font-semibold font-mono-num">{brl(dossier.bonusPaid)}</p>
+          </div>
+        </div>
+        <div className="mt-4 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-between text-[12px] mb-2">
+            <span className="opacity-70">Progresso para {brl(REFERRAL_BONUS)}</span>
+            <span className="font-semibold">{dossier.progressToNextBonus}/{REFERRALS_PER_BONUS}</span>
+          </div>
+          <div className="flex gap-2">
+            {[0, 1, 2].map((slot) => (
+              <div
+                key={slot}
+                className={`h-2 flex-1 rounded-full ${slot < dossier.progressToNextBonus ? "bg-green-400" : "bg-white/15"}`}
+              />
+            ))}
+          </div>
+          <p className="text-[11px] opacity-55 mt-2">
+            {dossier.remainingForBonus === 0
+              ? "Grupo completo — bônus liberado ao ativar mais indicações."
+              : `Faltam ${dossier.remainingForBonus} indicação${dossier.remainingForBonus === 1 ? "" : "ões"} ativa${dossier.remainingForBonus === 1 ? "" : "s"} para o bônus de ${brl(REFERRAL_BONUS)}.`}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-faint">Foi indicado por alguém?</p>
+        <div className="card p-4">
+          {dossier.wasReferred && dossier.referredBy ? (
+            <div className="space-y-2 text-sm">
+              <p><span className="text-ink-soft">Indicado por:</span> <strong>{dossier.referredBy.nome}</strong></p>
+              <p className="text-ink-soft truncate">{dossier.referredBy.email}</p>
+              <p><span className="text-ink-soft">Código usado:</span> <span className="font-mono-num">{dossier.referredBy.code || member.referredByCode || "—"}</span></p>
+            </div>
+          ) : (
+            <p className="text-sm text-ink-soft">Este associado não utilizou código de indicação no cadastro.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-faint">
+          Pessoas que indicou ({dossier.totalReferrals})
+        </p>
+        <div className="card p-1.5">
+          {dossier.madeReferrals.length === 0 ? (
+            <p className="p-4 text-sm text-ink-soft text-center">Ainda não indicou ninguém.</p>
+          ) : (
+            dossier.madeReferrals.map((person) => <ReferredAdminRow key={person.id} person={person} />)
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ReferredAdminRow({ person }: { person: AdminReferredPerson }) {
+  const activityLabel = person.isDepositing
+    ? `${person.depositosCount} dia${person.depositosCount === 1 ? "" : "s"} depositando`
+    : person.isActive
+      ? "Ativo · sem depósitos"
+      : person.memberStatus.charAt(0).toUpperCase() + person.memberStatus.slice(1);
+
+  return (
+    <div className="detail-row">
+      <div className="flex items-center gap-3.5 min-w-0">
+        <div className={`icon-badge-lg mb-0 ${person.isValid ? "" : "icon-badge-amber bg-amber-100"}`}>
+          {person.isValid ? (
+            <CheckCircle2 className="w-4 h-4 text-green-700" />
+          ) : (
+            <Share2 className="w-4 h-4 text-amber-600" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold truncate">{person.nome}</p>
+          <p className="text-[12.5px] text-ink-soft truncate">{person.email}</p>
+          <p className="text-[12px] text-ink-faint">{activityLabel}</p>
+        </div>
+      </div>
+      <span className={person.isValid ? "badge-confirmado shrink-0" : "badge-pago shrink-0"}>
+        {person.isValid ? "Válida" : "Pendente"}
+      </span>
     </div>
   );
 }

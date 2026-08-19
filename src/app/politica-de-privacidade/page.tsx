@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import Logo from "@/components/Logo";
+import { PoliticaBackLink } from "@/components/PoliticaBackLink";
 
 export const metadata = {
   title: "Política de Privacidade",
@@ -47,9 +49,15 @@ export default function PoliticaPrivacidadePage() {
           </p>
         </div>
 
-        <Link href="/login" className="inline-block mt-10 text-brand font-bold hover:underline">
-          Voltar
-        </Link>
+        <Suspense
+          fallback={
+            <Link href="/cadastrar" className="inline-block mt-10 text-brand font-bold hover:underline">
+              Voltar ao cadastro
+            </Link>
+          }
+        >
+          <PoliticaBackLink />
+        </Suspense>
       </div>
     </main>
   );
