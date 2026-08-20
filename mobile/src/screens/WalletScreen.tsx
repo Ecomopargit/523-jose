@@ -44,7 +44,6 @@ export function WalletScreen({ navigation, route }: Props) {
   useEffect(() => {
     if (!route.params?.flow) return;
     if (route.params.flow === "withdraw") openWithdrawal();
-    else setFlow(route.params.flow);
     navigation.setParams({ flow: undefined });
   }, [navigation, route.params?.flow]);
 
@@ -74,7 +73,7 @@ export function WalletScreen({ navigation, route }: Props) {
         </LinearGradient>
 
         <View style={styles.actions}>
-          <Action icon="plus" label="Depositar" hint="via PIX" onPress={() => setFlow("deposit")} primary />
+          <Action icon="plus" label="Depositar" hint="via PIX" onPress={() => navigation.navigate("Pagamentos")} primary />
           <Action icon="arrow-down" label="Solicitar" hint={withdrawalLocked ? "em carência" : "saque"} onPress={openWithdrawal} />
         </View>
 
@@ -106,7 +105,7 @@ export function WalletScreen({ navigation, route }: Props) {
               <View style={styles.emptyIcon}><Feather color={colors.green700} name="inbox" size={21} /></View>
               <Text style={styles.emptyTitle}>Sua jornada começa aqui</Text>
               <Text style={styles.emptyText}>Quando você fizer sua primeira contribuição, ela aparecerá neste histórico.</Text>
-              <Pressable accessibilityRole="button" onPress={() => setFlow("deposit")} style={({ pressed }) => [styles.emptyAction, pressed && styles.pressed]}>
+              <Pressable accessibilityRole="button" onPress={() => navigation.navigate("Pagamentos")} style={({ pressed }) => [styles.emptyAction, pressed && styles.pressed]}>
                 <Text style={styles.emptyActionText}>Fazer primeiro depósito</Text>
                 <View style={styles.emptyActionIcon}><Feather color={colors.white} name="arrow-right" size={14} /></View>
               </Pressable>

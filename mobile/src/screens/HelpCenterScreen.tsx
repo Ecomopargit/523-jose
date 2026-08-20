@@ -14,7 +14,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "HelpCenter">;
 const faqs = [
   { question: "Como funciona a contribuição diária?", answer: "A contribuição diária é de R$ 7,00. Desse valor, R$ 5,00 são destinados à sua reserva pessoal e R$ 2,00 mantêm os serviços e benefícios da associação." },
   { question: "Quando posso sacar minha reserva?", answer: "O saldo disponível pode ser solicitado conforme as condições do seu plano. Valores em carência ficam liberados após o período indicado na Carteira." },
-  { question: "Como faço um depósito via PIX?", answer: "Acesse Carteira e toque em Depositar. O aplicativo apresentará o PIX e as instruções para concluir a contribuição." },
+  { question: "Como faço um depósito via PIX?", answer: "Acesse a aba Pagamentos, escolha o valor e toque em Gerar PIX. Use o QR Code ou o código copia e cola no app do seu banco." },
   { question: "Como funciona o bônus por indicação?", answer: "Compartilhe seu código na área Benefícios. Quando o motorista indicado concluir a ativação, o bônus será registrado na sua conta." },
   { question: "Posso alterar meu CPF ou e-mail?", answer: "Por segurança, CPF e e-mail precisam ser alterados pela equipe de suporte após a confirmação da sua identidade." },
   { question: "Meus dados estão seguros?", answer: "Sim. O acesso usa Firebase Authentication e regras que limitam cada associado aos próprios dados, conversas e arquivos." },

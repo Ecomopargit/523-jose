@@ -63,7 +63,8 @@ export type RootStackParamList = {
 
 export type AppTabParamList = {
   Início: undefined;
-  Carteira: { flow?: "deposit" | "withdraw" } | undefined;
+  Pagamentos: undefined;
+  Carteira: { flow?: "withdraw" } | undefined;
   Benefícios: undefined;
   Perfil: undefined;
 };

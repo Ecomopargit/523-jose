@@ -33,8 +33,8 @@ export const dashboardMeta: Record<
     subtitle: "Disponível, bloqueado e bônus",
   },
   "/dashboard/pagamentos": {
-    title: "Envio de pagamento",
-    subtitle: "Depósito diário via PIX",
+    title: "Pagamentos",
+    subtitle: "Depósito via PIX e transferências",
   },
   "/dashboard/ativar-cadastro": {
     title: "Ativar cadastro",

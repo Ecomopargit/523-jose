@@ -108,6 +108,7 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={() => setMenuOpen(false)}
               className={`block rounded-xl px-4 py-3.5 font-medium transition-colors ${
                 isActive(link.href)
                   ? "bg-brand-50 text-brand"
@@ -120,12 +121,13 @@ export default function Header() {
           <hr className="my-4 border-gray-100" />
           <Link
             href="/login"
+            onClick={() => setMenuOpen(false)}
             className="flex items-center gap-2 rounded-xl px-4 py-3.5 text-brand font-semibold hover:bg-brand-50"
           >
             <User size={20} />
             <span>Área do Associado</span>
           </Link>
-          <Link href="/cadastrar" className="btn-primary btn-md w-full mt-2">
+          <Link href="/cadastrar" onClick={() => setMenuOpen(false)} className="btn-primary btn-md w-full mt-2">
             Cadastrar-se
           </Link>
         </nav>

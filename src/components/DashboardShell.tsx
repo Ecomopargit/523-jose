@@ -12,6 +12,7 @@ import {
   Sparkles,
   Gift,
   CircleDollarSign,
+  QrCode,
   LogOut,
   Menu,
   X,
@@ -28,6 +29,7 @@ type MenuItem = { href: string; icon: LucideIcon; label: string };
 
 const menuItems: MenuItem[] = [
   { href: "/dashboard", icon: Home, label: "Início" },
+  { href: "/dashboard/pagamentos", icon: QrCode, label: "Pagamentos" },
   { href: "/dashboard/perfil", icon: UserCircle, label: "Meu perfil" },
   { href: "/dashboard/saque", icon: TrendingDown, label: "Solicitar saque" },
   { href: "/dashboard/extrato", icon: History, label: "Histórico saque" },

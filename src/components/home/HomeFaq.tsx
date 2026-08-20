@@ -26,30 +26,28 @@ const faq = [
 
 export default function HomeFaq() {
   return (
-    <section className="py-16 sm:py-20 bg-bg">
+    <section className="landing-faq-section py-20 sm:py-28 bg-[#f8f7f2]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10 sm:mb-12">
-          <span className="text-accent font-semibold text-sm uppercase tracking-wider">
+          <span className="landing-eyebrow">
             Tire suas dúvidas
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand mt-3">
+          <h2 className="font-display text-4xl sm:text-5xl font-semibold tracking-[-.04em] text-brand mt-4">
             Perguntas frequentes
           </h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="landing-faq-list">
           {faq.map((item) => (
             <details
               key={item.q}
-              className="card group p-0 overflow-hidden [&_summary::-webkit-details-marker]:hidden"
+              className="landing-faq-item group [&_summary::-webkit-details-marker]:hidden"
             >
-              <summary className="flex items-center justify-between gap-4 cursor-pointer list-none px-5 sm:px-6 py-5 font-semibold text-ink hover:text-brand transition-colors">
+              <summary className="flex items-center justify-between gap-4 cursor-pointer list-none py-6 font-semibold text-ink hover:text-brand transition-colors">
                 <span className="text-[15px] sm:text-base">{item.q}</span>
                 <ChevronDown className="w-5 h-5 shrink-0 text-accent transition-transform duration-300 group-open:rotate-180" />
               </summary>
-              <p className="px-5 sm:px-6 pb-5 text-sm sm:text-[15px] text-ink-soft leading-relaxed">
-                {item.a}
-              </p>
+              <div className="landing-faq-answer"><p>{item.a}</p></div>
             </details>
           ))}
         </div>

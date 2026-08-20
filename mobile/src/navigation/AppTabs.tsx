@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BenefitsScreen } from "../screens/BenefitsScreen";
 import { HomeScreen } from "../screens/HomeScreen";
+import { PaymentsScreen } from "../screens/PaymentsScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { WalletScreen } from "../screens/WalletScreen";
 import { colors, fonts } from "../theme";
@@ -14,6 +15,7 @@ const Tab = createBottomTabNavigator<AppTabParamList>();
 
 const icons = {
   Início: "grid",
+  Pagamentos: "zap",
   Carteira: "credit-card",
   Benefícios: "heart",
   Perfil: "user",
@@ -61,6 +63,7 @@ export function AppTabs() {
       })}
     >
       <Tab.Screen name="Início" component={HomeScreen} />
+      <Tab.Screen name="Pagamentos" component={PaymentsScreen} />
       <Tab.Screen name="Carteira" component={WalletScreen} />
       <Tab.Screen name="Benefícios" component={BenefitsScreen} />
       <Tab.Screen name="Perfil" component={ProfileScreen} />
@@ -104,7 +107,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.bold,
-    fontSize: 10,
+    fontSize: 9,
     marginBottom: 2,
     marginTop: 2,
   },

@@ -104,7 +104,7 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.sectionRow}><Text style={styles.sectionTitle}>Acesso rápido</Text><Text style={styles.sectionCaption}>PRINCIPAIS AÇÕES</Text></View>
         <View style={styles.shortcuts}>
-          <Shortcut icon="plus-circle" label="Depositar" onPress={() => navigation.navigate("Carteira", { flow: "deposit" })} />
+          <Shortcut icon="plus-circle" label="Depositar" onPress={() => navigation.navigate("Pagamentos")} />
           <Shortcut icon="send" label="Indicar" onPress={() => navigation.navigate("Benefícios")} />
           <Shortcut icon="arrow-down-circle" label="Sacar" onPress={() => navigation.navigate("Carteira", { flow: "withdraw" })} />
           <Shortcut icon="headphones" label="Suporte" onPress={() => navigation.navigate("Perfil")} />

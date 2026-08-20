@@ -10,11 +10,11 @@ import { LOGO_WATERMARK } from "@/lib/logo";
 import {
   ArrowRight,
   Banknote,
-  Camera,
   ChevronRight,
   CircleDollarSign,
   Layers,
   PiggyBank,
+  QrCode,
   Shield,
   Star,
   TrendingUp,
@@ -137,9 +137,9 @@ export default function DashboardPage() {
           </Link>
           <Link href="/dashboard/pagamentos" className="shortcut-btn">
             <div className="icon-mini">
-              <Camera className="w-[15px] h-[15px] text-white" strokeWidth={2} />
+              <QrCode className="w-[15px] h-[15px] text-white" strokeWidth={2} />
             </div>
-            Envio de pagamento
+            Pagamentos
           </Link>
         </div>
       </div>
