@@ -58,7 +58,7 @@ export function BenefitsScreen() {
       Alert.alert("Código indisponível", "Tente carregar seu código novamente antes de compartilhar.");
       return;
     }
-    const link = `https://ecomopar-523.netlify.app/cadastrar?ref=${code}`;
+    const link = `https://ecomopar.netlify.app/cadastrar?ref=${code}`;
     try {
       await Share.share({
         message: `Venha para a ECOMOPAR! Use meu código ${code} ou cadastre-se pelo link: ${link}`,

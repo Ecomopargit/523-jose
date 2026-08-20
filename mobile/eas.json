@@ -9,7 +9,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ecomopar-523.netlify.app",
+        "EXPO_PUBLIC_API_URL": "https://ecomopar.netlify.app",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDYuzms-MqYjHOVcIfpmqXqrfbTzm3aSB8",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "jose-a6521.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "jose-a6521",

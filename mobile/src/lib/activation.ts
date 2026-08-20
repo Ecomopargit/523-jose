@@ -19,10 +19,7 @@ export type PublicActivationPayment = {
 };
 
 function apiBase() {
-  const url = process.env.EXPO_PUBLIC_API_URL?.trim();
-  if (!url) {
-    throw new Error("Servidor de pagamentos não configurado no aplicativo.");
-  }
+  const url = (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar.netlify.app").trim();
   return url.replace(/\/$/, "");
 }
 

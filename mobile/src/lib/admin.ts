@@ -4,7 +4,7 @@ import { auth, db } from "./firebase";
 import type { MemberProfile } from "../types";
 
 function apiBase() {
-  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar-523.netlify.app").replace(/\/$/, "");
+  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar.netlify.app").replace(/\/$/, "");
 }
 
 async function adminHeaders() {

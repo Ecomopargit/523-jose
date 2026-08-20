@@ -315,6 +315,37 @@ export async function getMercadoPagoPayment(mpPaymentId: string) {
   return payment.get({ id: mpPaymentId });
 }
 
+/** PIX antigo (outra conta/token) ou expirado no MP — mensagem típica: "does not exist" / 404. */
+export function isMercadoPagoMissingPaymentError(error: unknown) {
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return /not found|does not exist|n[aã]o encontr|resource not found|\b404\b|invalid_payment_id/.test(
+    message,
+  );
+}
+
+export async function mercadoPagoPaymentExists(mpPaymentId: string) {
+  if (!mpPaymentId.trim()) return false;
+  try {
+    await getMercadoPagoPayment(mpPaymentId);
+    return true;
+  } catch (error) {
+    if (isMercadoPagoMissingPaymentError(error)) return false;
+    throw error;
+  }
+}
+
+/** URL pública para webhook/notificação do PIX (precisa ser HTTPS acessível). */
+export function getMercadoPagoNotificationBaseUrl(fallbackOrigin?: string) {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "").trim();
+  if (configured && !/localhost|127\.0\.0\.1/.test(configured)) {
+    return configured;
+  }
+  if (fallbackOrigin && !/localhost|127\.0\.0\.1/.test(fallbackOrigin)) {
+    return fallbackOrigin.replace(/\/$/, "");
+  }
+  return "https://ecomopar.netlify.app";
+}
+
 export function mapMpStatus(status?: string | null): "pending" | "approved" | "rejected" | "cancelled" | "expired" {
   switch (status) {
     case "approved":

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuthError, getMemberDoc, requireAuthUser } from "@/lib/api-auth";
 import { createMemberDeposit, publicDepositPayload } from "@/lib/deposit-payments";
+import { getMercadoPagoNotificationBaseUrl } from "@/lib/mercadopago";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
       email: String(member.email || decoded.email || ""),
       nome: String(member.nome || decoded.name || "Associado"),
       amount,
-      notificationUrl: `${process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin}/api/webhooks/mercadopago`,
+      notificationUrl: `${getMercadoPagoNotificationBaseUrl(request.nextUrl.origin)}/api/webhooks/mercadopago`,
     });
     return NextResponse.json({ payment: publicDepositPayload(payment) });
   } catch (error) {

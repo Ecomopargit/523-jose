@@ -11,7 +11,7 @@ export type ReferralDashboard = {
 };
 
 function baseUrl() {
-  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar-523.netlify.app").replace(/\/$/, "");
+  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar.netlify.app").replace(/\/$/, "");
 }
 
 async function request<T>(method: "GET" | "POST", body?: object): Promise<T> {

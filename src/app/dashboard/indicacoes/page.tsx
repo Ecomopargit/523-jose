@@ -24,7 +24,7 @@ export default function IndicacoesPage() {
   const [copied, setCopied] = useState<"codigo" | "link" | null>(null);
   const codigoIndicacao = dashboard?.code ?? "—";
   const linkIndicacao = dashboard?.code
-    ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://ecomopar-523.netlify.app"}/cadastrar?ref=${encodeURIComponent(dashboard.code)}`
+    ? `${process.env.NEXT_PUBLIC_SITE_URL || "https://ecomopar.netlify.app"}/cadastrar?ref=${encodeURIComponent(dashboard.code)}`
     : "";
 
   useEffect(() => {

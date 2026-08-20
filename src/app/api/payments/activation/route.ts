@@ -3,16 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { publicActivationPayload } from "@/lib/activation-constants";
 import { createMemberActivationPayment } from "@/lib/activation-payments";
 import { AuthError, getMemberDoc, requireAuthUser } from "@/lib/api-auth";
+import { getMercadoPagoNotificationBaseUrl } from "@/lib/mercadopago";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-function siteBaseUrl(request: NextRequest) {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    request.nextUrl.origin
-  );
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "E-mail do associado não encontrado." }, { status: 400 });
     }
 
-    const notificationUrl = `${siteBaseUrl(request)}/api/webhooks/mercadopago`;
+    const notificationUrl = `${getMercadoPagoNotificationBaseUrl(request.nextUrl.origin)}/api/webhooks/mercadopago`;
     const payment = await createMemberActivationPayment({
       memberId: decoded.uid,
       email,

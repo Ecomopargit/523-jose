@@ -2,7 +2,12 @@ import { randomUUID } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 
 import { adminDb } from "@/lib/firebase-admin";
-import { createDepositPixPayment, getMercadoPagoPayment, mapMpStatus } from "@/lib/mercadopago";
+import {
+  createDepositPixPayment,
+  getMercadoPagoPayment,
+  isMercadoPagoMissingPaymentError,
+  mapMpStatus,
+} from "@/lib/mercadopago";
 
 export const DEPOSIT_COLLECTION = "depositPayments";
 export type DepositStatus = "pending" | "approved" | "rejected" | "cancelled" | "expired";
@@ -77,7 +82,18 @@ export async function applyApprovedDeposit(payment: DepositPayment) {
 
 export async function syncDeposit(payment: DepositPayment) {
   if (payment.status === "approved") return payment;
-  const mp = await getMercadoPagoPayment(payment.mpPaymentId);
+  let mp;
+  try {
+    mp = await getMercadoPagoPayment(payment.mpPaymentId);
+  } catch (error) {
+    if (!isMercadoPagoMissingPaymentError(error)) throw error;
+    const updatedAt = nowIso();
+    await adminDb
+      .collection(DEPOSIT_COLLECTION)
+      .doc(payment.id)
+      .set({ status: "expired", updatedAt }, { merge: true });
+    return { ...payment, status: "expired" as const, updatedAt };
+  }
   const status = mapMpStatus(mp.status);
   if (status === "approved") return applyApprovedDeposit(payment);
   if (status !== payment.status) {

@@ -13,7 +13,9 @@ import { adminDb } from "@/lib/firebase-admin";
 import {
   createActivationPixPayment,
   getMercadoPagoPayment,
+  isMercadoPagoMissingPaymentError,
   mapMpStatus,
+  mercadoPagoPaymentExists,
 } from "@/lib/mercadopago";
 import { buildActivationReceiptPdf, sendActivationReceiptEmail } from "@/lib/receipt";
 import {
@@ -97,7 +99,13 @@ export async function createMemberActivationPayment(input: {
   notificationUrl?: string;
 }) {
   const existing = await findOpenActivationPayment(input.memberId);
-  if (existing) return existing;
+  if (existing) {
+    const expired =
+      Boolean(existing.expiresAt) && new Date(existing.expiresAt!).getTime() < Date.now();
+    const stillOnMp = expired ? false : await mercadoPagoPaymentExists(existing.mpPaymentId);
+    if (!expired && stillOnMp) return existing;
+    await cancelPendingActivationPayment(existing.id, existing.memberId);
+  }
 
   const created = await createActivationPixPayment({
     memberId: input.memberId,
@@ -219,7 +227,18 @@ export async function syncActivationPaymentStatus(payment: ActivationPayment) {
     return deliverReceiptOnce(payment);
   }
 
-  const mp = await getMercadoPagoPayment(payment.mpPaymentId);
+  let mp;
+  try {
+    mp = await getMercadoPagoPayment(payment.mpPaymentId);
+  } catch (error) {
+    if (!isMercadoPagoMissingPaymentError(error)) throw error;
+    const stamp = nowIso();
+    await adminDb.collection(ACTIVATION_COLLECTION).doc(payment.id).set(
+      { status: "expired", updatedAt: stamp },
+      { merge: true },
+    );
+    return { ...payment, status: "expired" as const, updatedAt: stamp };
+  }
   const nextStatus = mapMpStatus(mp.status);
 
   if (nextStatus === "approved") {
