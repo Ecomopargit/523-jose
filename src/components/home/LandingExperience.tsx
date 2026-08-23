@@ -21,8 +21,11 @@ const benefits = [
     icon: PiggyBank,
     title: "Reserva financeira",
     text: "R$ 5,00 de cada contribuição diária formam a reserva pessoal do associado.",
-    tone: "lime",
+    tone: "photo",
     number: "01",
+    image: "/landing/hero.webp",
+    position: "center 28%",
+    alt: "Motorista profissional em atividade na cidade",
   },
   {
     icon: ShieldCheck,
@@ -31,34 +34,48 @@ const benefits = [
     tone: "photo",
     number: "02",
     image: "/landing/driver-blue.webp",
+    position: "center",
+    alt: "Motorista profissional acompanhando o celular no veículo",
   },
   {
     icon: Stethoscope,
     title: "Assistência odontológica",
     text: "Suporte para cuidados odontológicos conforme as regras do plano da associação.",
-    tone: "coral",
+    tone: "photo",
     number: "03",
+    image: "/landing/driver-woman.webp",
+    position: "center 22%",
+    alt: "Profissional da mobilidade em pausa no expediente",
   },
   {
     icon: Scale,
     title: "Assistência jurídica",
     text: "Orientação e apoio jurídico em situações relacionadas à atividade do associado.",
-    tone: "paper",
+    tone: "photo",
     number: "04",
+    image: "/landing/moto.webp",
+    position: "center 35%",
+    alt: "Motociclista profissional em deslocamento urbano",
   },
   {
     icon: CircleDollarSign,
     title: "Empréstimo subsidiado",
     text: "Apoio financeiro em condições especiais, sempre sujeito à análise interna.",
-    tone: "sand",
+    tone: "photo",
     number: "05",
+    image: "/landing/benefit-loan.jpg",
+    position: "center 30%",
+    alt: "Motorista analisando finanças pelo celular no veículo",
   },
   {
     icon: Users,
     title: "Indique e ganhe",
     text: "A cada três parceiros que ativarem o cadastro, R$ 150,00 em bônus conforme as regras da campanha.",
-    tone: "mint",
+    tone: "photo",
     number: "06",
+    image: "/landing/benefit-referral.jpg",
+    position: "center 25%",
+    alt: "Motoristas conversando sobre indicação da associação",
   },
 ];
 
@@ -171,10 +188,15 @@ export function BenefitsCarousel() {
             data-benefit-card
             className={`landing-benefit-card landing-benefit-card-${benefit.tone}`}
           >
-            {benefit.image ? (
-              <Image src={benefit.image} alt="Motorista profissional em seu veículo" fill sizes="(max-width: 768px) 86vw, 440px" className="object-cover" />
-            ) : null}
-            {benefit.image ? <div className="landing-benefit-photo-overlay" aria-hidden="true" /> : null}
+            <Image
+              src={benefit.image}
+              alt={benefit.alt}
+              fill
+              sizes="(max-width: 768px) 86vw, 440px"
+              className="object-cover"
+              style={{ objectPosition: benefit.position }}
+            />
+            <div className="landing-benefit-photo-overlay" aria-hidden="true" />
             <span className="landing-benefit-number" aria-hidden="true">{benefit.number}</span>
             <div className="landing-benefit-icon"><benefit.icon aria-hidden="true" /></div>
             <div className="relative z-10">

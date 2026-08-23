@@ -294,54 +294,76 @@ function MemberDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <button type="button" className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-label="Fechar" onClick={onClose} />
-      <aside className="relative w-full max-w-lg h-full bg-surface shadow-2xl overflow-y-auto animate-fade-up border-l border-line-soft">
-        <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur border-b border-line-soft px-5 py-4 flex items-center justify-between">
-          <div>
-            <p className="font-display font-semibold text-ink">{member.nome}</p>
-            <p className="text-[12.5px] text-ink-soft">{member.email}</p>
+    <div className="admin-member-overlay">
+      <button type="button" className="admin-member-scrim" aria-label="Fechar" onClick={onClose} />
+      <aside className="admin-member-sheet" role="dialog" aria-modal="true" aria-labelledby="admin-member-title">
+        <div className="admin-member-sheet-glow" aria-hidden="true" />
+
+        <header className="admin-member-head">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="admin-member-avatar">{initialsFromName(member.nome)}</div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-green-700/80">Ficha do associado</p>
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                <h2 id="admin-member-title" className="font-display text-[1.35rem] font-semibold tracking-tight text-ink truncate leading-none">
+                  {member.nome}
+                </h2>
+                <span className={statusBadge(member.status)}>
+                  <StatusIcon status={member.status} />
+                  {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                </span>
+              </div>
+              <p className="mt-1.5 text-[12.5px] text-ink-soft truncate">{member.email}</p>
+            </div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-green-50 text-ink-soft" aria-label="Fechar">
-            <X className="w-5 h-5" />
+          <button type="button" onClick={onClose} className="admin-member-close" aria-label="Fechar">
+            <X className="w-[18px] h-[18px]" />
           </button>
-        </div>
+        </header>
 
-        <div className="p-5 space-y-5">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="stat-card !p-3">
-              <p className="text-[11px] text-ink-soft mb-1">Disponível</p>
-              <p className="font-mono-num font-semibold text-green-700 text-sm">{brl(member.saldoDisponivel)}</p>
+        <div className="admin-member-body">
+          <div className="admin-member-balances">
+            <div>
+              <p>Disponível</p>
+              <strong className="text-green-700">{brl(member.saldoDisponivel)}</strong>
             </div>
-            <div className="stat-card !p-3">
-              <p className="text-[11px] text-ink-soft mb-1">Bloqueado</p>
-              <p className="font-mono-num font-semibold text-brick-600 text-sm">{brl(member.saldoBloqueado)}</p>
+            <div>
+              <p>Bloqueado</p>
+              <strong className="text-brick-600">{brl(member.saldoBloqueado)}</strong>
             </div>
-            <div className="stat-card !p-3">
-              <p className="text-[11px] text-ink-soft mb-1">Bônus</p>
-              <p className="font-mono-num font-semibold text-amber-600 text-sm">{brl(member.saldoBonus)}</p>
+            <div>
+              <p>Bônus</p>
+              <strong className="text-amber-700">{brl(member.saldoBonus)}</strong>
             </div>
           </div>
 
-          <section className="space-y-3">
-            <h3 className="font-display text-[15px] font-semibold">Dados cadastrais</h3>
-            <InfoLine icon={Mail} label="E-mail" value={member.email} />
-            <InfoLine icon={Phone} label="Telefone" value={member.telefone || "—"} />
-            <InfoLine
-              icon={MapPin}
-              label="Endereço"
-              value={[member.endereco, member.cidade && `${member.cidade}-${member.estado}`, member.cep]
-                .filter(Boolean)
-                .join(" · ") || "—"}
-            />
-            <InfoLine icon={Car} label="Veículo" value={vehicleLabel(member)} />
-            <InfoLine icon={KeyRound} label="Chave PIX" value={member.chavePix || "—"} />
+          <section className="admin-member-block">
+            <div className="admin-member-block-title">
+              <h3>Dados cadastrais</h3>
+              <span>Cadastro</span>
+            </div>
+            <div className="admin-member-info-list">
+              <InfoLine icon={Mail} label="E-mail" value={member.email} />
+              <InfoLine icon={Phone} label="Telefone" value={member.telefone || "—"} />
+              <InfoLine
+                icon={MapPin}
+                label="Endereço"
+                value={[member.endereco, member.cidade && `${member.cidade}-${member.estado}`, member.cep]
+                  .filter(Boolean)
+                  .join(" · ") || "—"}
+              />
+              <InfoLine icon={Car} label="Veículo" value={vehicleLabel(member)} />
+              <InfoLine icon={KeyRound} label="Chave PIX" value={member.chavePix || "—"} />
+            </div>
           </section>
 
           <ReferralAdminSection member={member} />
 
-          <section className="space-y-3 pt-2 border-t border-line-soft">
-            <h3 className="font-display text-[15px] font-semibold">Gestão</h3>
+          <section className="admin-member-block">
+            <div className="admin-member-block-title">
+              <h3>Gestão</h3>
+              <span>Controles</span>
+            </div>
 
             <div>
               <label className="text-[13px] font-semibold block mb-1.5">Status</label>
@@ -382,24 +404,28 @@ function MemberDrawer({
               />
             </div>
 
-            {msg && (
-              <p className="text-[13px] text-green-700 bg-green-50 border border-line-soft rounded-[11px] px-3 py-2">
+            {msg ? (
+              <p className="text-[13px] text-green-700 bg-green-50 border border-line-soft rounded-[12px] px-3 py-2">
                 {msg}
               </p>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-2 pt-1">
-              <button type="button" onClick={save} className="btn-primary btn-md flex-1">
-                <Save className="w-4 h-4" />
-                Salvar alterações
-              </button>
-              <button type="button" onClick={remove} className="btn-outline btn-md text-brick-600 border-brick-100 hover:bg-brick-100/40">
-                <Trash2 className="w-4 h-4" />
-                Remover
-              </button>
-            </div>
+            ) : null}
           </section>
         </div>
+
+        <footer className="admin-member-foot">
+          <button type="button" onClick={save} className="btn-primary btn-md flex-1">
+            <Save className="w-4 h-4" />
+            Salvar alterações
+          </button>
+          <button
+            type="button"
+            onClick={remove}
+            className="btn-outline btn-md text-brick-600 border-brick-100 hover:bg-brick-100/40"
+          >
+            <Trash2 className="w-4 h-4" />
+            Remover
+          </button>
+        </footer>
       </aside>
     </div>
   );
@@ -426,10 +452,14 @@ function ReferralAdminSection({ member }: { member: MemberProfile }) {
 
   if (loading) {
     return (
-      <section className="space-y-3 pt-2 border-t border-line-soft">
-        <h3 className="font-display text-[15px] font-semibold">Programa de indicação</h3>
-        <div className="card p-4 flex items-center gap-2 text-sm text-ink-soft">
-          <LoaderCircle className="w-4 h-4 animate-spin" /> Carregando indicações…
+      <section className="admin-member-block">
+        <div className="admin-member-block-title">
+          <h3>Programa de indicação</h3>
+          <span>Indique</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-ink-soft py-1">
+          <LoaderCircle className="w-4 h-4 animate-spin shrink-0" />
+          Carregando indicações…
         </div>
       </section>
     );
@@ -438,80 +468,115 @@ function ReferralAdminSection({ member }: { member: MemberProfile }) {
   if (!dossier) return null;
 
   return (
-    <section className="space-y-4 pt-2 border-t border-line-soft">
-      <h3 className="font-display text-[15px] font-semibold">Programa de indicação</h3>
+    <section className="space-y-3">
+      <div className="admin-member-block !pb-4">
+        <div className="admin-member-block-title">
+          <h3>Programa de indicação</h3>
+          <span>Indique</span>
+        </div>
 
-      <div className="withdraw-hero !p-4">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="icon-badge-lg mb-0">
-            <Gift className="w-4 h-4" />
+        <div className="rounded-[1.15rem] bg-gradient-to-br from-green-800 to-green-950 text-white p-3.5 space-y-3.5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/12 border border-white/10 flex items-center justify-center shrink-0">
+              <Gift className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-white/55 font-semibold">Código do associado</p>
+              <p className="font-mono-num text-base font-semibold tracking-wide truncate">
+                {dossier.referralCode || "—"}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/80">
+              {dossier.totalReferrals} indicação{dossier.totalReferrals === 1 ? "" : "ões"}
+            </span>
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] opacity-55 uppercase tracking-wide font-semibold">Código do associado</p>
-            <p className="font-mono-num text-lg font-semibold truncate">{dossier.referralCode || "—"}</p>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-white/8 border border-white/8 px-2.5 py-2.5 text-center">
+              <p className="text-[10px] uppercase tracking-wide text-white/50 font-semibold">Válidas</p>
+              <p className="mt-1 font-display text-xl font-semibold leading-none">{dossier.validCount}</p>
+            </div>
+            <div className="rounded-xl bg-white/8 border border-white/8 px-2.5 py-2.5 text-center">
+              <p className="text-[10px] uppercase tracking-wide text-white/50 font-semibold">Pendentes</p>
+              <p className="mt-1 font-display text-xl font-semibold leading-none">{dossier.pendingCount}</p>
+            </div>
+            <div className="rounded-xl bg-white/8 border border-white/8 px-2.5 py-2.5 text-center">
+              <p className="text-[10px] uppercase tracking-wide text-white/50 font-semibold">Bônus pago</p>
+              <p className="mt-1 font-mono-num text-sm font-semibold leading-none">{brl(dossier.bonusPaid)}</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-black/15 border border-white/8 px-3 py-3">
+            <div className="flex items-center justify-between gap-3 text-[12px] mb-2">
+              <span className="text-white/70">Próximo bônus {brl(REFERRAL_BONUS)}</span>
+              <span className="font-semibold tabular-nums">
+                {dossier.progressToNextBonus}/{REFERRALS_PER_BONUS}
+              </span>
+            </div>
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((slot) => (
+                <div
+                  key={slot}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    slot < dossier.progressToNextBonus ? "bg-[#d7ef77]" : "bg-white/15"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-[11px] text-white/55 mt-2 leading-relaxed">
+              {dossier.remainingForBonus === 0
+                ? "Grupo completo — bônus liberado ao ativar mais indicações."
+                : `Faltam ${dossier.remainingForBonus} indicação${dossier.remainingForBonus === 1 ? "" : "ões"} ativa${dossier.remainingForBonus === 1 ? "" : "s"} para liberar ${brl(REFERRAL_BONUS)}.`}
+            </p>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-sm">
-          <div>
-            <p className="text-[11px] opacity-55">Válidas</p>
-            <p className="font-semibold">{dossier.validCount}</p>
-          </div>
-          <div>
-            <p className="text-[11px] opacity-55">Pendentes</p>
-            <p className="font-semibold">{dossier.pendingCount}</p>
-          </div>
-          <div>
-            <p className="text-[11px] opacity-55">Bônus pago</p>
-            <p className="font-semibold font-mono-num">{brl(dossier.bonusPaid)}</p>
-          </div>
-        </div>
-        <div className="mt-4 pt-3 border-t border-white/10">
-          <div className="flex items-center justify-between text-[12px] mb-2">
-            <span className="opacity-70">Progresso para {brl(REFERRAL_BONUS)}</span>
-            <span className="font-semibold">{dossier.progressToNextBonus}/{REFERRALS_PER_BONUS}</span>
-          </div>
-          <div className="flex gap-2">
-            {[0, 1, 2].map((slot) => (
-              <div
-                key={slot}
-                className={`h-2 flex-1 rounded-full ${slot < dossier.progressToNextBonus ? "bg-green-400" : "bg-white/15"}`}
-              />
-            ))}
-          </div>
-          <p className="text-[11px] opacity-55 mt-2">
-            {dossier.remainingForBonus === 0
-              ? "Grupo completo — bônus liberado ao ativar mais indicações."
-              : `Faltam ${dossier.remainingForBonus} indicação${dossier.remainingForBonus === 1 ? "" : "ões"} ativa${dossier.remainingForBonus === 1 ? "" : "s"} para o bônus de ${brl(REFERRAL_BONUS)}.`}
+
+        <div className="rounded-xl border border-line-soft bg-[#f7faf7] px-3.5 py-3">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-faint mb-2">
+            Foi indicado por alguém?
           </p>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-faint">Foi indicado por alguém?</p>
-        <div className="card p-4">
           {dossier.wasReferred && dossier.referredBy ? (
-            <div className="space-y-2 text-sm">
-              <p><span className="text-ink-soft">Indicado por:</span> <strong>{dossier.referredBy.nome}</strong></p>
-              <p className="text-ink-soft truncate">{dossier.referredBy.email}</p>
-              <p><span className="text-ink-soft">Código usado:</span> <span className="font-mono-num">{dossier.referredBy.code || member.referredByCode || "—"}</span></p>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-green-100 text-green-800 flex items-center justify-center text-[11px] font-bold shrink-0">
+                {initialsFromName(dossier.referredBy.nome)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink truncate">{dossier.referredBy.nome}</p>
+                <p className="text-[12px] text-ink-soft truncate">{dossier.referredBy.email}</p>
+                <p className="text-[12px] text-ink-faint mt-0.5">
+                  Código usado:{" "}
+                  <span className="font-mono-num text-ink-soft">
+                    {dossier.referredBy.code || member.referredByCode || "—"}
+                  </span>
+                </p>
+              </div>
             </div>
           ) : (
-            <p className="text-sm text-ink-soft">Este associado não utilizou código de indicação no cadastro.</p>
+            <p className="text-[13px] text-ink-soft leading-relaxed">
+              Não usou código de indicação no cadastro.
+            </p>
           )}
         </div>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-faint">
-          Pessoas que indicou ({dossier.totalReferrals})
-        </p>
-        <div className="card p-1.5">
-          {dossier.madeReferrals.length === 0 ? (
-            <p className="p-4 text-sm text-ink-soft text-center">Ainda não indicou ninguém.</p>
-          ) : (
-            dossier.madeReferrals.map((person) => <ReferredAdminRow key={person.id} person={person} />)
-          )}
+      <div className="rounded-[1.2rem] border border-line-soft overflow-hidden bg-white/72">
+        <div className="px-3.5 py-2.5 border-b border-line-soft bg-[#f7faf7]/80 flex items-center justify-between gap-2">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
+            Pessoas que indicou
+          </p>
+          <span className="text-[11px] font-semibold text-ink-soft tabular-nums">
+            {dossier.totalReferrals}
+          </span>
         </div>
+        {dossier.madeReferrals.length === 0 ? (
+          <p className="px-3.5 py-3.5 text-[13px] text-ink-soft">Ainda não indicou ninguém.</p>
+        ) : (
+          <div className="divide-y divide-line-soft">
+            {dossier.madeReferrals.map((person) => (
+              <ReferredAdminRow key={person.id} person={person} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -525,20 +590,18 @@ function ReferredAdminRow({ person }: { person: AdminReferredPerson }) {
       : person.memberStatus.charAt(0).toUpperCase() + person.memberStatus.slice(1);
 
   return (
-    <div className="detail-row">
-      <div className="flex items-center gap-3.5 min-w-0">
-        <div className={`icon-badge-lg mb-0 ${person.isValid ? "" : "icon-badge-amber bg-amber-100"}`}>
-          {person.isValid ? (
-            <CheckCircle2 className="w-4 h-4 text-green-700" />
-          ) : (
-            <Share2 className="w-4 h-4 text-amber-600" />
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold truncate">{person.nome}</p>
-          <p className="text-[12.5px] text-ink-soft truncate">{person.email}</p>
-          <p className="text-[12px] text-ink-faint">{activityLabel}</p>
-        </div>
+    <div className="flex items-center gap-3 px-3.5 py-3">
+      <div
+        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+          person.isValid ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+        }`}
+      >
+        {person.isValid ? <CheckCircle2 className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold truncate text-ink">{person.nome}</p>
+        <p className="text-[12px] text-ink-soft truncate">{person.email}</p>
+        <p className="text-[11px] text-ink-faint mt-0.5">{activityLabel}</p>
       </div>
       <span className={person.isValid ? "badge-confirmado shrink-0" : "badge-pago shrink-0"}>
         {person.isValid ? "Válida" : "Pendente"}
@@ -557,13 +620,13 @@ function InfoLine({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="icon-badge-lg mb-0">
-        <Icon className="w-[15px] h-[15px] text-green-700" />
+    <div className="admin-member-info-row">
+      <div className="admin-member-info-icon">
+        <Icon className="w-[15px] h-[15px]" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10.5px] uppercase tracking-wide text-ink-faint font-semibold">{label}</p>
-        <p className="text-sm font-medium break-words">{value}</p>
+        <p>{label}</p>
+        <strong>{value}</strong>
       </div>
     </div>
   );
