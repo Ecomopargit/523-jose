@@ -125,7 +125,7 @@ export function PaymentsScreen({ navigation }: Props) {
       const created = await createDepositPayment(value);
       setPayment(created);
       setStep("pix");
-      await loadHistory();
+      void loadHistory();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível gerar o PIX.");
     } finally {

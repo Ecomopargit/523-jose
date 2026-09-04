@@ -8,7 +8,15 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.ecomopar.app"
+      "bundleIdentifier": "org.ecomopar.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "CFBundleDisplayName": "ECOMOPAR",
+        "NSCameraUsageDescription": "A ECOMOPAR precisa acessar a câmera para tirar sua foto de perfil.",
+        "NSPhotoLibraryUsageDescription": "A ECOMOPAR precisa acessar suas fotos para atualizar sua imagem de perfil.",
+        "NSUserNotificationsUsageDescription": "Usamos notificações para lembrar você da contribuição diária.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -38,7 +46,9 @@
           "icon": "./assets/icon.png",
           "color": "#0B3D2C"
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {

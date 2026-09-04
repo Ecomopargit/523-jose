@@ -14,12 +14,12 @@ function baseUrl() {
   return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar.netlify.app").replace(/\/$/, "");
 }
 
-async function request<T>(method: "GET" | "POST", body?: object): Promise<T> {
+async function request<T>(method: "GET" | "POST", path: string, body?: object): Promise<T> {
   if (!auth.currentUser) throw new Error("Faça login para continuar.");
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch(`${baseUrl()}/api/referrals`, {
+    const response = await fetch(`${baseUrl()}${path}`, {
       method,
       headers: {
         Authorization: `Bearer ${await auth.currentUser.getIdToken()}`,
@@ -42,9 +42,11 @@ async function request<T>(method: "GET" | "POST", body?: object): Promise<T> {
 }
 
 export function ensureReferralProfile(referralCode?: string, joinCampaign = false) {
-  return request<{ code: string }>("POST", { referralCode, joinCampaign });
+  return request<{ code: string }>("POST", "/api/referrals", { referralCode, joinCampaign });
 }
 
-export function getReferralDashboard() {
-  return request<ReferralDashboard>("GET");
+/** Uma única chamada: garante o código e devolve o painel. */
+export function getReferralDashboard(joinCampaign = false) {
+  const query = joinCampaign ? "?join=1" : "";
+  return request<ReferralDashboard>("GET", `/api/referrals${query}`);
 }

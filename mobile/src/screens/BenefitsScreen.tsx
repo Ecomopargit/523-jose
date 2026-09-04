@@ -8,11 +8,8 @@ import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Share, StyleShe
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
-import {
-  ensureReferralProfile,
-  getReferralDashboard,
-  type ReferralDashboard,
-} from "../lib/referrals";
+import { useAuth } from "../context/AuthContext";
+import { getReferralDashboard, type ReferralDashboard } from "../lib/referrals";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
 
@@ -25,19 +22,20 @@ const benefits = [
 
 export function BenefitsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { member } = useAuth();
   const [referral, setReferral] = useState<ReferralDashboard | null>(null);
-  const [loadingReferral, setLoadingReferral] = useState(true);
+  const [loadingReferral, setLoadingReferral] = useState(!member?.referralCode);
   const [referralError, setReferralError] = useState("");
-  const code = referral?.code || "";
-  const progress = (referral?.valid ?? 0) % 3;
-  const remaining = progress === 0 && (referral?.valid ?? 0) > 0 ? 3 : 3 - progress;
+  const code = referral?.code || member?.referralCode || "";
+  const progress = (referral?.valid ?? member?.referralValidCount ?? 0) % 3;
+  const remaining = progress === 0 && (referral?.valid ?? member?.referralValidCount ?? 0) > 0 ? 3 : 3 - progress;
 
   const loadReferral = useCallback(async () => {
-    setLoadingReferral(true);
+    // Código do perfil aparece na hora; só mostra "GERANDO..." se ainda não existir.
+    setLoadingReferral(!member?.referralCode);
     setReferralError("");
     try {
-      await ensureReferralProfile(undefined, true);
-      setReferral(await getReferralDashboard());
+      setReferral(await getReferralDashboard(true));
     } catch (error) {
       setReferralError(
         error instanceof Error ? error.message : "Não foi possível carregar seu código.",
@@ -45,7 +43,7 @@ export function BenefitsScreen() {
     } finally {
       setLoadingReferral(false);
     }
-  }, []);
+  }, [member?.referralCode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -111,8 +109,8 @@ export function BenefitsScreen() {
           ) : null}
           <View style={styles.referralStats}>
             <Text style={styles.referralStat}>{referral?.total ?? 0} indicados</Text>
-            <Text style={styles.referralStat}>{referral?.valid ?? 0} ativados</Text>
-            <Text style={styles.referralStat}>R$ {(referral?.bonus ?? 0).toLocaleString("pt-BR")} em bônus</Text>
+            <Text style={styles.referralStat}>{referral?.valid ?? member?.referralValidCount ?? 0} ativados</Text>
+            <Text style={styles.referralStat}>R$ {(referral?.bonus ?? (member?.referralBonusPaidGroups ?? 0) * 150).toLocaleString("pt-BR")} em bônus</Text>
           </View>
           <View style={styles.bonusProgress}>
             <View style={styles.progressBars}>

@@ -38,9 +38,24 @@ async function parse(res: Response) {
   return data.payment;
 }
 
+async function pixFetch(path: string, init: RequestInit) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  try {
+    return await fetch(`${apiBase()}${path}`, { ...init, signal: controller.signal });
+  } catch (error) {
+    if ((error as { name?: string }).name === "AbortError") {
+      throw new Error("O servidor demorou para gerar o PIX. Tente novamente.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function createDepositPayment(amount: number) {
   return parse(
-    await fetch(`${apiBase()}/api/payments/deposit`, {
+    await pixFetch("/api/payments/deposit", {
       method: "POST",
       headers: await headers(),
       body: JSON.stringify({ amount }),
@@ -50,7 +65,7 @@ export async function createDepositPayment(amount: number) {
 
 export async function getDepositPayment(id: string) {
   return parse(
-    await fetch(`${apiBase()}/api/payments/deposit/${id}`, {
+    await pixFetch(`/api/payments/deposit/${id}`, {
       method: "GET",
       headers: await headers(),
     }),

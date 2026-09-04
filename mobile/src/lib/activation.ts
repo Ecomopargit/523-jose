@@ -39,9 +39,24 @@ async function parseJson<T>(res: Response): Promise<T> {
   return data;
 }
 
+async function pixFetch(path: string, init: RequestInit) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  try {
+    return await fetch(`${apiBase()}${path}`, { ...init, signal: controller.signal });
+  } catch (error) {
+    if ((error as { name?: string }).name === "AbortError") {
+      throw new Error("O servidor demorou para gerar o PIX. Tente novamente.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function createActivationPayment() {
   const headers = await authHeaders();
-  const res = await fetch(`${apiBase()}/api/payments/activation`, {
+  const res = await pixFetch("/api/payments/activation", {
     method: "POST",
     headers,
   });
@@ -51,7 +66,7 @@ export async function createActivationPayment() {
 
 export async function replaceActivationPayment(id: string) {
   const headers = await authHeaders();
-  const res = await fetch(`${apiBase()}/api/payments/activation/${id}`, {
+  const res = await pixFetch(`/api/payments/activation/${id}`, {
     method: "DELETE",
     headers,
   });
@@ -61,7 +76,7 @@ export async function replaceActivationPayment(id: string) {
 
 export async function getActivationPayment(id: string) {
   const headers = await authHeaders();
-  const res = await fetch(`${apiBase()}/api/payments/activation/${id}`, {
+  const res = await pixFetch(`/api/payments/activation/${id}`, {
     method: "GET",
     headers,
   });
