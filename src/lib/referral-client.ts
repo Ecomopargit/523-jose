@@ -45,8 +45,9 @@ export async function ensureReferralProfile(input: {
   return parse<{ code: string }>(response);
 }
 
-export async function getReferralDashboard() {
-  const response = await fetch("/api/referrals", {
+export async function getReferralDashboard(joinCampaign = false) {
+  const query = joinCampaign ? "?join=1" : "";
+  const response = await fetch(`/api/referrals${query}`, {
     headers: await headers(),
     cache: "no-store",
   });

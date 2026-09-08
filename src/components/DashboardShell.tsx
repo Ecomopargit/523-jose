@@ -115,6 +115,13 @@ function SidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
         >
           Política de privacidade
         </Link>
+        <Link
+          href="/excluir-conta"
+          onClick={onNavigate}
+          className="block px-2.5 pt-1 text-[10.5px] text-white/30 hover:text-white/55 transition-colors"
+        >
+          Excluir conta
+        </Link>
       </div>
     </div>
   );

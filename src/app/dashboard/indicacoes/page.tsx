@@ -12,7 +12,6 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  ensureReferralProfile,
   getReferralDashboard,
   type ReferralDashboard,
 } from "@/lib/referral-client";
@@ -29,8 +28,7 @@ export default function IndicacoesPage() {
 
   useEffect(() => {
     let active = true;
-    void ensureReferralProfile({ joinCampaign: true })
-      .then(() => getReferralDashboard())
+    void getReferralDashboard(true)
       .then((data) => {
         if (active) setDashboard(data);
       })

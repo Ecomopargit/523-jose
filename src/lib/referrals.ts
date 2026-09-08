@@ -161,23 +161,44 @@ export async function activateReferralForMember(referredId: string) {
   });
 }
 
-export async function getReferralDashboard(uid: string) {
-  await ensureReferralProfile({ uid });
-  const userSnap = await adminDb.collection("users").doc(uid).get();
+async function loadUsersByIds(ids: string[]) {
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  const map = new Map<string, Record<string, unknown>>();
+  for (let i = 0; i < unique.length; i += 100) {
+    const chunk = unique.slice(i, i + 100);
+    const snaps = await adminDb.getAll(
+      ...chunk.map((id) => adminDb.collection("users").doc(id)),
+    );
+    for (const snap of snaps) {
+      if (snap.exists) map.set(snap.id, snap.data() as Record<string, unknown>);
+    }
+  }
+  return map;
+}
+
+export async function getReferralDashboard(
+  uid: string,
+  options?: { joinCampaign?: boolean },
+) {
+  await ensureReferralProfile({ uid, joinCampaign: options?.joinCampaign });
+  let userSnap = await adminDb.collection("users").doc(uid).get();
   if (!userSnap.exists) throw new Error("Associado não encontrado.");
-  const user = userSnap.data()!;
+  let user = userSnap.data()!;
   const referralQuery = adminDb.collection("referrals").where("referrerId", "==", uid);
 
   async function loadReferrals() {
     const snapshot = await referralQuery.get();
-    const items = await Promise.all(
-      snapshot.docs.map(async (item) => {
+    const profiles = await loadUsersByIds(
+      snapshot.docs.map((item) => String(item.data().referredId || "")),
+    );
+    return snapshot.docs
+      .map((item) => {
         const data = item.data();
-        const referred = await adminDb.collection("users").doc(String(data.referredId)).get();
-        const profile = referred.data() || {};
+        const referredId = String(data.referredId || item.id);
+        const profile = profiles.get(referredId) || {};
         return {
           id: item.id,
-          referredId: String(data.referredId || item.id),
+          referredId,
           nome: String(profile.nome || "Associado"),
           email: String(profile.email || ""),
           memberStatus: String(profile.status || "pendente"),
@@ -185,9 +206,8 @@ export async function getReferralDashboard(uid: string) {
           createdAt: String(data.createdAt || ""),
           activatedAt: data.activatedAt ? String(data.activatedAt) : null,
         };
-      }),
-    );
-    return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   let referrals = await loadReferrals();
@@ -197,6 +217,8 @@ export async function getReferralDashboard(uid: string) {
   if (pendingActive.length) {
     await Promise.all(pendingActive.map((item) => activateReferralForMember(item.referredId)));
     referrals = await loadReferrals();
+    userSnap = await adminDb.collection("users").doc(uid).get();
+    user = userSnap.data() || user;
   }
 
   const valid = referrals.filter((item) => item.status === "activated").length;

@@ -121,9 +121,14 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-12 pt-8 text-center space-y-2">
-          <Link href="/politica-de-privacidade" className="text-white/60 hover:text-white text-sm transition-colors inline-block">
-            Política de Privacidade
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link href="/politica-de-privacidade" className="text-white/60 hover:text-white text-sm transition-colors inline-block">
+              Política de Privacidade
+            </Link>
+            <Link href="/excluir-conta" className="text-white/60 hover:text-white text-sm transition-colors inline-block">
+              Excluir conta
+            </Link>
+          </div>
           <p className="text-white/45 text-sm">
             © {new Date().getFullYear()} ECOMOPAR — Instituto de Apoio ao Motorista Autônomo.
           </p>

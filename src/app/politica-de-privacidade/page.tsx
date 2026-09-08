@@ -45,7 +45,11 @@ export default function PoliticaPrivacidadePage() {
           <h2 className="text-lg font-bold text-brand">Seus direitos</h2>
           <p>
             Você pode solicitar acesso, correção ou exclusão dos seus dados entrando em contato
-            pelo e-mail contato@ecomopar.org.
+            pelo e-mail contato@ecomopar.org. Para exclusão de conta e dados no app, use a página{" "}
+            <Link href="/excluir-conta" className="text-brand font-semibold underline">
+              Excluir conta
+            </Link>
+            .
           </p>
         </div>
 

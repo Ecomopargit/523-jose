@@ -33,7 +33,10 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuthUser(request);
-    return NextResponse.json(await getReferralDashboard(user.uid));
+    const joinCampaign =
+      request.nextUrl.searchParams.get("join") === "1" ||
+      request.nextUrl.searchParams.get("joinCampaign") === "true";
+    return NextResponse.json(await getReferralDashboard(user.uid, { joinCampaign }));
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

@@ -102,8 +102,12 @@ export async function createMemberActivationPayment(input: {
   if (existing) {
     const expired =
       Boolean(existing.expiresAt) && new Date(existing.expiresAt!).getTime() < Date.now();
-    const stillOnMp = expired ? false : await mercadoPagoPaymentExists(existing.mpPaymentId);
-    if (!expired && stillOnMp) return existing;
+    // Reusa PIX já salvo sem consultar o MP (evita 1–3s extras por request).
+    if (!expired && existing.qrCode) return existing;
+    if (!expired) {
+      const stillOnMp = await mercadoPagoPaymentExists(existing.mpPaymentId);
+      if (stillOnMp) return existing;
+    }
     await cancelPendingActivationPayment(existing.id, existing.memberId);
   }
 
