@@ -44,6 +44,10 @@ export const dashboardMeta: Record<
     title: "Minhas indicações",
     subtitle: "Programa Indique e Ganhe",
   },
+  "/dashboard/suporte": {
+    title: "Suporte",
+    subtitle: "Fale com a equipe ECOMOPAR",
+  },
 };
 
 export function getDashboardMeta(pathname: string) {

@@ -13,6 +13,7 @@ import {
   ChevronRight,
   CircleDollarSign,
   Layers,
+  MessageCircle,
   PiggyBank,
   QrCode,
   Shield,
@@ -140,6 +141,12 @@ export default function DashboardPage() {
               <QrCode className="w-[15px] h-[15px] text-white" strokeWidth={2} />
             </div>
             Pagamentos
+          </Link>
+          <Link href="/dashboard/suporte" className="shortcut-btn">
+            <div className="icon-mini">
+              <MessageCircle className="w-[15px] h-[15px] text-white" strokeWidth={2} />
+            </div>
+            Suporte
           </Link>
         </div>
       </div>

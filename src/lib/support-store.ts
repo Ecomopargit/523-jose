@@ -140,3 +140,59 @@ export async function setSupportChatStatus(chatId: string, status: "open" | "clo
     updatedAt: serverTimestamp(),
   });
 }
+
+export function subscribeMemberSupportMessages(
+  memberId: string,
+  callback: (messages: SupportMessage[]) => void,
+  onError?: (error: Error) => void,
+) {
+  return subscribeAdminSupportMessages(memberId, callback, onError);
+}
+
+export async function sendMemberSupportMessage(
+  member: { id: string; nome: string; email: string },
+  rawText: string,
+) {
+  const text = rawText.trim();
+  const user = auth.currentUser;
+  if (!text || !user || user.uid !== member.id) return;
+
+  const chatRef = doc(db, "supportChats", member.id);
+  await setDoc(
+    chatRef,
+    {
+      memberId: member.id,
+      memberName: member.nome || "Associado ECOMOPAR",
+      memberEmail: member.email || user.email || "",
+      status: "open",
+      lastMessage: text,
+      lastMessageAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      unreadByAdmin: increment(1),
+      unreadByMember: 0,
+    },
+    { merge: true },
+  );
+  await addDoc(collection(chatRef, "messages"), {
+    senderId: user.uid,
+    senderRole: "member",
+    text,
+    createdAt: serverTimestamp(),
+  });
+
+  void notifySupportPush({
+    direction: "member_to_admin",
+    chatId: member.id,
+    preview: text,
+    memberName: member.nome || "Associado",
+  });
+}
+
+export async function markMemberSupportRead(memberId: string) {
+  try {
+    await updateDoc(doc(db, "supportChats", memberId), { unreadByMember: 0 });
+  } catch {
+    /* chat ainda pode não existir */
+  }
+}
