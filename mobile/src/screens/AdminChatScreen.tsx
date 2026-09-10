@@ -6,6 +6,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth, db } from "../lib/firebase";
+import { notifySupportPush } from "../lib/push-tokens";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
 
@@ -45,6 +46,12 @@ export function AdminChatScreen({ navigation, route }: Props) {
       const chatRef = doc(db, "supportChats", chatId);
       await setDoc(chatRef, { status: "open", lastMessage: clean, lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp(), unreadByMember: increment(1), unreadByAdmin: 0 }, { merge: true });
       await addDoc(collection(chatRef, "messages"), { senderId: user.uid, senderRole: "admin", text: clean, createdAt: serverTimestamp() });
+      void notifySupportPush({
+        direction: "admin_to_member",
+        chatId,
+        preview: clean,
+        memberName,
+      });
     } catch { setText(clean); } finally { setSending(false); }
   }
 

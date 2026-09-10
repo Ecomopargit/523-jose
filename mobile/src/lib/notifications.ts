@@ -9,6 +9,7 @@ import {
 } from "./notification-settings";
 
 export const DEPOSIT_REMINDER_CHANNEL_ID = "deposit-reminder";
+export const SUPPORT_MESSAGES_CHANNEL_ID = "support-messages";
 
 const REMINDER_COPY = {
   title: "Hora do seu depósito diário",
@@ -40,6 +41,14 @@ async function ensureAndroidChannel() {
     vibrationPattern: [0, 250, 120, 250],
     lightColor: "#0B3D2C",
     sound: "default",
+  });
+  await Notifications.setNotificationChannelAsync(SUPPORT_MESSAGES_CHANNEL_ID, {
+    name: "Mensagens de suporte",
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 120, 250],
+    lightColor: "#0B3D2C",
+    sound: "default",
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   });
 }
 

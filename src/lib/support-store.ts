@@ -12,6 +12,7 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { notifySupportPush } from "@/lib/support-push-client";
 
 export type SupportChat = {
   id: string;
@@ -119,6 +120,13 @@ export async function sendAdminSupportMessage(chat: SupportChat, rawText: string
     senderRole: "admin",
     text,
     createdAt: serverTimestamp(),
+  });
+
+  void notifySupportPush({
+    direction: "admin_to_member",
+    chatId: chat.id,
+    preview: text,
+    memberName: chat.memberName,
   });
 }
 

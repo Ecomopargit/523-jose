@@ -1,7 +1,8 @@
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import * as Notifications from "expo-notifications";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import {
   Manrope_400Regular,
@@ -35,6 +36,7 @@ import type { RootStackParamList } from "./src/types";
 import { configureNotificationHandler, syncDepositReminderFromStorage } from "./src/lib/notifications";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -48,9 +50,29 @@ const navigationTheme = {
   },
 };
 
+function openSupportFromNotification(
+  data: Record<string, unknown> | undefined,
+  role: "admin" | "member" | undefined,
+) {
+  if (!data || data.type !== "support_message" || !navigationRef.isReady()) return;
+  const chatId = String(data.chatId || "");
+  if (!chatId) return;
+
+  if (role === "admin") {
+    navigationRef.navigate("AdminChat", {
+      chatId,
+      memberName: "Associado",
+      memberEmail: "",
+    });
+    return;
+  }
+  navigationRef.navigate("Support");
+}
+
 function RootNavigator() {
   const { user, member, initializing } = useAuth();
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
     configureNotificationHandler();
@@ -71,6 +93,23 @@ function RootNavigator() {
     void syncDepositReminderFromStorage();
   }, [member?.id, member?.role, user]);
 
+  useEffect(() => {
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+      openSupportFromNotification(data, member?.role);
+    });
+
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (!response) return;
+      const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+      openSupportFromNotification(data, member?.role);
+    });
+
+    return () => {
+      responseListener.current?.remove();
+    };
+  }, [member?.role, user?.uid]);
+
   if (initializing || onboardingDone === null) {
     return (
       <View style={styles.loading}>
@@ -80,7 +119,7 @@ function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       <Stack.Navigator
         initialRouteName={user ? undefined : onboardingDone ? "Login" : "Welcome"}
         screenOptions={{ headerShown: false, animation: "fade" }}

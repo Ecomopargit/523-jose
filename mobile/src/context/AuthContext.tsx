@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { auth } from "../lib/firebase";
 import { ensureMemberProfile, getMember } from "../lib/members";
+import { registerExpoPushToken, unregisterExpoPushToken } from "../lib/push-tokens";
 import type { MemberProfile } from "../types";
 
 type AuthValue = {
@@ -40,12 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         void ensureMemberProfile(nextUser)
-          .then((profile) => {
+          .then(async (profile) => {
             if (!active) return;
             clearTimeout(safetyTimer);
             setUser(nextUser);
             setMember(profile);
             setInitializing(false);
+            try {
+              await registerExpoPushToken();
+            } catch (error) {
+              console.warn("Não foi possível registrar push token.", error);
+            }
           })
           .catch((error) => {
             console.warn("Não foi possível carregar o perfil do associado.", error);
@@ -87,7 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.warn("Não foi possível atualizar o perfil.", error);
         }
       },
-      logout: () => signOut(auth),
+      logout: async () => {
+        try {
+          await unregisterExpoPushToken();
+        } catch {
+          /* ignore */
+        }
+        await signOut(auth);
+      },
     }),
     [initializing, member, user],
   );

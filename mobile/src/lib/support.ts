@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 
 import { auth, db } from "./firebase";
+import { notifySupportPush } from "./push-tokens";
 import type { MemberProfile } from "../types";
 
 export type SupportMessage = {
@@ -86,6 +87,13 @@ export async function sendMemberSupportMessage(member: MemberProfile, rawText: s
     senderRole: "member",
     text,
     createdAt: serverTimestamp(),
+  });
+
+  void notifySupportPush({
+    direction: "member_to_admin",
+    chatId: user.uid,
+    preview: text,
+    memberName: member.nome || user.displayName || "Associado",
   });
 }
 
