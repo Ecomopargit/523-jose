@@ -35,11 +35,12 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "set EXPO_OFFLINE=1&& expo start --lan --port 8081",
-    "start:clear": "set EXPO_OFFLINE=1&& expo start --clear --lan --port 8081",
-    "start:tunnel": "set EXPO_OFFLINE=1&& expo start --clear --tunnel --port 8081",
-    "android": "set EXPO_OFFLINE=1&& expo start --android --lan --port 8081",
-    "ios": "set EXPO_OFFLINE=1&& expo start --ios --lan --port 8081",
+    "start": "expo start --lan --port 8081",
+    "start:clear": "expo start --clear --lan --port 8081",
+    "start:offline": "set EXPO_OFFLINE=1&& expo start --lan --port 8081",
+    "start:tunnel": "expo start --clear --tunnel --port 8081",
+    "android": "expo start --android --lan --port 8081",
+    "ios": "expo start --ios --lan --port 8081",
     "web": "expo start --web"
   },
   "private": true

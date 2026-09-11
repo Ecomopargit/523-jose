@@ -6,7 +6,7 @@ const beneficios = [
     icon: PiggyBank,
     tag: "Financeiro",
     title: "Economia (reserva)",
-    desc: "Com depósitos diários de R$ 5,00 você constrói uma reserva para urgências, caução de locadora ou franquia de seguro.",
+    desc: "Com depósitos diários de R$ 7,00 você constrói uma reserva para urgências, caução de locadora ou franquia de seguro.",
   },
   {
     icon: TrendingUp,
