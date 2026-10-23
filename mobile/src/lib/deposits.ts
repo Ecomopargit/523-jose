@@ -16,7 +16,7 @@ export type DepositPayment = {
 };
 
 function apiBase() {
-  const url = (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar.netlify.app").trim();
+  const url = (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar-523.netlify.app").trim();
   return url.replace(/\/$/, "");
 }
 

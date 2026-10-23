@@ -57,7 +57,7 @@ export type RootStackParamList = {
   PrivacyPolicy: { origin?: "register" } | undefined;
   HelpCenter: undefined;
   BenefitDetail: {
-    benefitId: "financial" | "health" | "legal" | "vehicle";
+    benefitId: "financial" | "health" | "legal" | "vehicle" | "recovery";
   };
 };
 

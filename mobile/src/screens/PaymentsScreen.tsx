@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -25,6 +26,7 @@ import {
   listMyDepositPayments,
   type DepositPayment,
 } from "../lib/deposits";
+import { createRecurringPayment } from "../lib/recurring";
 import { colors, fonts, shadow } from "../theme";
 import type { AppTabParamList } from "../types";
 
@@ -52,6 +54,10 @@ export function PaymentsScreen({ navigation }: Props) {
   const [payment, setPayment] = useState<DepositPayment | null>(null);
   const [history, setHistory] = useState<DepositPayment[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [recurringAmount, setRecurringAmount] = useState("7");
+  const [recurringDays, setRecurringDays] = useState("30");
+  const [recurringLoading, setRecurringLoading] = useState(false);
+  const [recurringError, setRecurringError] = useState("");
 
   const value = Number(amount.replace(",", "."));
   const isActive = member?.status === "ativo";
@@ -166,6 +172,24 @@ export function PaymentsScreen({ navigation }: Props) {
     setPayment(null);
     setError("");
     setCopied(false);
+  }
+
+  async function openRecurringCheckout() {
+    setRecurringError("");
+    const dailyAmount = Number(recurringAmount.replace(",", "."));
+    const days = Number(recurringDays);
+    if (!isActive) return setRecurringError("Ative seu cadastro antes de contratar uma recorrência.");
+    if (!Number.isFinite(dailyAmount) || dailyAmount < 7) return setRecurringError("O valor diário mínimo é R$ 7,00.");
+    if (!Number.isInteger(days) || days < 1 || days > 365) return setRecurringError("Escolha entre 1 e 365 dias.");
+    setRecurringLoading(true);
+    try {
+      const subscription = await createRecurringPayment(dailyAmount, days);
+      await Linking.openURL(subscription.checkoutUrl);
+    } catch (err) {
+      setRecurringError(err instanceof Error ? err.message : "Não foi possível abrir o checkout.");
+    } finally {
+      setRecurringLoading(false);
+    }
   }
 
   const expires = payment?.expiresAt
@@ -331,6 +355,20 @@ export function PaymentsScreen({ navigation }: Props) {
           ) : null}
         </View>
 
+        <View style={styles.recurringCard}>
+          <View style={styles.recurringHead}>
+            <View><Text style={styles.cardEyebrow}>CARTÃO DE CRÉDITO</Text><Text style={styles.cardTitle}>Recorrência diária</Text><Text style={styles.cardHint}>O cartão é informado diretamente no ambiente seguro do Mercado Pago.</Text></View>
+            <View style={styles.recurringIcon}><Feather color={colors.green700} name="credit-card" size={20} /></View>
+          </View>
+          <View style={styles.recurringFields}>
+            <View style={styles.recurringField}><Text style={styles.label}>Valor por dia</Text><TextInput keyboardType="decimal-pad" value={recurringAmount} onChangeText={(text) => setRecurringAmount(text.replace(/[^0-9,.]/g, ""))} style={styles.recurringInput} /></View>
+            <View style={styles.recurringField}><Text style={styles.label}>Dias</Text><TextInput keyboardType="number-pad" value={recurringDays} onChangeText={(text) => setRecurringDays(text.replace(/\D/g, ""))} style={styles.recurringInput} /></View>
+          </View>
+          <Text style={styles.recurringTotal}>Total previsto: {money((Number(recurringAmount.replace(",", ".")) || 0) * (Number(recurringDays) || 0))}</Text>
+          {recurringError ? <Text style={styles.recurringError}>{recurringError}</Text> : null}
+          <Pressable disabled={recurringLoading || !isActive} onPress={() => void openRecurringCheckout()} style={({ pressed }) => [styles.primary, (recurringLoading || !isActive) && styles.primaryDisabled, pressed && styles.pressed]}><Feather color={colors.white} name="repeat" size={17} /><Text style={styles.primaryText}>{recurringLoading ? "Abrindo checkout..." : "Configurar no cartão"}</Text></Pressable>
+        </View>
+
         <View style={styles.sectionHeading}>
           <View>
             <Text style={styles.section}>Suas transferências</Text>
@@ -404,6 +442,14 @@ const styles = StyleSheet.create({
     padding: 18,
     ...shadow,
   },
+  recurringCard: { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 20, borderWidth: 1, marginTop: 15, padding: 16, ...shadow },
+  recurringHead: { flexDirection: "row", gap: 12, justifyContent: "space-between" },
+  recurringIcon: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 13, height: 44, justifyContent: "center", width: 44 },
+  recurringFields: { flexDirection: "row", gap: 10, marginTop: 16 },
+  recurringField: { flex: 1 },
+  recurringInput: { backgroundColor: colors.green50, borderRadius: 12, color: colors.ink, fontFamily: fonts.extraBold, fontSize: 18, height: 48, marginTop: 7, paddingHorizontal: 12 },
+  recurringTotal: { backgroundColor: colors.green50, borderRadius: 11, color: colors.inkSoft, fontFamily: fonts.medium, fontSize: 11, marginTop: 12, padding: 11 },
+  recurringError: { color: colors.danger, fontFamily: fonts.semibold, fontSize: 11, marginTop: 10 },
   cardEyebrow: { color: colors.green600, fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1.2 },
   cardTitle: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 22, letterSpacing: -0.5, marginTop: 6 },
   cardHint: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 12, lineHeight: 18, marginTop: 6 },

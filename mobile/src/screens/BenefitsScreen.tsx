@@ -18,11 +18,13 @@ const benefits = [
   { id: "health" as const, icon: "heart", title: "Assistência à saúde", text: "Apoio para cuidar de você e da família.", tone: "brick" as const, label: "Incluído" },
   { id: "legal" as const, icon: "briefcase", title: "Orientação jurídica", text: "Suporte especializado para o motorista.", tone: "amber" as const, label: "Incluído" },
   { id: "vehicle" as const, icon: "tool", title: "Assistência veicular", text: "Mais tranquilidade para seguir viagem.", tone: "green" as const, label: "Incluído" },
+  { id: "recovery" as const, icon: "heart", title: "Bônus Recuperação", text: "Apoio sujeito à análise em caso de acidente com fratura.", tone: "brick" as const, label: "Sob análise" },
 ];
 
 export function BenefitsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { member } = useAuth();
+  const benefitsAvailable = member?.status === "ativo";
   const [referral, setReferral] = useState<ReferralDashboard | null>(null);
   const [loadingReferral, setLoadingReferral] = useState(!member?.referralCode);
   const [referralError, setReferralError] = useState("");
@@ -56,7 +58,7 @@ export function BenefitsScreen() {
       Alert.alert("Código indisponível", "Tente carregar seu código novamente antes de compartilhar.");
       return;
     }
-    const link = `https://ecomopar.netlify.app/cadastrar?ref=${code}`;
+    const link = `https://ecomopar-523.netlify.app/cadastrar?ref=${code}`;
     try {
       await Share.share({
         message: `Venha para a ECOMOPAR! Use meu código ${code} ou cadastre-se pelo link: ${link}`,
@@ -121,8 +123,8 @@ export function BenefitsScreen() {
         </LinearGradient>
 
         <View style={styles.sectionHeading}>
-          <View><Text style={styles.section}>Sua rede de proteção</Text><Text style={styles.sectionHint}>Apoio pensado para a rotina na estrada</Text></View>
-          <View style={styles.count}><Text style={styles.countText}>4</Text></View>
+          <View><Text style={styles.section}>Sua rede de proteção</Text><Text style={styles.sectionHint}>Disponível somente com cadastro ativo</Text></View>
+          <View style={styles.count}><Text style={styles.countText}>5</Text></View>
         </View>
 
         <View style={styles.list}>
@@ -141,7 +143,7 @@ export function BenefitsScreen() {
                   <Text style={styles.benefitText}>{benefit.text}</Text>
                 </View>
                 <View style={styles.benefitEnd}>
-                  <Text style={[styles.benefitLabel, benefit.label === "Em breve" && styles.benefitLabelMuted]}>{benefit.label}</Text>
+                  <Text style={[styles.benefitLabel, !benefitsAvailable && styles.benefitLabelMuted]}>{benefitsAvailable ? benefit.label : "Ative seu cadastro"}</Text>
                   <Feather color={colors.inkFaint} name="arrow-up-right" size={17} />
                 </View>
               </View>

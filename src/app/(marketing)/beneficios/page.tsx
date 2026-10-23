@@ -8,6 +8,7 @@ import {
   Shield,
   Clock,
   FileCheck
+  ,HeartPulse
 } from "lucide-react";
 import Link from "next/link";
 
@@ -83,6 +84,18 @@ const beneficios = [
       "Acompanhamento de indicados",
       "Link personalizado de indicação"
     ]
+  },
+  {
+    icon: HeartPulse,
+    title: "Bônus Recuperação",
+    description: "Ajuda de custo para associado ativo que, após acidente de trânsito com fratura, fique temporariamente impedido de trabalhar. Sujeito à confirmação da diretoria.",
+    color: "bg-brand",
+    features: [
+      "Solicitação analisada pela diretoria",
+      "R$ 500,00 por semana aprovada",
+      "Até 4 semanas de ajuda de custo",
+      "Limite total de até R$ 2.000,00"
+    ]
   }
 ];
 
@@ -140,10 +153,8 @@ export default function BeneficiosPage() {
       <section className="py-20 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-accent font-semibold text-sm uppercase tracking-wider">Processo Simples</span>
-            <h2 className="text-3xl lg:text-4xl font-bold text-brand mt-3">
-              Como acessar os benefícios
-            </h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-brand">Critérios para acesso aos benefícios</h2>
+            <p className="mt-4 text-gray-600 leading-relaxed">Todos os serviços, benefícios e bônus oferecidos pela plataforma são concedidos somente a parceiros clientes com cadastro ativo. Alguns benefícios também exigem análise e confirmação interna.</p>
           </div>
 
           <div className="grid md:grid-cols-4 gap-6">
@@ -173,7 +184,7 @@ export default function BeneficiosPage() {
                 <span className="text-white text-2xl font-bold">4</span>
               </div>
               <h4 className="font-bold text-brand mb-2">Aproveite</h4>
-              <p className="text-gray-600 text-sm">Acesse todos os benefícios disponíveis</p>
+              <p className="text-gray-600 text-sm">Com o cadastro ativo, acesse os benefícios conforme suas regras</p>
             </div>
           </div>
         </div>

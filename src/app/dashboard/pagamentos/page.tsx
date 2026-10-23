@@ -11,6 +11,8 @@ import {
   Loader2,
   QrCode,
   RefreshCw,
+  CreditCard,
+  Repeat2,
   XCircle,
 } from "lucide-react";
 
@@ -23,6 +25,7 @@ import {
 } from "@/lib/deposit-client";
 import { listMemberDepositPayments } from "@/lib/deposit-store";
 import { brl } from "@/lib/dashboard-meta";
+import { createRecurringPayment, type PublicRecurringPayment } from "@/lib/recurring-client";
 
 type Step = "form" | "pix" | "success";
 
@@ -45,6 +48,10 @@ export default function PagamentosPage() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [recurringAmount, setRecurringAmount] = useState("7");
+  const [recurringDays, setRecurringDays] = useState("30");
+  const [recurringLoading, setRecurringLoading] = useState(false);
+  const [recurringError, setRecurringError] = useState("");
 
   const value = Number(amount.replace(",", "."));
   const isActive = member?.status === "ativo";
@@ -158,6 +165,24 @@ export default function PagamentosPage() {
     setPayment(null);
     setError("");
     setCopied(false);
+  }
+
+  async function startRecurring() {
+    setRecurringError("");
+    const dailyAmount = Number(recurringAmount.replace(",", "."));
+    const days = Number(recurringDays);
+    if (!isActive) return setRecurringError("Ative seu cadastro antes de contratar uma recorrência.");
+    if (!Number.isFinite(dailyAmount) || dailyAmount < 7) return setRecurringError("O valor diário mínimo é R$ 7,00.");
+    if (!Number.isInteger(days) || days < 1 || days > 365) return setRecurringError("Escolha entre 1 e 365 dias.");
+    setRecurringLoading(true);
+    try {
+      const subscription: PublicRecurringPayment = await createRecurringPayment(dailyAmount, days);
+      window.location.assign(subscription.checkoutUrl);
+    } catch (err) {
+      setRecurringError(err instanceof Error ? err.message : "Não foi possível iniciar a recorrência.");
+    } finally {
+      setRecurringLoading(false);
+    }
   }
 
   const expires = payment?.expiresAt
@@ -376,6 +401,30 @@ export default function PagamentosPage() {
               </div>
             ) : null}
           </div>
+
+          <section className="card overflow-hidden">
+            <div className="bg-green-950 p-5 text-white sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-green-300">Cartão de crédito</p>
+                  <h2 className="mt-1 font-display text-xl font-semibold">Recorrência diária</h2>
+                  <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-white/65">Defina por quantos dias deseja contribuir. O Mercado Pago processa as cobranças diárias com segurança.</p>
+                </div>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10"><CreditCard className="h-5 w-5 text-green-200" /></span>
+              </div>
+            </div>
+            <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
+              <label className="block text-[13px] font-semibold">Valor por dia
+                <div className="mt-2 flex h-12 items-center gap-2 rounded-xl border border-line bg-bg px-3"><span className="text-green-700">R$</span><input className="min-w-0 flex-1 bg-transparent font-mono-num text-lg outline-none" inputMode="decimal" value={recurringAmount} onChange={(event) => setRecurringAmount(event.target.value.replace(/[^0-9,.]/g, ""))} /></div>
+              </label>
+              <label className="block text-[13px] font-semibold">Quantidade de dias
+                <input className="field mt-2 h-12 font-mono-num" inputMode="numeric" value={recurringDays} onChange={(event) => setRecurringDays(event.target.value.replace(/\D/g, ""))} />
+              </label>
+              <div className="sm:col-span-2 rounded-xl bg-green-50 p-3 text-[13px] text-ink-soft">Total previsto: <strong className="font-mono-num text-green-800">{brl((Number(recurringAmount.replace(",", ".")) || 0) * (Number(recurringDays) || 0))}</strong>. O cartão será informado no ambiente seguro do Mercado Pago.</div>
+              {recurringError ? <p className="sm:col-span-2 rounded-xl bg-brick-100 px-3 py-2.5 text-xs text-brick-600">{recurringError}</p> : null}
+              <button type="button" disabled={recurringLoading || !isActive} onClick={() => void startRecurring()} className="btn-primary btn-lg sm:col-span-2 w-full"><Repeat2 className="h-4 w-4" />{recurringLoading ? "Abrindo checkout..." : "Configurar recorrência no cartão"}</button>
+            </div>
+          </section>
         </div>
 
         <div className="card overflow-hidden">

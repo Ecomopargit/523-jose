@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Stethoscope,
   Users,
+  HeartPulse,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AppPreview from "@/components/home/AppPreview";
@@ -76,6 +77,16 @@ const benefits = [
     image: "/landing/benefit-referral.jpg",
     position: "center 25%",
     alt: "Motoristas conversando sobre indicação da associação",
+  },
+  {
+    icon: HeartPulse,
+    title: "Bônus Recuperação",
+    text: "Apoio de até R$ 2.000 para associado ativo que fique temporariamente impossibilitado de trabalhar após acidente com fratura, sujeito à confirmação da diretoria.",
+    tone: "photo",
+    number: "07",
+    image: "/landing/moto.webp",
+    position: "center 35%",
+    alt: "Motociclista profissional em deslocamento urbano",
   },
 ];
 

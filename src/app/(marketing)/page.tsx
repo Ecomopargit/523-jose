@@ -12,6 +12,7 @@ import {
   Smartphone,
   UserCheck,
   Users,
+  HeartPulse,
 } from "lucide-react";
 import AppPreview from "@/components/home/AppPreview";
 import {
@@ -174,6 +175,20 @@ export default function HomePage() {
 
       <AudienceShowcase />
       <BenefitsCarousel />
+
+      <section className="landing-clarity-section">
+        <div className="landing-shell grid gap-7 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+            <HeartPulse className="h-8 w-8" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="landing-eyebrow">Bônus Recuperação</p>
+            <h2 className="landing-section-title mt-4">Apoio quando um acidente interrompe a sua rotina.</h2>
+            <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-ink-soft">Associados ativos que sofrerem acidente de trânsito com fratura e impedimento temporário para trabalhar podem solicitar análise. Após confirmação da diretoria, a ajuda de custo é de R$ 500,00 por semana, durante até quatro semanas, limitada a R$ 2.000,00.</p>
+            <Link href="/beneficios" className="landing-text-link mt-5">Conhecer critérios de acesso <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+        </div>
+      </section>
       <AppShowcase />
 
       <div id="simulador" className="scroll-mt-20 landing-simulator">

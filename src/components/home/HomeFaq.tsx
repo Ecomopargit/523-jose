@@ -15,6 +15,14 @@ const faq = [
     a: "Você recebe um código e um link exclusivos. Cada pessoa que se cadastra pelo seu link entra no seu contador e, a cada 3 parceiros que ativarem o cadastro, você ganha R$ 150,00.",
   },
   {
+    q: "Quem pode acessar os serviços, benefícios e bônus?",
+    a: "Os serviços, benefícios e bônus da plataforma são destinados exclusivamente aos parceiros clientes com cadastro ativo. Cada benefício pode ter critérios próprios de acesso e análise.",
+  },
+  {
+    q: "Como funciona o Bônus Recuperação?",
+    a: "O associado ativo que sofrer acidente de trânsito com fratura e ficar temporariamente impedido de trabalhar pode solicitar análise. Após confirmação da diretoria, a ajuda de custo é de R$ 500,00 por semana, durante até 4 semanas, totalizando até R$ 2.000,00.",
+  },
+  {
     q: "Preciso ter carro próprio?",
     a: "Não. O cadastro aceita motoristas com veículo próprio ou alugado — basta informar os dados do veículo e da locadora, quando for o caso.",
   },

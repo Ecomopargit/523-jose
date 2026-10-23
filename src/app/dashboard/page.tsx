@@ -19,6 +19,7 @@ import {
   Shield,
   Star,
   TrendingUp,
+  HeartPulse,
 } from "lucide-react";
 
 const dados = {
@@ -87,7 +88,7 @@ export default function DashboardPage() {
         {[
           { icon: Layers, label: "Reserva/mês", value: brl(dados.reservaMensal) },
           { icon: TrendingUp, label: "Depósitos", value: String(depositos) },
-          { icon: Star, label: "Benefícios", value: "5 ativos" },
+          { icon: Star, label: "Benefícios", value: "6 disponíveis" },
         ].map((s) => (
           <div key={s.label} className="stat-card">
             <div className="icon-badge">
@@ -171,6 +172,11 @@ export default function DashboardPage() {
             icon: CircleDollarSign,
             title: "Empréstimo subsidiado",
             desc: "Condições especiais para associados ativos",
+          },
+          {
+            icon: HeartPulse,
+            title: "Bônus Recuperação",
+            desc: isActive ? "Solicite análise em caso de acidente com fratura" : "Disponível após a ativação do cadastro",
           },
         ].map((b) => (
           <div

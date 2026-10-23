@@ -343,7 +343,7 @@ export function getMercadoPagoNotificationBaseUrl(fallbackOrigin?: string) {
   if (fallbackOrigin && !/localhost|127\.0\.0\.1/.test(fallbackOrigin)) {
     return fallbackOrigin.replace(/\/$/, "");
   }
-  return "https://ecomopar.netlify.app";
+  return "https://ecomopar-523.netlify.app";
 }
 
 export function mapMpStatus(status?: string | null): "pending" | "approved" | "rejected" | "cancelled" | "expired" {

@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenAtmosphere } from "../components/UI";
+import { useAuth } from "../context/AuthContext";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
 
@@ -86,6 +87,22 @@ const benefitContent: Record<BenefitId, {
     action: "Solicitar assistência",
     secondary: "Em situação de risco imediato, priorize os serviços públicos de emergência da sua região.",
   },
+  recovery: {
+    icon: "heart",
+    eyebrow: "Apoio em recuperação",
+    title: "Bônus Recuperação",
+    description: "Ajuda de custo destinada ao associado ativo que, após acidente de trânsito com fratura, fique temporariamente impedido de trabalhar.",
+    status: "Sujeito à análise",
+    tone: "brick",
+    highlights: [
+      { icon: "shield", title: "Cadastro ativo", text: "O acesso aos serviços, benefícios e bônus exige associação ativa." },
+      { icon: "file-text", title: "Confirmação do caso", text: "A diretoria confirma a ocorrência e a documentação necessária antes de aprovar." },
+      { icon: "calendar", title: "Ajuda semanal", text: "Quando aprovado, o apoio é de R$ 500 por semana, durante até 4 semanas." },
+    ],
+    steps: ["Envie o relato do acidente e os documentos solicitados.", "Aguarde a confirmação da diretoria.", "Acompanhe o retorno e as orientações da equipe."],
+    action: "Solicitar análise",
+    secondary: "O benefício é limitado a R$ 2.000,00 por ocorrência aprovada e não representa pagamento automático.",
+  },
 };
 
 const toneColors = {
@@ -95,10 +112,16 @@ const toneColors = {
 };
 
 export function BenefitDetailScreen({ navigation, route }: Props) {
+  const { member } = useAuth();
   const benefit = benefitContent[route.params.benefitId];
   const tone = toneColors[benefit.tone];
+  const canAccess = member?.status === "ativo";
 
   function handleAction() {
+    if (!canAccess) {
+      navigation.navigate("App", { screen: "Pagamentos" });
+      return;
+    }
     if (route.params.benefitId === "financial") {
       navigation.navigate("App", { screen: "Carteira" });
       return;
@@ -124,7 +147,7 @@ export function BenefitDetailScreen({ navigation, route }: Props) {
           <View style={[styles.heroIcon, { backgroundColor: `${tone.strong}35` }]}>
             <Feather color={colors.white} name={benefit.icon} size={25} />
           </View>
-          <View style={styles.status}><View style={[styles.statusDot, { backgroundColor: tone.strong }]} /><Text style={styles.statusText}>{benefit.status}</Text></View>
+          <View style={styles.status}><View style={[styles.statusDot, { backgroundColor: canAccess ? tone.strong : colors.amber600 }]} /><Text style={styles.statusText}>{canAccess ? benefit.status : "Ative seu cadastro"}</Text></View>
           <Text style={styles.eyebrow}>{benefit.eyebrow}</Text>
           <Text style={styles.title}>{benefit.title}</Text>
           <Text style={styles.description}>{benefit.description}</Text>
@@ -168,7 +191,7 @@ export function BenefitDetailScreen({ navigation, route }: Props) {
         {benefit.secondary ? <Text style={styles.disclaimer}>{benefit.secondary}</Text> : null}
 
         <Pressable accessibilityRole="button" onPress={handleAction} style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-          <Text style={styles.actionText}>{benefit.action}</Text>
+          <Text style={styles.actionText}>{canAccess ? benefit.action : "Ativar meu cadastro"}</Text>
           <Feather color={colors.white} name="arrow-right" size={18} />
         </Pressable>
       </ScrollView>

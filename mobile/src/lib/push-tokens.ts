@@ -81,7 +81,7 @@ export async function unregisterExpoPushToken() {
 }
 
 function apiBase() {
-  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar.netlify.app").replace(/\/$/, "");
+  return (process.env.EXPO_PUBLIC_API_URL || "https://ecomopar-523.netlify.app").replace(/\/$/, "");
 }
 
 export async function notifySupportPush(input: {

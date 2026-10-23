@@ -11,6 +11,7 @@ import {
   UserPlus,
   TrendingDown,
   MessageCircle,
+  HeartPulse,
   LogOut,
   Menu,
   X,
@@ -24,6 +25,7 @@ const menuItems: MenuItem[] = [
   { href: "/admin/associados", icon: Users, label: "Associados" },
   { href: "/admin/pendentes", icon: UserPlus, label: "Pendentes" },
   { href: "/admin/saques", icon: TrendingDown, label: "Saques" },
+  { href: "/admin/recuperacao", icon: HeartPulse, label: "Bônus Recuperação" },
   { href: "/admin/suporte", icon: MessageCircle, label: "Atendimento" },
 ];
 
