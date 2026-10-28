@@ -29,7 +29,7 @@ export default function RecuperacaoAdminPage() {
           <div className="card p-5">
             <ShieldCheck className="h-5 w-5 text-green-700" />
             <h3 className="mt-3 font-display font-semibold">Regra de ativação</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-soft">Todos os serviços, benefícios e bônus da plataforma são concedidos somente aos parceiros clientes que estiverem ativos.</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">Benefícios só para parceiros ativos. A ativação diária é o PIX de R$ 7,00 (validade de 24h). Dá para antecipar vários dias no mesmo pagamento (ex.: R$ 49,00 = 7 dias).</p>
           </div>
           <div className="card p-5">
             <FileCheck2 className="h-5 w-5 text-amber-600" />

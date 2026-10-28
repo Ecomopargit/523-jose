@@ -7,6 +7,11 @@ import {
 } from "@/lib/activation-payments";
 import { getMercadoPagoPayment, mapMpStatus, verifyMercadoPagoWebhook } from "@/lib/mercadopago";
 import { applyApprovedDeposit, getDepositByMpId, syncDeposit } from "@/lib/deposit-payments";
+import {
+  applyRecurringAuthorizedPayment,
+  creditRecurringPaymentWebhook,
+  syncRecurringPreapproval,
+} from "@/lib/recurring-payments";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -37,6 +42,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
+    const topic = String(body.type || "").toLowerCase();
+    if (topic === "subscription_preapproval" || topic === "preapproval") {
+      await syncRecurringPreapproval(dataId);
+      return NextResponse.json({ ok: true, type: "recurring_status" });
+    }
+    if (topic === "subscription_authorized_payment" || topic === "authorized_payment") {
+      await applyRecurringAuthorizedPayment(dataId);
+      return NextResponse.json({ ok: true, type: "recurring_charge" });
+    }
+
     // Sempre reconsulta o pagamento na API MP (fonte da verdade).
     const mp = await getMercadoPagoPayment(dataId);
     const status = mapMpStatus(mp.status);
@@ -55,6 +70,9 @@ export async function POST(request: NextRequest) {
       else await syncDeposit(deposit);
       return NextResponse.json({ ok: true, type: "deposit" });
     }
+
+    const recurring = await creditRecurringPaymentWebhook(mp);
+    if (recurring) return NextResponse.json({ ok: true, type: "recurring_charge" });
 
     return NextResponse.json({ ok: true, ignored: "payment_not_found" });
   } catch (error) {

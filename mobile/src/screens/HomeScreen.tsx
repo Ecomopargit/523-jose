@@ -9,6 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivationFlowModal } from "../components/ActivationFlowModal";
 import { Card, IconBadge, ScreenAtmosphere } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
+import { canContributeDaily, effectiveMemberStatus, remainingCoverageDays } from "../lib/member-status";
 import { buttonShadowPrimary, colors, fonts, shadow } from "../theme";
 import type { AppTabParamList } from "../types";
 
@@ -22,8 +23,19 @@ export function HomeScreen({ navigation }: Props) {
   const [activationOpen, setActivationOpen] = useState(false);
   const firstName = member?.nome?.split(" ")[0] || "Associado";
   const total = (member?.saldoDisponivel || 0) + (member?.saldoBloqueado || 0) + (member?.saldoBonus || 0);
-  const isActive = member?.status === "ativo";
-  const status = isActive ? "Cadastro ativo" : "Cadastro em análise";
+  const isActive = canContributeDaily(member?.status);
+  const dayStatus = member ? effectiveMemberStatus(member) : "pendente";
+  const daysLeft = member ? remainingCoverageDays(member.coverageUntilDate) : 0;
+  const status =
+    dayStatus === "ativo"
+      ? daysLeft > 1
+        ? `Ativo · ${daysLeft} dias cobertos`
+        : "Em dia hoje"
+      : dayStatus === "inadimplente"
+        ? "Inadimplente hoje"
+        : dayStatus === "bloqueado"
+          ? "Conta bloqueada"
+          : "Cadastro em análise";
 
   const handleActivated = useCallback(async () => {
     await refresh();
@@ -126,7 +138,9 @@ export function HomeScreen({ navigation }: Props) {
           <IconBadge name="zap" tone="amber" />
           <View style={{ flex: 1 }}>
             <Text style={styles.tipTitle}>Constância que protege</Text>
-            <Text style={styles.tipText}>Contribua R$ 7 por dia. R$ 5 entram na sua reserva pessoal.</Text>
+            <Text style={styles.tipText}>
+              Contribua R$ 7 por dia — ou antecipe a semana/mês. R$ 5 de cada dia entram na reserva.
+            </Text>
           </View>
         </LinearGradient>
       </ScrollView>

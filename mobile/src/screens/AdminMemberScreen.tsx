@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { collection, doc, onSnapshot, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { activateMember, setMemberStatus } from "../lib/admin";
@@ -15,6 +15,8 @@ import {
 } from "../lib/referrals-admin";
 import { db } from "../lib/firebase";
 import { getMember } from "../lib/members";
+import { effectiveMemberStatus, isActivatedMemberStatus } from "../lib/member-status";
+import { WHATSAPP_TEMPLATES, buildWhatsAppUrl, firstNameFrom, whatsappDigits } from "../lib/whatsapp";
 import { colors, fonts, shadow } from "../theme";
 import type { MemberProfile, RootStackParamList } from "../types";
 
@@ -33,6 +35,7 @@ export function AdminMemberScreen({ navigation, route }: Props) {
   const [amount, setAmount] = useState("");
   const [savingBalance, setSavingBalance] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
 
   useEffect(() => {
     void getMember(route.params.memberId)
@@ -40,6 +43,9 @@ export function AdminMemberScreen({ navigation, route }: Props) {
         setMember(loaded);
         if (loaded) {
           setReferrals(await getMemberReferralDossier(loaded.id, loaded));
+          if (effectiveMemberStatus(loaded) === "inadimplente" && whatsappDigits(loaded.telefone)) {
+            setWhatsappOpen(true);
+          }
         }
       })
       .finally(() => setLoading(false));
@@ -61,7 +67,7 @@ export function AdminMemberScreen({ navigation, route }: Props) {
   }
 
   async function activateAccount() {
-    if (!member || statusUpdating || member.status === "ativo") return;
+    if (!member || statusUpdating || isActivatedMemberStatus(member.status) || member.activatedAt) return;
     setStatusUpdating(true);
     try {
       const result = await activateMember(member.id);
@@ -133,12 +139,43 @@ export function AdminMemberScreen({ navigation, route }: Props) {
     setAmount("");
   }
 
+  async function openWhatsApp(templateId: string) {
+    if (!member) return;
+    const template = WHATSAPP_TEMPLATES.find((item) => item.id === templateId);
+    if (!template) return;
+    const url = buildWhatsAppUrl(member.telefone, template.build(firstNameFrom(member.nome)));
+    if (!url) {
+      Alert.alert("Telefone inválido", "Cadastre um telefone válido para abrir o WhatsApp.");
+      return;
+    }
+    setWhatsappOpen(false);
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert("Não foi possível abrir", "Verifique se o WhatsApp está instalado neste aparelho.");
+    }
+  }
+
   if (loading || !member) return <SafeAreaView style={styles.safe}><View style={styles.loading}><ActivityIndicator color={colors.green600} /></View></SafeAreaView>;
   const total = member.saldoDisponivel + member.saldoBloqueado + member.saldoBonus;
+  const hasWhatsApp = Boolean(whatsappDigits(member.telefone));
+  const dayStatus = effectiveMemberStatus(member);
+  const cadastroAtivado = isActivatedMemberStatus(member.status) || Boolean(member.activatedAt);
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}><Pressable onPress={() => navigation.goBack()} style={styles.back}><Feather color={colors.ink} name="arrow-left" size={20} /></Pressable><View style={styles.headerCopy}><Text style={styles.eyebrow}>DOSSIÊ DO ASSOCIADO</Text><Text numberOfLines={1} style={styles.headerTitle}>{member.nome}</Text></View><View style={[styles.status, member.status === "ativo" ? styles.statusActive : styles.statusWarn]}><Text style={styles.statusText}>{member.status}</Text></View></View>
+      <View style={styles.header}>
+        <Pressable onPress={() => navigation.goBack()} style={styles.back}><Feather color={colors.ink} name="arrow-left" size={20} /></Pressable>
+        <View style={styles.headerCopy}><Text style={styles.eyebrow}>DOSSIÊ DO ASSOCIADO</Text><Text numberOfLines={1} style={styles.headerTitle}>{member.nome}</Text></View>
+        <Pressable
+          disabled={!hasWhatsApp}
+          onPress={() => setWhatsappOpen(true)}
+          style={[styles.whatsappHeader, !hasWhatsApp && styles.whatsappHeaderDisabled]}
+        >
+          <Feather color={hasWhatsApp ? colors.white : colors.inkFaint} name="message-circle" size={17} />
+        </Pressable>
+        <View style={[styles.status, dayStatus === "ativo" ? styles.statusActive : styles.statusWarn]}><Text style={styles.statusText}>{dayStatus}</Text></View>
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
           <View style={styles.avatar}><Text style={styles.avatarText}>{member.nome.split(" ").slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</Text></View>
@@ -160,6 +197,24 @@ export function AdminMemberScreen({ navigation, route }: Props) {
           <Info icon="truck" label="Veículo" value={[member.modelo || member.tipoVeiculo, member.placa].filter(Boolean).join(" · ") || "Não informado"} />
           <Info icon="key" label="Chave PIX" value={member.chavePix || "Não informada"} last />
         </View>
+        <Pressable
+          disabled={!hasWhatsApp}
+          onPress={() => setWhatsappOpen(true)}
+          style={({ pressed }) => [styles.whatsappCard, !hasWhatsApp && styles.whatsappCardDisabled, pressed && hasWhatsApp && styles.pressed]}
+        >
+          <View style={styles.whatsappIcon}><Feather color={colors.white} name="message-circle" size={18} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.whatsappTitle}>WhatsApp do associado</Text>
+            <Text style={styles.whatsappHint}>
+              {!hasWhatsApp
+                ? "Cadastre um telefone para liberar"
+                : dayStatus === "inadimplente"
+                  ? "Sem pagamento hoje — lembre pelo WhatsApp"
+                  : "Escolha uma mensagem pronta e abra a conversa"}
+            </Text>
+          </View>
+          <Feather color={hasWhatsApp ? "#128C7E" : colors.inkFaint} name="chevron-right" size={18} />
+        </Pressable>
 
         <Text style={styles.sectionTitle}>Programa de indicação</Text>
         {referrals ? (
@@ -227,13 +282,13 @@ export function AdminMemberScreen({ navigation, route }: Props) {
         <Text style={styles.sectionTitle}>Controle de acesso</Text>
         <View style={styles.actions}>
           <Pressable
-            disabled={statusUpdating || member.status === "ativo"}
+            disabled={statusUpdating || cadastroAtivado}
             onPress={() => void activateAccount()}
             style={({ pressed }) => [
               styles.action,
               styles.activate,
-              (statusUpdating || member.status === "ativo") && styles.actionDisabled,
-              pressed && !statusUpdating && member.status !== "ativo" && styles.pressed,
+              (statusUpdating || cadastroAtivado) && styles.actionDisabled,
+              pressed && !statusUpdating && !cadastroAtivado && styles.pressed,
             ]}
           >
             {statusUpdating ? (
@@ -241,7 +296,7 @@ export function AdminMemberScreen({ navigation, route }: Props) {
             ) : (
               <>
                 <Feather color={colors.green700} name="check-circle" size={18} />
-                <Text style={styles.activateText}>{member.status === "ativo" ? "Conta ativa" : "Ativar conta"}</Text>
+                <Text style={styles.activateText}>{cadastroAtivado ? "Cadastro ativado" : "Ativar conta"}</Text>
               </>
             )}
           </Pressable>
@@ -311,6 +366,46 @@ export function AdminMemberScreen({ navigation, route }: Props) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setWhatsappOpen(false)}
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        transparent
+        visible={whatsappOpen}
+      >
+        <View style={styles.modalRoot}>
+          <Pressable accessibilityLabel="Fechar" onPress={() => setWhatsappOpen(false)} style={styles.modalBackdrop} />
+          <View accessibilityViewIsModal style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+            <View style={styles.handle} />
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetHeaderCopy}>
+                <Text style={styles.sheetTitle}>WhatsApp</Text>
+                <Text style={styles.sheetText}>Escolha uma mensagem pronta para {member.nome}.</Text>
+              </View>
+              <Pressable accessibilityLabel="Fechar" onPress={() => setWhatsappOpen(false)} style={styles.sheetClose}>
+                <Feather color={colors.inkSoft} name="x" size={18} />
+              </Pressable>
+            </View>
+            <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+              {WHATSAPP_TEMPLATES.map((template) => (
+                <Pressable
+                  key={template.id}
+                  onPress={() => void openWhatsApp(template.id)}
+                  style={({ pressed }) => [styles.templateRow, pressed && styles.pressed]}
+                >
+                  <View style={styles.templateIcon}><Feather color="#128C7E" name="message-circle" size={15} /></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.templateLabel}>{template.label}</Text>
+                    <Text style={styles.templatePreview}>{template.build(firstNameFrom(member.nome))}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -342,5 +437,5 @@ function ReferredRow({ person, last }: { person: AdminReferredPerson; last: bool
 }
 
 const styles = StyleSheet.create({
-  safe: { backgroundColor: colors.background, flex: 1 }, loading: { alignItems: "center", flex: 1, justifyContent: "center" }, header: { alignItems: "center", flexDirection: "row", gap: 11, padding: 18 }, back: { alignItems: "center", backgroundColor: colors.surface, borderRadius: 13, height: 43, justifyContent: "center", width: 43 }, headerCopy: { flex: 1 }, eyebrow: { color: colors.green600, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.1 }, headerTitle: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 18, marginTop: 2 }, status: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 }, statusActive: { backgroundColor: colors.green100 }, statusWarn: { backgroundColor: colors.amber100 }, statusText: { color: colors.green700, fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, content: { padding: 18, paddingBottom: 44, paddingTop: 0 }, hero: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 22, borderWidth: 1, flexDirection: "row", gap: 14, padding: 18, ...shadow }, avatar: { alignItems: "center", backgroundColor: colors.green900, borderRadius: 18, height: 58, justifyContent: "center", width: 58 }, avatarText: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 14 }, heroCopy: { flex: 1 }, name: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 16 }, email: { color: colors.inkSoft, fontFamily: fonts.medium, fontSize: 9, marginTop: 3 }, since: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 8, marginTop: 6 }, sectionTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 13, marginBottom: 10, marginTop: 23 }, sectionSubtitle: { color: colors.inkSoft, fontFamily: fonts.bold, fontSize: 10, marginBottom: 8, marginTop: 14, textTransform: "uppercase" }, referralHero: { backgroundColor: colors.green950, borderRadius: 22, padding: 18 }, referralHeroTop: { alignItems: "center", flexDirection: "row", gap: 12 }, referralHeroIcon: { alignItems: "center", backgroundColor: "rgba(255,255,255,.08)", borderRadius: 14, height: 42, justifyContent: "center", width: 42 }, referralHeroCopy: { flex: 1 }, referralHeroLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1 }, referralHeroCode: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 16, marginTop: 3 }, referralStats: { borderTopColor: "rgba(255,255,255,.1)", borderTopWidth: 1, flexDirection: "row", marginTop: 16, paddingTop: 14 }, referralStat: { flex: 1 }, referralStatLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.medium, fontSize: 7 }, referralStatValue: { color: colors.white, fontFamily: fonts.bold, fontSize: 10, marginTop: 3 }, referralProgress: { marginTop: 16 }, referralProgressHead: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, referralProgressLabel: { color: "rgba(255,255,255,.65)", fontFamily: fonts.medium, fontSize: 8 }, referralProgressValue: { color: colors.green400, fontFamily: fonts.bold, fontSize: 9 }, referralProgressTrack: { flexDirection: "row", gap: 8, marginTop: 10 }, referralProgressDot: { backgroundColor: "rgba(255,255,255,.12)", borderRadius: 6, flex: 1, height: 8 }, referralProgressDotFilled: { backgroundColor: colors.green400 }, referralProgressHint: { color: "rgba(255,255,255,.45)", fontFamily: fonts.regular, fontSize: 7.5, lineHeight: 12, marginTop: 8 }, referredRow: { alignItems: "center", flexDirection: "row", gap: 11, paddingVertical: 13 }, referredIcon: { alignItems: "center", backgroundColor: colors.green50, borderRadius: 9, height: 34, justifyContent: "center", width: 34 }, referredCopy: { flex: 1 }, referredName: { color: colors.ink, fontFamily: fonts.bold, fontSize: 10 }, referredMeta: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 7.5, marginTop: 2 }, referredBadge: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 }, referredBadgeValid: { backgroundColor: colors.green100 }, referredBadgePending: { backgroundColor: colors.amber100 }, referredBadgeText: { fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, referredBadgeTextValid: { color: colors.green700 }, referredBadgeTextPending: { color: colors.amber600 }, balanceHero: { backgroundColor: colors.green950, borderRadius: 22, padding: 19 }, balanceLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1 }, balanceValue: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 28, marginTop: 4 }, balanceRow: { borderTopColor: "rgba(255,255,255,.1)", borderTopWidth: 1, flexDirection: "row", marginTop: 16, paddingTop: 14 }, balanceItem: { flex: 1 }, balanceItemLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.medium, fontSize: 7 }, balanceItemValue: { color: colors.white, fontFamily: fonts.bold, fontSize: 9, marginTop: 3 }, moneyActions: { flexDirection: "row", gap: 9 }, moneyButton: { flex: 1 }, primary: { alignItems: "center", backgroundColor: colors.green700, borderRadius: 13, flexDirection: "row", gap: 7, justifyContent: "center", marginTop: 10, minHeight: 48 }, primaryText: { color: colors.white, fontFamily: fonts.bold, fontSize: 10 }, withdraw: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 13, flexDirection: "row", gap: 7, justifyContent: "center", marginTop: 10, minHeight: 48 }, withdrawText: { color: colors.green700, fontFamily: fonts.bold, fontSize: 10 }, card: { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 19, borderWidth: 1, paddingHorizontal: 15, ...shadow }, info: { alignItems: "center", flexDirection: "row", gap: 11, paddingVertical: 13 }, withRule: { borderBottomColor: colors.line, borderBottomWidth: 1 }, infoIcon: { alignItems: "center", backgroundColor: colors.green50, borderRadius: 9, height: 34, justifyContent: "center", width: 34 }, infoCopy: { flex: 1 }, infoLabel: { color: colors.inkFaint, fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, infoValue: { color: colors.ink, fontFamily: fonts.semibold, fontSize: 9.5, marginTop: 2 }, history: { alignItems: "center", flexDirection: "row", paddingVertical: 13 }, historyIcon: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 9, height: 34, justifyContent: "center", width: 34 }, historyCopy: { flex: 1, marginLeft: 10 }, historyValue: { color: colors.ink, fontFamily: fonts.bold, fontSize: 10 }, historyDate: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 7.5, marginTop: 2 }, historyStatus: { color: colors.green700, fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, empty: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 9, paddingVertical: 20, textAlign: "center" }, actions: { flexDirection: "row", gap: 9 }, action: { alignItems: "center", borderRadius: 14, flex: 1, flexDirection: "row", gap: 7, justifyContent: "center", minHeight: 48 }, activate: { backgroundColor: colors.green100 }, block: { backgroundColor: colors.brick100 }, actionDisabled: { opacity: 0.55 }, pressed: { opacity: 0.82 }, activateText: { color: colors.green700, fontFamily: fonts.bold, fontSize: 9 }, blockText: { color: colors.danger, fontFamily: fonts.bold, fontSize: 9 }, modalRoot: { flex: 1, justifyContent: "flex-end" }, modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(8,42,31,.48)" }, sheet: { backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: "88%", paddingHorizontal: 22, paddingTop: 10, ...shadow }, sheetHeader: { alignItems: "flex-start", flexDirection: "row", gap: 12, marginBottom: 6 }, sheetHeaderCopy: { flex: 1 }, sheetClose: { alignItems: "center", backgroundColor: colors.background, borderRadius: 11, height: 38, justifyContent: "center", width: 38 }, amountLabel: { color: colors.ink, fontFamily: fonts.semibold, fontSize: 10, marginBottom: 8, marginTop: 8 }, sheetPrimary: { alignItems: "center", backgroundColor: colors.green700, borderRadius: 13, justifyContent: "center", marginTop: 14, minHeight: 48 }, handle: { alignSelf: "center", backgroundColor: colors.line, borderRadius: 3, height: 4, marginBottom: 18, width: 40 }, sheetTitle: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 20 }, sheetText: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 10, lineHeight: 16, marginTop: 5 }, amount: { backgroundColor: colors.background, borderColor: colors.line, borderRadius: 15, borderWidth: 1, color: colors.ink, fontFamily: fonts.extraBold, fontSize: 22, height: 60, paddingHorizontal: 16 },
+  safe: { backgroundColor: colors.background, flex: 1 }, loading: { alignItems: "center", flex: 1, justifyContent: "center" }, header: { alignItems: "center", flexDirection: "row", gap: 9, padding: 18 }, back: { alignItems: "center", backgroundColor: colors.surface, borderRadius: 13, height: 43, justifyContent: "center", width: 43 }, headerCopy: { flex: 1 }, eyebrow: { color: colors.green600, fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1.1 }, headerTitle: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 18, marginTop: 2 }, whatsappHeader: { alignItems: "center", backgroundColor: "#25D366", borderRadius: 13, height: 43, justifyContent: "center", width: 43 }, whatsappHeaderDisabled: { backgroundColor: colors.line }, status: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6 }, statusActive: { backgroundColor: colors.green100 }, statusWarn: { backgroundColor: colors.amber100 }, statusText: { color: colors.green700, fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, content: { padding: 18, paddingBottom: 44, paddingTop: 0 }, whatsappCard: { alignItems: "center", backgroundColor: "#f3fbf6", borderColor: "#cce8d8", borderRadius: 16, borderWidth: 1, flexDirection: "row", gap: 12, marginTop: 10, padding: 14 }, whatsappCardDisabled: { opacity: 0.55 }, whatsappIcon: { alignItems: "center", backgroundColor: "#25D366", borderRadius: 12, height: 40, justifyContent: "center", width: 40 }, whatsappTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 11 }, whatsappHint: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 8.5, marginTop: 3 }, templateRow: { alignItems: "flex-start", borderColor: colors.line, borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 11, marginBottom: 9, padding: 12 }, templateIcon: { alignItems: "center", backgroundColor: "#e8f8ef", borderRadius: 10, height: 32, justifyContent: "center", marginTop: 1, width: 32 }, templateLabel: { color: colors.ink, fontFamily: fonts.bold, fontSize: 11 }, templatePreview: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 8.5, lineHeight: 13, marginTop: 4 }, hero: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 22, borderWidth: 1, flexDirection: "row", gap: 14, padding: 18, ...shadow }, avatar: { alignItems: "center", backgroundColor: colors.green900, borderRadius: 18, height: 58, justifyContent: "center", width: 58 }, avatarText: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 14 }, heroCopy: { flex: 1 }, name: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 16 }, email: { color: colors.inkSoft, fontFamily: fonts.medium, fontSize: 9, marginTop: 3 }, since: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 8, marginTop: 6 }, sectionTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 13, marginBottom: 10, marginTop: 23 }, sectionSubtitle: { color: colors.inkSoft, fontFamily: fonts.bold, fontSize: 10, marginBottom: 8, marginTop: 14, textTransform: "uppercase" }, referralHero: { backgroundColor: colors.green950, borderRadius: 22, padding: 18 }, referralHeroTop: { alignItems: "center", flexDirection: "row", gap: 12 }, referralHeroIcon: { alignItems: "center", backgroundColor: "rgba(255,255,255,.08)", borderRadius: 14, height: 42, justifyContent: "center", width: 42 }, referralHeroCopy: { flex: 1 }, referralHeroLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1 }, referralHeroCode: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 16, marginTop: 3 }, referralStats: { borderTopColor: "rgba(255,255,255,.1)", borderTopWidth: 1, flexDirection: "row", marginTop: 16, paddingTop: 14 }, referralStat: { flex: 1 }, referralStatLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.medium, fontSize: 7 }, referralStatValue: { color: colors.white, fontFamily: fonts.bold, fontSize: 10, marginTop: 3 }, referralProgress: { marginTop: 16 }, referralProgressHead: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" }, referralProgressLabel: { color: "rgba(255,255,255,.65)", fontFamily: fonts.medium, fontSize: 8 }, referralProgressValue: { color: colors.green400, fontFamily: fonts.bold, fontSize: 9 }, referralProgressTrack: { flexDirection: "row", gap: 8, marginTop: 10 }, referralProgressDot: { backgroundColor: "rgba(255,255,255,.12)", borderRadius: 6, flex: 1, height: 8 }, referralProgressDotFilled: { backgroundColor: colors.green400 }, referralProgressHint: { color: "rgba(255,255,255,.45)", fontFamily: fonts.regular, fontSize: 7.5, lineHeight: 12, marginTop: 8 }, referredRow: { alignItems: "center", flexDirection: "row", gap: 11, paddingVertical: 13 }, referredIcon: { alignItems: "center", backgroundColor: colors.green50, borderRadius: 9, height: 34, justifyContent: "center", width: 34 }, referredCopy: { flex: 1 }, referredName: { color: colors.ink, fontFamily: fonts.bold, fontSize: 10 }, referredMeta: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 7.5, marginTop: 2 }, referredBadge: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 }, referredBadgeValid: { backgroundColor: colors.green100 }, referredBadgePending: { backgroundColor: colors.amber100 }, referredBadgeText: { fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, referredBadgeTextValid: { color: colors.green700 }, referredBadgeTextPending: { color: colors.amber600 }, balanceHero: { backgroundColor: colors.green950, borderRadius: 22, padding: 19 }, balanceLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.bold, fontSize: 7, letterSpacing: 1 }, balanceValue: { color: colors.white, fontFamily: fonts.extraBold, fontSize: 28, marginTop: 4 }, balanceRow: { borderTopColor: "rgba(255,255,255,.1)", borderTopWidth: 1, flexDirection: "row", marginTop: 16, paddingTop: 14 }, balanceItem: { flex: 1 }, balanceItemLabel: { color: "rgba(255,255,255,.45)", fontFamily: fonts.medium, fontSize: 7 }, balanceItemValue: { color: colors.white, fontFamily: fonts.bold, fontSize: 9, marginTop: 3 }, moneyActions: { flexDirection: "row", gap: 9 }, moneyButton: { flex: 1 }, primary: { alignItems: "center", backgroundColor: colors.green700, borderRadius: 13, flexDirection: "row", gap: 7, justifyContent: "center", marginTop: 10, minHeight: 48 }, primaryText: { color: colors.white, fontFamily: fonts.bold, fontSize: 10 }, withdraw: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 13, flexDirection: "row", gap: 7, justifyContent: "center", marginTop: 10, minHeight: 48 }, withdrawText: { color: colors.green700, fontFamily: fonts.bold, fontSize: 10 }, card: { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: 19, borderWidth: 1, paddingHorizontal: 15, ...shadow }, info: { alignItems: "center", flexDirection: "row", gap: 11, paddingVertical: 13 }, withRule: { borderBottomColor: colors.line, borderBottomWidth: 1 }, infoIcon: { alignItems: "center", backgroundColor: colors.green50, borderRadius: 9, height: 34, justifyContent: "center", width: 34 }, infoCopy: { flex: 1 }, infoLabel: { color: colors.inkFaint, fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, infoValue: { color: colors.ink, fontFamily: fonts.semibold, fontSize: 9.5, marginTop: 2 }, history: { alignItems: "center", flexDirection: "row", paddingVertical: 13 }, historyIcon: { alignItems: "center", backgroundColor: colors.green100, borderRadius: 9, height: 34, justifyContent: "center", width: 34 }, historyCopy: { flex: 1, marginLeft: 10 }, historyValue: { color: colors.ink, fontFamily: fonts.bold, fontSize: 10 }, historyDate: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 7.5, marginTop: 2 }, historyStatus: { color: colors.green700, fontFamily: fonts.bold, fontSize: 7, textTransform: "uppercase" }, empty: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 9, paddingVertical: 20, textAlign: "center" }, actions: { flexDirection: "row", gap: 9 }, action: { alignItems: "center", borderRadius: 14, flex: 1, flexDirection: "row", gap: 7, justifyContent: "center", minHeight: 48 }, activate: { backgroundColor: colors.green100 }, block: { backgroundColor: colors.brick100 }, actionDisabled: { opacity: 0.55 }, pressed: { opacity: 0.82 }, activateText: { color: colors.green700, fontFamily: fonts.bold, fontSize: 9 }, blockText: { color: colors.danger, fontFamily: fonts.bold, fontSize: 9 }, modalRoot: { flex: 1, justifyContent: "flex-end" }, modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(8,42,31,.48)" }, sheet: { backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: "88%", paddingHorizontal: 22, paddingTop: 10, ...shadow }, sheetHeader: { alignItems: "flex-start", flexDirection: "row", gap: 12, marginBottom: 6 }, sheetHeaderCopy: { flex: 1 }, sheetClose: { alignItems: "center", backgroundColor: colors.background, borderRadius: 11, height: 38, justifyContent: "center", width: 38 }, amountLabel: { color: colors.ink, fontFamily: fonts.semibold, fontSize: 10, marginBottom: 8, marginTop: 8 }, sheetPrimary: { alignItems: "center", backgroundColor: colors.green700, borderRadius: 13, justifyContent: "center", marginTop: 14, minHeight: 48 }, handle: { alignSelf: "center", backgroundColor: colors.line, borderRadius: 3, height: 4, marginBottom: 18, width: 40 }, sheetTitle: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 20 }, sheetText: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 10, lineHeight: 16, marginTop: 5 }, amount: { backgroundColor: colors.background, borderColor: colors.line, borderRadius: 15, borderWidth: 1, color: colors.ink, fontFamily: fonts.extraBold, fontSize: 22, height: 60, paddingHorizontal: 16 },
 });

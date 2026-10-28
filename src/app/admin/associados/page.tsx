@@ -35,6 +35,7 @@ import {
   Gift,
   Share2,
   CheckCircle2,
+  MessageCircle,
 } from "lucide-react";
 import {
   getMemberReferralDossier,
@@ -43,6 +44,13 @@ import {
   type AdminReferralDossier,
   type AdminReferredPerson,
 } from "@/lib/referral-admin";
+import {
+  WHATSAPP_TEMPLATES,
+  buildWhatsAppUrl,
+  firstNameFrom,
+  whatsappDigits,
+} from "@/lib/whatsapp";
+import { effectiveMemberStatus, memberStatusLabel } from "@/lib/member-status";
 
 const statusOptions: { value: MemberStatus | "todos"; label: string }[] = [
   { value: "todos", label: "Todos" },
@@ -73,9 +81,15 @@ export default function AssociadosPage() {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<MemberStatus | "todos">("todos");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [openWhatsAppOnSelect, setOpenWhatsAppOnSelect] = useState(false);
+
+  const membersWithStatus = useMemo(
+    () => members.map((m) => ({ ...m, status: effectiveMemberStatus(m) })),
+    [members],
+  );
 
   const filtered = useMemo(() => {
-    return members.filter((m) => {
+    return membersWithStatus.filter((m) => {
       if (filtroStatus !== "todos" && m.status !== filtroStatus) return false;
       if (!busca.trim()) return true;
       const q = busca.toLowerCase();
@@ -87,9 +101,9 @@ export default function AssociadosPage() {
         m.placa?.toLowerCase().includes(q)
       );
     });
-  }, [members, busca, filtroStatus]);
+  }, [membersWithStatus, busca, filtroStatus]);
 
-  const selected = members.find((m) => m.id === selectedId) ?? null;
+  const selected = membersWithStatus.find((m) => m.id === selectedId) ?? null;
 
   return (
     <AdminShell
@@ -98,10 +112,10 @@ export default function AssociadosPage() {
     >
       <section className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Base total", value: members.length, icon: Users },
-          { label: "Ativos", value: members.filter((m) => m.status === "ativo").length, icon: UserCheck },
-          { label: "Pendentes", value: members.filter((m) => m.status === "pendente").length, icon: Clock },
-          { label: "Com atenção", value: members.filter((m) => m.status === "inadimplente" || m.status === "bloqueado").length, icon: UserRoundX },
+          { label: "Base total", value: membersWithStatus.length, icon: Users },
+          { label: "Ativos (pagaram hoje)", value: membersWithStatus.filter((m) => m.status === "ativo").length, icon: UserCheck },
+          { label: "Pendentes", value: membersWithStatus.filter((m) => m.status === "pendente").length, icon: Clock },
+          { label: "Inadimplentes", value: membersWithStatus.filter((m) => m.status === "inadimplente").length, icon: UserRoundX },
         ].map((item) => (
           <div key={item.label} className="admin-metric">
             <div className="flex items-center justify-between gap-3">
@@ -175,7 +189,10 @@ export default function AssociadosPage() {
                   <tr
                     key={m.id}
                     className="hover:bg-green-50/50 transition-colors cursor-pointer"
-                    onClick={() => setSelectedId(m.id)}
+                    onClick={() => {
+                      setOpenWhatsAppOnSelect(false);
+                      setSelectedId(m.id);
+                    }}
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
@@ -195,7 +212,7 @@ export default function AssociadosPage() {
                     <td className="px-5 py-3.5">
                       <span className={statusBadge(m.status)}>
                         <StatusIcon status={m.status} />
-                        {m.status.charAt(0).toUpperCase() + m.status.slice(1)}
+                        {memberStatusLabel(m.status)}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 font-mono-num font-semibold text-green-700 text-sm whitespace-nowrap">
@@ -205,11 +222,38 @@ export default function AssociadosPage() {
                       {new Date(m.createdAt).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-5 py-3.5 text-right">
+                      {m.status === "inadimplente" || whatsappDigits(m.telefone) ? (
+                        <button
+                          type="button"
+                          title={m.status === "inadimplente" ? "Cobrar no WhatsApp" : "Abrir WhatsApp"}
+                          className={`mr-1.5 inline-flex h-9 items-center justify-center gap-1.5 rounded-xl px-2.5 text-[#128C7E] ${
+                            m.status === "inadimplente" ? "bg-[#25D366] text-white hover:bg-[#1ebe57]" : "bg-[#e8f8ef] hover:bg-[#d4f0e2]"
+                          }`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            const phoneOk = Boolean(whatsappDigits(m.telefone));
+                            if (m.status === "inadimplente" && phoneOk) {
+                              const template = WHATSAPP_TEMPLATES.find((item) => item.id === "inadimplente") || WHATSAPP_TEMPLATES[0]!;
+                              const url = buildWhatsAppUrl(m.telefone, template.build(firstNameFrom(m.nome)));
+                              if (url) {
+                                window.open(url, "_blank", "noopener,noreferrer");
+                                return;
+                              }
+                            }
+                            setOpenWhatsAppOnSelect(true);
+                            setSelectedId(m.id);
+                          }}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          {m.status === "inadimplente" ? <span className="text-[11px] font-semibold">WhatsApp</span> : null}
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         className="text-[13px] font-semibold text-green-700 hover:underline"
                         onClick={(e) => {
                           e.stopPropagation();
+                          setOpenWhatsAppOnSelect(false);
                           setSelectedId(m.id);
                         }}
                       >
@@ -227,7 +271,11 @@ export default function AssociadosPage() {
       {selected && (
         <MemberDrawer
           member={selected}
-          onClose={() => setSelectedId(null)}
+          openWhatsApp={openWhatsAppOnSelect}
+          onClose={() => {
+            setSelectedId(null);
+            setOpenWhatsAppOnSelect(false);
+          }}
           onSaved={() => refresh()}
         />
       )}
@@ -237,10 +285,12 @@ export default function AssociadosPage() {
 
 function MemberDrawer({
   member,
+  openWhatsApp = false,
   onClose,
   onSaved,
 }: {
   member: MemberProfile;
+  openWhatsApp?: boolean;
   onClose: () => void;
   onSaved: () => void | Promise<void>;
 }) {
@@ -251,6 +301,9 @@ function MemberDrawer({
   const [depositosCount, setDepositosCount] = useState(String(member.depositosCount));
   const [notasAdmin, setNotasAdmin] = useState(member.notasAdmin);
   const [msg, setMsg] = useState("");
+  const displayStatus = effectiveMemberStatus(member);
+  const [whatsappOpen, setWhatsappOpen] = useState(openWhatsApp || displayStatus === "inadimplente");
+  const hasWhatsApp = Boolean(whatsappDigits(member.telefone));
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- synchronize editable draft when drawer target changes */
@@ -261,8 +314,20 @@ function MemberDrawer({
     setDepositosCount(String(member.depositosCount));
     setNotasAdmin(member.notasAdmin);
     setMsg("");
+    setWhatsappOpen(openWhatsApp || effectiveMemberStatus(member) === "inadimplente");
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [member]);
+  }, [member, openWhatsApp]);
+
+  function openWhatsAppChat(templateId: string) {
+    const template = WHATSAPP_TEMPLATES.find((item) => item.id === templateId);
+    if (!template) return;
+    const url = buildWhatsAppUrl(member.telefone, template.build(firstNameFrom(member.nome)));
+    if (!url) {
+      setMsg("Este associado não tem telefone válido para WhatsApp.");
+      return;
+    }
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   const save = async () => {
     setMsg("");
@@ -308,9 +373,9 @@ function MemberDrawer({
                 <h2 id="admin-member-title" className="font-display text-[1.35rem] font-semibold tracking-tight text-ink truncate leading-none">
                   {member.nome}
                 </h2>
-                <span className={statusBadge(member.status)}>
-                  <StatusIcon status={member.status} />
-                  {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                <span className={statusBadge(effectiveMemberStatus(member))}>
+                  <StatusIcon status={effectiveMemberStatus(member)} />
+                  {memberStatusLabel(effectiveMemberStatus(member))}
                 </span>
               </div>
               <p className="mt-1.5 text-[12.5px] text-ink-soft truncate">{member.email}</p>
@@ -354,6 +419,51 @@ function MemberDrawer({
               />
               <InfoLine icon={Car} label="Veículo" value={vehicleLabel(member)} />
               <InfoLine icon={KeyRound} label="Chave PIX" value={member.chavePix || "—"} />
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-[#cce8d8] bg-[#f3fbf6] p-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#128C7E]">WhatsApp</p>
+                  <p className="mt-1 text-[12.5px] text-ink-soft">
+                    {!hasWhatsApp
+                      ? "Cadastre um telefone para liberar o WhatsApp."
+                      : displayStatus === "inadimplente"
+                        ? "Sem pagamento hoje — lembre o associado pelo WhatsApp."
+                        : "Abra a conversa com uma mensagem pronta."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={!hasWhatsApp}
+                  onClick={() => setWhatsappOpen((open) => !open)}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#25D366] px-3.5 text-[12.5px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </button>
+              </div>
+              {whatsappOpen && hasWhatsApp ? (
+                <div className="mt-3 grid gap-2">
+                  {WHATSAPP_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => openWhatsAppChat(template.id)}
+                      className={`rounded-xl border px-3 py-2.5 text-left text-[12.5px] font-semibold text-ink hover:border-[#25D366] hover:bg-[#f7fdf9] ${
+                        template.id === "pagamento" && displayStatus === "inadimplente"
+                          ? "border-[#25D366] bg-[#f7fdf9]"
+                          : "border-[#cce8d8] bg-white"
+                      }`}
+                    >
+                      {template.label}
+                      <span className="mt-1 block text-[11px] font-medium leading-relaxed text-ink-soft">
+                        {template.build(firstNameFrom(member.nome))}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </section>
 

@@ -27,6 +27,9 @@ export type MemberProfile = {
   referralValidCount: number;
   referralBonusPaidGroups: number;
   activatedAt: string | null;
+  lastDepositAt: string | null;
+  /** Último dia (YYYY-MM-DD Brasília) com acesso aos benefícios. */
+  coverageUntilDate: string | null;
   withdrawalLockedUntil: string | null;
   createdAt: string;
   updatedAt: string;
@@ -48,7 +51,7 @@ export type RootStackParamList = {
   Admin: undefined;
   AdminOperations: { section: "associados" | "saques" | "atendimento" };
   AdminMember: { memberId: string };
-  AdminWithdrawal: { withdrawalId: string };
+  AdminWithdrawal: { memberId?: string; withdrawalId?: string };
   AdminChat: { chatId: string; memberName: string; memberEmail: string };
   Support: undefined;
   EditProfile: undefined;

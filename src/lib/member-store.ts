@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { listAllActivationPayments } from "@/lib/activation-store";
+import { effectiveMemberStatus } from "@/lib/member-status";
 
 export type MemberStatus = "pendente" | "ativo" | "inadimplente" | "bloqueado";
 export type UserRole = "member" | "admin";
@@ -51,6 +52,9 @@ export type MemberProfile = {
   referralValidCount: number;
   referralBonusPaidGroups: number;
   activatedAt: string | null;
+  lastDepositAt: string | null;
+  /** Último dia (YYYY-MM-DD Brasília) com acesso aos benefícios. */
+  coverageUntilDate: string | null;
   withdrawalLockedUntil: string | null;
   createdAt: string;
   updatedAt: string;
@@ -123,6 +127,11 @@ function mapUserDoc(id: string, data: Record<string, unknown>): MemberProfile {
     referralValidCount: Number(data.referralValidCount ?? 0),
     referralBonusPaidGroups: Number(data.referralBonusPaidGroups ?? 0),
     activatedAt: data.activatedAt ? tsToIso(data.activatedAt) : null,
+    lastDepositAt: data.lastDepositAt ? tsToIso(data.lastDepositAt) : null,
+    coverageUntilDate:
+      typeof data.coverageUntilDate === "string" && data.coverageUntilDate
+        ? data.coverageUntilDate
+        : null,
     withdrawalLockedUntil: data.withdrawalLockedUntil
       ? tsToIso(data.withdrawalLockedUntil)
       : null,
@@ -206,6 +215,8 @@ export type RegisterInput = Omit<
   | "referralValidCount"
   | "referralBonusPaidGroups"
   | "activatedAt"
+  | "lastDepositAt"
+  | "coverageUntilDate"
   | "withdrawalLockedUntil"
   | "photoURL"
 > & {
@@ -518,10 +529,11 @@ export async function getAdminStats() {
   ]);
   const approvedPayments = payments.filter((payment) => payment.status === "approved");
   const total = members.length;
-  const ativos = members.filter((m) => m.status === "ativo").length;
-  const pendentes = members.filter((m) => m.status === "pendente").length;
-  const inadimplentes = members.filter((m) => m.status === "inadimplente").length;
-  const bloqueados = members.filter((m) => m.status === "bloqueado").length;
+  const withStatus = members.map((m) => ({ ...m, status: effectiveMemberStatus(m) }));
+  const ativos = withStatus.filter((m) => m.status === "ativo").length;
+  const pendentes = withStatus.filter((m) => m.status === "pendente").length;
+  const inadimplentes = withStatus.filter((m) => m.status === "inadimplente").length;
+  const bloqueados = withStatus.filter((m) => m.status === "bloqueado").length;
   const totalReserva = members.reduce((s, m) => s + m.saldoDisponivel, 0);
   const totalBloqueado = members.reduce((s, m) => s + m.saldoBloqueado, 0);
   const totalBonus = members.reduce((s, m) => s + m.saldoBonus, 0);
@@ -543,7 +555,7 @@ export async function getAdminStats() {
     totalReceitaAdmin,
     pagamentosAprovados: approvedPayments.length,
     novosHoje,
-    recentes: members.slice(0, 8),
+    recentes: withStatus.slice(0, 8),
   };
 }
 

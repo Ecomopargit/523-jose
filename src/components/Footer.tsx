@@ -33,7 +33,7 @@ const beneficios = [
   "Empréstimo Subsidiado",
   "Assistência Odontológica",
   "Assistência Jurídica",
-  "Seguro da Franquia",
+  "Carro Reserva",
   "Indique e Ganhe",
 ];
 

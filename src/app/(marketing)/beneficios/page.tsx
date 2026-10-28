@@ -28,25 +28,25 @@ const beneficios = [
   {
     icon: TrendingUp,
     title: "Empréstimo Subsidiado",
-    description: "Acesso a apoio financeiro em condições especiais, sujeito à análise interna.",
+    description: "Apoio financeiro em condições especiais. Carência de 30 dias: o parceiro precisa estar cadastrado há mais de 30 dias e permanecer ativo durante todo o período.",
     color: "bg-accent",
     features: [
+      "Carência de 30 dias de cadastro",
+      "Manter-se ativo durante o período",
       "Taxas reduzidas para associados",
-      "Análise rápida de crédito",
-      "Parcelamento flexível",
-      "Sem burocracia excessiva"
+      "Sujeito à análise interna"
     ]
   },
   {
     icon: Stethoscope,
     title: "Assistência Odontológica",
-    description: "Suporte para cuidados odontológicos conforme regras do plano da associação.",
+    description: "Descontos exclusivos em tratamentos odontológicos, conforme o procedimento realizado.",
     color: "bg-brand",
     features: [
-      "Consultas preventivas",
-      "Tratamentos básicos",
+      "Descontos exclusivos para associados",
+      "Conforme o procedimento realizado",
       "Rede credenciada",
-      "Atendimento em emergências"
+      "Tratamentos odontológicos"
     ]
   },
   {
@@ -56,21 +56,21 @@ const beneficios = [
     color: "bg-accent",
     features: [
       "Consultas jurídicas",
-      "Assessoria em contratos",
-      "Defesa em processos trabalhistas",
+      "Acidentes de trânsito",
+      "Questões relacionadas às plataformas",
       "Orientação sobre direitos"
     ]
   },
   {
     icon: Car,
-    title: "Seguro da Franquia",
-    description: "Em caso de sinistro, o associado paga uma taxa reduzida e o instituto cobre o valor da franquia.",
+    title: "Carro Reserva",
+    description: "Benefício veicular para o parceiro. Carência de 30 dias: é preciso estar cadastrado há mais de 30 dias e permanecer ativo durante todo o período.",
     color: "bg-brand",
     features: [
-      "Cobertura do valor da franquia",
-      "Taxa reduzida em sinistros",
-      "Processo simplificado",
-      "Preservação da reserva"
+      "Carência de 30 dias de cadastro",
+      "Manter-se ativo durante o período",
+      "Acesso conforme regras do benefício",
+      "Sujeito à análise interna"
     ]
   },
   {
@@ -153,8 +153,21 @@ export default function BeneficiosPage() {
       <section className="py-20 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-brand">Critérios para acesso aos benefícios</h2>
-            <p className="mt-4 text-gray-600 leading-relaxed">Todos os serviços, benefícios e bônus oferecidos pela plataforma são concedidos somente a parceiros clientes com cadastro ativo. Alguns benefícios também exigem análise e confirmação interna.</p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-brand">Regulamento de acesso aos benefícios</h2>
+            <p className="mt-4 text-gray-600 leading-relaxed">
+              Para ter acesso aos benefícios da plataforma, o parceiro precisa estar ativo.
+              A ativação é feita todos os dias, com validade de 24 horas, e é validada no momento do PIX de R$ 7,00.
+              Também é possível antecipar várias ativações futuras: o sistema cobre o parceiro até o limite de dias pagos.
+            </p>
+          </div>
+
+          <div className="mb-14 max-w-3xl mx-auto rounded-2xl border border-brand/10 bg-white p-6 sm:p-8 text-left">
+            <h3 className="font-bold text-brand text-lg">Como funciona a ativação</h3>
+            <ul className="mt-4 space-y-3 text-gray-600 text-sm leading-relaxed">
+              <li><strong className="text-brand">PIX de R$ 7,00</strong> — libera o acesso aos benefícios pelo dia (validade de 24h).</li>
+              <li><strong className="text-brand">Ativação prévia (opcional)</strong> — você pode pagar vários dias de uma vez. Ex.: R$ 7,00 × 7 = R$ 49,00 cobre a semana inteira; o mesmo vale para um mês ou mais.</li>
+              <li>Alguns benefícios ainda exigem análise e confirmação interna da ECOMOPAR.</li>
+            </ul>
           </div>
 
           <div className="grid md:grid-cols-4 gap-6">
@@ -176,8 +189,8 @@ export default function BeneficiosPage() {
               <div className="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-white text-2xl font-bold">3</span>
               </div>
-              <h4 className="font-bold text-brand mb-2">Ative sua Conta</h4>
-              <p className="text-gray-600 text-sm">Realize seu primeiro depósito e comece a acumular</p>
+              <h4 className="font-bold text-brand mb-2">Ative com PIX</h4>
+              <p className="text-gray-600 text-sm">R$ 7,00 por dia — ou antecipe vários dias no mesmo PIX</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">

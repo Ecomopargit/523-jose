@@ -19,6 +19,10 @@ import {
 } from "@/lib/mercadopago";
 import { buildActivationReceiptPdf, sendActivationReceiptEmail } from "@/lib/receipt";
 import {
+  coverageDaysFromAmount,
+  extendCoverageUntilDate,
+} from "@/lib/member-status";
+import {
   activateReferralForMember,
   withdrawalLockUntil,
 } from "@/lib/referrals";
@@ -192,6 +196,11 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
     const lockedUntil = member.aderiuIndicacao
       ? withdrawalLockUntil(stamp)
       : null;
+    const days = coverageDaysFromAmount(payment.amount);
+    const coverageUntilDate = extendCoverageUntilDate(
+      typeof member.coverageUntilDate === "string" ? member.coverageUntilDate : null,
+      days,
+    );
     tx.update(paymentRef, {
       status: "approved",
       approvedAt: stamp,
@@ -200,6 +209,7 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
       adminFeeCredited: true,
       adminFeeCreditedAt: stamp,
       updatedAt: stamp,
+      coverageDays: days,
     });
     tx.set(
       userRef,
@@ -207,6 +217,8 @@ export async function applyApprovedActivation(payment: ActivationPayment) {
         status: "ativo",
         updatedAt: FieldValue.serverTimestamp(),
         activatedAt: stamp,
+        lastDepositAt: stamp,
+        coverageUntilDate,
         withdrawalLockedUntil: lockedUntil,
         activationPaymentId: payment.id,
         activationMpPaymentId: payment.mpPaymentId,

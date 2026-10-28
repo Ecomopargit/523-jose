@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthError, getMemberDoc, requireAuthUser } from "@/lib/api-auth";
 import { createMemberDeposit, publicDepositPayload } from "@/lib/deposit-payments";
 import { getMercadoPagoNotificationBaseUrl } from "@/lib/mercadopago";
+import { canContributeDaily } from "@/lib/member-status";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Informe um valor entre R$ 1,00 e R$ 5.000,00." }, { status: 400 });
     }
     const member = await getMemberDoc(decoded.uid);
-    if (!member || member.status !== "ativo") {
+    if (!member || !canContributeDaily(String(member.status || ""))) {
       return NextResponse.json({ error: "Ative seu cadastro antes de fazer depósitos." }, { status: 403 });
     }
     const payment = await createMemberDeposit({

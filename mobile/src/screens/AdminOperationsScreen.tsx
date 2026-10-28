@@ -2,11 +2,13 @@ import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { db } from "../lib/firebase";
 import { getAdminStats, setMemberStatus } from "../lib/admin";
+import { effectiveMemberStatus } from "../lib/member-status";
+import { WHATSAPP_TEMPLATES, buildWhatsAppUrl, firstNameFrom, whatsappDigits } from "../lib/whatsapp";
 import { colors, fonts, shadow } from "../theme";
 import type { MemberProfile, RootStackParamList } from "../types";
 
@@ -19,6 +21,9 @@ type OperationItem = {
   status: string;
   value?: number;
   member?: MemberProfile;
+  memberId?: string;
+  withdrawalId?: string;
+  telefone?: string;
 };
 
 const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -38,8 +43,9 @@ export function AdminOperationsScreen({ navigation, route }: Props) {
           title: member.nome || "Associado",
           subtitle: member.email,
           detail: member.telefone || "Telefone não informado",
-          status: member.status,
+          status: effectiveMemberStatus(member),
           value: member.saldoDisponivel + member.saldoBloqueado + member.saldoBonus,
+          telefone: member.telefone,
           member,
         }))))
         .catch(() => setError("Não foi possível carregar os associados."))
@@ -52,15 +58,17 @@ export function AdminOperationsScreen({ navigation, route }: Props) {
     return onSnapshot(
       query(collection(db, source), orderBy(field, "desc")),
       (snapshot) => {
-        setItems(snapshot.docs.map((record) => {
+        const records = snapshot.docs.map((record) => {
           const data = record.data();
           return section === "saques" ? {
             id: record.id,
+            memberId: String(data.memberId ?? ""),
             title: String(data.memberName ?? "Associado"),
             subtitle: String(data.pixKey ?? ""),
             detail: String(data.memberCpf ?? "CPF não informado"),
             status: String(data.status ?? "solicitado"),
             value: Number(data.value ?? 0),
+            requestedAt: data.requestedAt?.toDate?.() as Date | undefined,
           } : {
             id: record.id,
             title: String(data.memberName ?? "Associado"),
@@ -68,7 +76,37 @@ export function AdminOperationsScreen({ navigation, route }: Props) {
             detail: String(data.lastMessage ?? "Sem mensagens"),
             status: data.status === "closed" ? "encerrado" : "aberto",
           };
-        }));
+        });
+        if (section !== "saques") {
+          setItems(records);
+          setLoading(false);
+          return;
+        }
+        const open = records.filter((item) => item.status === "solicitado" || item.status === "processando");
+        const closed = records.filter((item) => item.status !== "solicitado" && item.status !== "processando");
+        const byMember = new Map<string, typeof open>();
+        open.forEach((item) => {
+          const current = byMember.get(item.memberId || item.id) ?? [];
+          current.push(item);
+          byMember.set(item.memberId || item.id, current);
+        });
+        const groups = [...byMember.values()].map((group) => {
+          const latest = [...group].sort((a, b) => (b.requestedAt?.getTime() ?? 0) - (a.requestedAt?.getTime() ?? 0))[0]!;
+          const allProcessing = group.every((item) => item.status === "processando");
+          return {
+            id: `open-${latest.memberId}`,
+            memberId: latest.memberId,
+            title: latest.title,
+            subtitle: latest.subtitle,
+            detail: group.length > 1 ? `${group.length} pedidos em aberto` : latest.detail,
+            status: allProcessing ? "processando" : "solicitado",
+            value: group.reduce((sum, item) => sum + (item.value || 0), 0),
+          };
+        });
+        setItems([
+          ...groups,
+          ...closed.map((item) => ({ ...item, withdrawalId: item.id, memberId: undefined })),
+        ]);
         setLoading(false);
       },
       () => {
@@ -85,8 +123,30 @@ export function AdminOperationsScreen({ navigation, route }: Props) {
 
   function open(item: OperationItem) {
     if (section === "associados") navigation.navigate("AdminMember", { memberId: item.id });
-    else if (section === "saques") navigation.navigate("AdminWithdrawal", { withdrawalId: item.id });
+    else if (section === "saques") navigation.navigate("AdminWithdrawal", item.memberId ? { memberId: item.memberId } : { withdrawalId: item.withdrawalId || item.id });
     else navigation.navigate("AdminChat", { chatId: item.id, memberName: item.title, memberEmail: item.subtitle });
+  }
+
+  async function openWhatsApp(item: OperationItem) {
+    const phone = item.telefone || item.member?.telefone || "";
+    if (!whatsappDigits(phone)) {
+      Alert.alert("Sem telefone", "Este associado não tem telefone cadastrado para WhatsApp.");
+      navigation.navigate("AdminMember", { memberId: item.id });
+      return;
+    }
+    const template =
+      WHATSAPP_TEMPLATES.find((entry) => entry.id === (item.status === "inadimplente" ? "inadimplente" : "pagamento")) ||
+      WHATSAPP_TEMPLATES[0]!;
+    const url = buildWhatsAppUrl(phone, template.build(firstNameFrom(item.title)));
+    if (!url) {
+      Alert.alert("Telefone inválido", "Não foi possível montar o link do WhatsApp.");
+      return;
+    }
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert("Não foi possível abrir", "Verifique se o WhatsApp está instalado.");
+    }
   }
 
   const copy = {
@@ -116,7 +176,27 @@ export function AdminOperationsScreen({ navigation, route }: Props) {
           <View key={item.id} style={styles.card}>
             <View style={styles.cardTop}><View style={styles.avatar}><Text style={styles.avatarText}>{item.title.split(" ").slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</Text></View><View style={styles.cardCopy}><Text numberOfLines={1} style={styles.name}>{item.title}</Text><Text numberOfLines={1} style={styles.email}>{item.subtitle}</Text></View><View style={styles.badge}><Text style={styles.badgeText}>{item.status}</Text></View></View>
             <View style={styles.rule} />
-            <View style={styles.cardBottom}><View style={styles.detailCopy}><Text numberOfLines={2} style={styles.detail}>{item.detail}</Text>{item.value !== undefined ? <Text style={styles.value}>{money(item.value)}</Text> : null}</View><Pressable onPress={() => open(item)} style={({ pressed }) => [styles.button, pressed && styles.pressed]}><Text style={styles.buttonText}>{section === "atendimento" ? "Conversar" : "Visualizar"}</Text><Feather color={colors.white} name="arrow-right" size={13} /></Pressable></View>
+            <View style={styles.cardBottom}>
+              <View style={styles.detailCopy}>
+                <Text numberOfLines={2} style={styles.detail}>{item.detail}</Text>
+                {item.value !== undefined ? <Text style={styles.value}>{money(item.value)}</Text> : null}
+              </View>
+              <View style={styles.cardActions}>
+                {section === "associados" && (item.status === "inadimplente" || whatsappDigits(item.telefone || "")) ? (
+                  <Pressable
+                    onPress={() => void openWhatsApp(item)}
+                    style={({ pressed }) => [styles.whatsappButton, item.status === "inadimplente" && styles.whatsappButtonHot, pressed && styles.pressed]}
+                  >
+                    <Feather color={colors.white} name="message-circle" size={13} />
+                    <Text style={styles.whatsappButtonText}>{item.status === "inadimplente" ? "WhatsApp" : "WA"}</Text>
+                  </Pressable>
+                ) : null}
+                <Pressable onPress={() => open(item)} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+                  <Text style={styles.buttonText}>{section === "atendimento" ? "Conversar" : "Visualizar"}</Text>
+                  <Feather color={colors.white} name="arrow-right" size={13} />
+                </Pressable>
+              </View>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -155,6 +235,10 @@ const styles = StyleSheet.create({
   detailCopy: { flex: 1 },
   detail: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 9 },
   value: { color: colors.green700, fontFamily: fonts.extraBold, fontSize: 13, marginTop: 4 },
+  cardActions: { alignItems: "center", flexDirection: "row", gap: 7 },
+  whatsappButton: { alignItems: "center", backgroundColor: "#128C7E", borderRadius: 10, flexDirection: "row", gap: 5, paddingHorizontal: 10, paddingVertical: 10 },
+  whatsappButtonHot: { backgroundColor: "#25D366" },
+  whatsappButtonText: { color: colors.white, fontFamily: fonts.bold, fontSize: 8.5 },
   button: { alignItems: "center", backgroundColor: colors.green700, borderRadius: 10, flexDirection: "row", gap: 5, paddingHorizontal: 13, paddingVertical: 10 },
   buttonDisabled: { backgroundColor: colors.inkFaint, opacity: 0.55 },
   buttonText: { color: colors.white, fontFamily: fonts.bold, fontSize: 8.5 },

@@ -9,6 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { IconBadge, ScreenAtmosphere, ScreenHeader } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
+import { effectiveMemberStatus, remainingCoverageDays } from "../lib/member-status";
 import { getReferralDashboard, type ReferralDashboard } from "../lib/referrals";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
@@ -24,7 +25,8 @@ const benefits = [
 export function BenefitsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { member } = useAuth();
-  const benefitsAvailable = member?.status === "ativo";
+  const benefitsAvailable = member ? effectiveMemberStatus(member) === "ativo" : false;
+  const coverageDaysLeft = member ? remainingCoverageDays(member.coverageUntilDate) : 0;
   const [referral, setReferral] = useState<ReferralDashboard | null>(null);
   const [loadingReferral, setLoadingReferral] = useState(!member?.referralCode);
   const [referralError, setReferralError] = useState("");
@@ -122,6 +124,24 @@ export function BenefitsScreen() {
           </View>
         </LinearGradient>
 
+        <View style={styles.rulesCard}>
+          <Text style={styles.rulesEyebrow}>REGULAMENTO</Text>
+          <Text style={styles.rulesTitle}>Acesso aos benefícios</Text>
+          <Text style={styles.rulesText}>
+            O parceiro precisa estar ativo. A ativação é o PIX de R$ 7,00 por dia (validade de 24h).
+            Dá para antecipar: R$ 49,00 cobre 7 dias; o mesmo vale para um mês ou mais.
+          </Text>
+          {benefitsAvailable ? (
+            <Text style={styles.rulesMeta}>
+              {coverageDaysLeft > 1
+                ? `Você está coberto por mais ${coverageDaysLeft} dias.`
+                : "Você está ativo hoje."}
+            </Text>
+          ) : (
+            <Text style={styles.rulesMetaMuted}>Ative o cadastro para liberar os benefícios.</Text>
+          )}
+        </View>
+
         <View style={styles.sectionHeading}>
           <View><Text style={styles.section}>Sua rede de proteção</Text><Text style={styles.sectionHint}>Disponível somente com cadastro ativo</Text></View>
           <View style={styles.count}><Text style={styles.countText}>5</Text></View>
@@ -195,6 +215,19 @@ const styles = StyleSheet.create({
   share: { alignItems: "center", backgroundColor: "#DDF2E9", borderRadius: 11, flexDirection: "row", gap: 7, paddingHorizontal: 13, paddingVertical: 11 },
   shareDisabled: { opacity: 0.58 },
   shareText: { color: colors.green900, fontFamily: fonts.bold, fontSize: 10 },
+  rulesCard: {
+    backgroundColor: colors.green50,
+    borderColor: colors.green100,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginTop: 18,
+    padding: 16,
+  },
+  rulesEyebrow: { color: colors.green700, fontFamily: fonts.bold, fontSize: 8.5, letterSpacing: 1.1 },
+  rulesTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 14, marginTop: 6 },
+  rulesText: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 11, lineHeight: 16, marginTop: 7 },
+  rulesMeta: { color: colors.green700, fontFamily: fonts.semibold, fontSize: 10.5, marginTop: 10 },
+  rulesMetaMuted: { color: colors.amber600, fontFamily: fonts.semibold, fontSize: 10.5, marginTop: 10 },
   sectionHeading: { alignItems: "flex-end", flexDirection: "row", justifyContent: "space-between", marginBottom: 13, marginTop: 25 },
   section: { color: colors.ink, fontFamily: fonts.bold, fontSize: 16 },
   sectionHint: { color: colors.inkFaint, fontFamily: fonts.regular, fontSize: 9.5, marginTop: 3 },

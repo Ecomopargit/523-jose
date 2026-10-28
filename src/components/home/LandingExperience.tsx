@@ -30,8 +30,8 @@ const benefits = [
   },
   {
     icon: ShieldCheck,
-    title: "Seguro da franquia",
-    text: "Apoio para a franquia do seguro quando um imprevisto acontece, conforme as regras do benefício.",
+    title: "Carro reserva",
+    text: "Carência de 30 dias: cadastro há mais de 30 dias e permanência ativa no período, conforme as regras do benefício.",
     tone: "photo",
     number: "02",
     image: "/landing/driver-blue.webp",
@@ -41,7 +41,7 @@ const benefits = [
   {
     icon: Stethoscope,
     title: "Assistência odontológica",
-    text: "Suporte para cuidados odontológicos conforme as regras do plano da associação.",
+    text: "Descontos exclusivos em tratamentos odontológicos, conforme o procedimento realizado.",
     tone: "photo",
     number: "03",
     image: "/landing/driver-woman.webp",
@@ -51,7 +51,7 @@ const benefits = [
   {
     icon: Scale,
     title: "Assistência jurídica",
-    text: "Orientação e apoio jurídico em situações relacionadas à atividade do associado.",
+    text: "Orientação em acidentes de trânsito e questões relacionadas às plataformas.",
     tone: "photo",
     number: "04",
     image: "/landing/moto.webp",
@@ -61,7 +61,7 @@ const benefits = [
   {
     icon: CircleDollarSign,
     title: "Empréstimo subsidiado",
-    text: "Apoio financeiro em condições especiais, sempre sujeito à análise interna.",
+    text: "Carência de 30 dias com cadastro ativo no período. Apoio financeiro sujeito à análise interna.",
     tone: "photo",
     number: "05",
     image: "/landing/benefit-loan.jpg",

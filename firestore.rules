@@ -112,6 +112,12 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /recurringCharges/{chargeId} {
+      allow read: if isAdmin() || isAdminEmail()
+        || (signedIn() && resource.data.memberId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
     match /referrals/{referralId} {
       allow read: if isAdmin() || isAdminEmail()
         || (signedIn() && (

@@ -25,11 +25,16 @@ import {
 } from "@/lib/deposit-client";
 import { listMemberDepositPayments } from "@/lib/deposit-store";
 import { brl } from "@/lib/dashboard-meta";
-import { createRecurringPayment, type PublicRecurringPayment } from "@/lib/recurring-client";
+import {
+  cancelRecurringPayment,
+  createRecurringPayment,
+  listRecurringPayments,
+  type PublicRecurringPayment,
+} from "@/lib/recurring-client";
 
 type Step = "form" | "pix" | "success";
 
-const quickValues = [7, 35, 70, 150];
+const quickValues = [7, 49, 70, 210];
 
 const statusLabel: Record<PublicDepositPayment["status"], string> = {
   pending: "Aguardando PIX",
@@ -52,9 +57,20 @@ export default function PagamentosPage() {
   const [recurringDays, setRecurringDays] = useState("30");
   const [recurringLoading, setRecurringLoading] = useState(false);
   const [recurringError, setRecurringError] = useState("");
+  const [subscriptions, setSubscriptions] = useState<PublicRecurringPayment[]>([]);
+  const [cancellingId, setCancellingId] = useState("");
+  const [recurringNotice, setRecurringNotice] = useState("");
 
   const value = Number(amount.replace(",", "."));
-  const isActive = member?.status === "ativo";
+  const isActive = member?.status === "ativo" || member?.status === "inadimplente";
+
+  const loadSubscriptions = useCallback(async () => {
+    try {
+      setSubscriptions(await listRecurringPayments());
+    } catch {
+      setSubscriptions([]);
+    }
+  }, []);
 
   const loadHistory = useCallback(async () => {
     if (!member?.id) {
@@ -71,7 +87,11 @@ export default function PagamentosPage() {
   useEffect(() => {
     if (!ready) return;
     void loadHistory();
-  }, [ready, loadHistory]);
+    void loadSubscriptions();
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("recorrencia") === "sucesso") {
+      setRecurringNotice("Cartão enviado ao Mercado Pago. A recorrência fica ativa assim que a autorização for confirmada.");
+    }
+  }, [ready, loadHistory, loadSubscriptions]);
 
   useEffect(() => {
     if (step !== "pix" || !payment?.id || payment.status !== "pending") return;
@@ -185,6 +205,26 @@ export default function PagamentosPage() {
     }
   }
 
+  async function cancelSubscription(id: string) {
+    setRecurringError("");
+    setCancellingId(id);
+    try {
+      await cancelRecurringPayment(id);
+      await loadSubscriptions();
+    } catch (err) {
+      setRecurringError(err instanceof Error ? err.message : "Não foi possível cancelar a recorrência.");
+    } finally {
+      setCancellingId("");
+    }
+  }
+
+  const recurringStatus: Record<PublicRecurringPayment["status"], string> = {
+    pending: "Aguardando cartão",
+    authorized: "Ativa",
+    paused: "Pausada",
+    cancelled: "Cancelada",
+  };
+
   const expires = payment?.expiresAt
     ? new Date(payment.expiresAt).toLocaleTimeString("pt-BR", {
         hour: "2-digit",
@@ -232,7 +272,7 @@ export default function PagamentosPage() {
                     Escolha o valor do PIX
                   </h2>
                   <p className="text-[13px] text-ink-soft mt-1.5 leading-relaxed">
-                    Gere o QR Code ou o código copia e cola para pagar no app do seu banco.
+                    R$ 7,00 = 1 dia de ativação. Antecipe a semana (R$ 49) ou o mês (R$ 210) no mesmo PIX.
                   </p>
                 </div>
 
@@ -420,9 +460,27 @@ export default function PagamentosPage() {
               <label className="block text-[13px] font-semibold">Quantidade de dias
                 <input className="field mt-2 h-12 font-mono-num" inputMode="numeric" value={recurringDays} onChange={(event) => setRecurringDays(event.target.value.replace(/\D/g, ""))} />
               </label>
-              <div className="sm:col-span-2 rounded-xl bg-green-50 p-3 text-[13px] text-ink-soft">Total previsto: <strong className="font-mono-num text-green-800">{brl((Number(recurringAmount.replace(",", ".")) || 0) * (Number(recurringDays) || 0))}</strong>. O cartão será informado no ambiente seguro do Mercado Pago.</div>
+              <div className="sm:col-span-2 rounded-xl bg-green-50 p-3 text-[13px] text-ink-soft">Total previsto: <strong className="font-mono-num text-green-800">{brl((Number(recurringAmount.replace(",", ".")) || 0) * (Number(recurringDays) || 0))}</strong>. De cada cobrança, a reserva recebe a mesma divisão do PIX (R$ 7 pagos → R$ 5 na reserva). O cartão fica no Mercado Pago.</div>
+              {recurringNotice ? <p className="sm:col-span-2 rounded-xl bg-green-50 px-3 py-2.5 text-xs text-green-800">{recurringNotice}</p> : null}
               {recurringError ? <p className="sm:col-span-2 rounded-xl bg-brick-100 px-3 py-2.5 text-xs text-brick-600">{recurringError}</p> : null}
               <button type="button" disabled={recurringLoading || !isActive} onClick={() => void startRecurring()} className="btn-primary btn-lg sm:col-span-2 w-full"><Repeat2 className="h-4 w-4" />{recurringLoading ? "Abrindo checkout..." : "Configurar recorrência no cartão"}</button>
+              {subscriptions.length ? (
+                <div className="sm:col-span-2 space-y-2">
+                  {subscriptions.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-3">
+                      <div>
+                        <p className="text-sm font-semibold">{brl(item.amount)} por dia · {item.days} dias</p>
+                        <p className="mt-1 text-xs text-ink-soft">{recurringStatus[item.status]}{item.endDate ? ` · até ${new Date(item.endDate).toLocaleDateString("pt-BR")}` : ""}</p>
+                      </div>
+                      {item.status !== "cancelled" ? (
+                        <button type="button" disabled={cancellingId === item.id} onClick={() => void cancelSubscription(item.id)} className="text-xs font-semibold text-brick-600">
+                          {cancellingId === item.id ? "Cancelando..." : "Cancelar"}
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </section>
         </div>

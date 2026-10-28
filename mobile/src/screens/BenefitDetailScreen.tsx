@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ScreenAtmosphere } from "../components/UI";
 import { useAuth } from "../context/AuthContext";
+import { effectiveMemberStatus } from "../lib/member-status";
 import { colors, fonts, shadow } from "../theme";
 import type { RootStackParamList } from "../types";
 
@@ -115,7 +116,7 @@ export function BenefitDetailScreen({ navigation, route }: Props) {
   const { member } = useAuth();
   const benefit = benefitContent[route.params.benefitId];
   const tone = toneColors[benefit.tone];
-  const canAccess = member?.status === "ativo";
+  const canAccess = member ? effectiveMemberStatus(member) === "ativo" : false;
 
   function handleAction() {
     if (!canAccess) {

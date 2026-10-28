@@ -112,34 +112,63 @@ export async function updateWithdrawalStatus(
   nextStatus: WithdrawalStatus,
   adminNote = "",
 ) {
+  return updateWithdrawalsBatch([withdrawal], nextStatus, adminNote);
+}
+
+export async function updateWithdrawalsBatch(
+  withdrawals: Withdrawal[],
+  nextStatus: WithdrawalStatus,
+  adminNote = "",
+) {
+  const pending = withdrawals.filter((item) => item.status !== "pago" && item.status !== "rejeitado");
+  if (!pending.length) return { ok: false as const, error: "Não há saques em aberto nesse associado." };
+  const memberId = pending[0]?.memberId;
+  if (!memberId || pending.some((item) => item.memberId !== memberId)) {
+    return { ok: false as const, error: "Os saques precisam ser do mesmo associado." };
+  }
+
   try {
-    if (nextStatus === "pago" && withdrawal.status !== "pago") {
+    if (nextStatus === "pago") {
       await runTransaction(db, async (transaction) => {
-        const memberRef = doc(db, "users", withdrawal.memberId);
+        const memberRef = doc(db, "users", memberId);
         const memberSnapshot = await transaction.get(memberRef);
+        const withdrawalSnapshots = await Promise.all(
+          pending.map((item) => transaction.get(doc(db, "withdrawals", item.id))),
+        );
         if (!memberSnapshot.exists()) throw new Error("Associado não encontrado.");
+        const payable = withdrawalSnapshots.filter((snapshot) => {
+          const status = String(snapshot.data()?.status ?? "");
+          return snapshot.exists() && status !== "pago" && status !== "rejeitado";
+        });
+        const total = payable.reduce((sum, snapshot) => sum + Number(snapshot.data()?.value ?? 0), 0);
         const available = Number(memberSnapshot.data().saldoDisponivel ?? 0);
         const bonus = Number(memberSnapshot.data().saldoBonus ?? 0);
-        if (available + bonus < withdrawal.value) throw new Error("Saldo insuficiente.");
-        const debitAvailable = Math.min(available, withdrawal.value);
-        const debitBonus = withdrawal.value - debitAvailable;
+        if (available + bonus < total) throw new Error("Saldo insuficiente.");
+        const debitAvailable = Math.min(available, total);
+        const debitBonus = total - debitAvailable;
         transaction.update(memberRef, {
           saldoDisponivel: available - debitAvailable,
           saldoBonus: bonus - debitBonus,
           updatedAt: serverTimestamp(),
         });
-        transaction.update(doc(db, "withdrawals", withdrawal.id), {
-          status: nextStatus,
-          adminNote: adminNote.trim(),
-          updatedAt: serverTimestamp(),
+        payable.forEach((snapshot) => {
+          transaction.update(snapshot.ref, {
+            status: nextStatus,
+            adminNote: adminNote.trim(),
+            updatedAt: serverTimestamp(),
+          });
         });
       });
     } else {
-      await updateDoc(doc(db, "withdrawals", withdrawal.id), {
-        status: nextStatus,
-        adminNote: adminNote.trim(),
-        updatedAt: serverTimestamp(),
-      });
+      await Promise.all(
+        pending.map((item) =>
+          updateDoc(doc(db, "withdrawals", item.id), {
+            status: nextStatus,
+            adminNote: adminNote.trim(),
+            updatedAt: serverTimestamp(),
+          }),
+        ),
+      );
     }
     return { ok: true as const };
   } catch (error) {

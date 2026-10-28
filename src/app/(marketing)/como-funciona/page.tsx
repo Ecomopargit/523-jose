@@ -197,14 +197,15 @@ export default function ComoFuncionaPage() {
                 <div className="border-b border-white/20 pb-4">
                   <h4 className="font-semibold mb-2">Posso fazer depósitos maiores?</h4>
                   <p className="text-gray-300 text-sm">
-                    O modelo é de R$ 7,00 por dia, mas você pode fazer adiantamentos 
-                    de múltiplos dias.
+                    Sim. O modelo é R$ 7,00 por dia, e você pode antecipar vários dias no mesmo PIX
+                    (ex.: R$ 49,00 cobre 7 dias de ativação e benefícios).
                   </p>
                 </div>
                 <div className="border-b border-white/20 pb-4">
                   <h4 className="font-semibold mb-2">E se eu não fizer o depósito?</h4>
                   <p className="text-gray-300 text-sm">
-                    O depósito é diário. Dias sem depósito não geram acúmulo na reserva.
+                    Sem ativação válida no dia, não há acúmulo na reserva e o acesso aos benefícios
+                    fica suspenso até a próxima ativação.
                   </p>
                 </div>
                 <div>

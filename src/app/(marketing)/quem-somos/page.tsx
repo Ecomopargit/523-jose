@@ -177,7 +177,7 @@ export default function QuemSomosPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-lg">Benefícios reais</h4>
-                    <p className="text-gray-300">Assistências odontológica, jurídica e seguro da franquia</p>
+                    <p className="text-gray-300">Assistências odontológica, jurídica e carro reserva</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">

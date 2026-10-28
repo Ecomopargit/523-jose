@@ -69,6 +69,11 @@ export async function getMember(uid: string): Promise<MemberProfile | null> {
     referralValidCount: Number(data.referralValidCount ?? 0),
     referralBonusPaidGroups: Number(data.referralBonusPaidGroups ?? 0),
     activatedAt: data.activatedAt ? toIso(data.activatedAt) : null,
+    lastDepositAt: data.lastDepositAt ? toIso(data.lastDepositAt) : null,
+    coverageUntilDate:
+      typeof data.coverageUntilDate === "string" && data.coverageUntilDate
+        ? data.coverageUntilDate
+        : null,
     withdrawalLockedUntil: data.withdrawalLockedUntil
       ? toIso(data.withdrawalLockedUntil)
       : null,

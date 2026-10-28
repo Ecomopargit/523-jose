@@ -5,7 +5,7 @@ import AdminShell from "@/components/AdminShell";
 import { brl } from "@/lib/dashboard-meta";
 import {
   subscribeWithdrawals,
-  updateWithdrawalStatus,
+  updateWithdrawalsBatch,
   type Withdrawal,
   type WithdrawalStatus,
 } from "@/lib/withdrawal-store";
@@ -29,6 +29,78 @@ const statusLabels: Record<WithdrawalStatus, string> = {
   rejeitado: "Rejeitado",
 };
 
+type WithdrawalGroup = {
+  key: string;
+  memberName: string;
+  memberCpf: string;
+  pixKey: string;
+  pixKeys: string[];
+  value: number;
+  status: WithdrawalStatus;
+  requestedAt: Date | null;
+  count: number;
+  items: Withdrawal[];
+};
+
+const openStatuses: WithdrawalStatus[] = ["solicitado", "processando"];
+
+function isOpen(item: Withdrawal) {
+  return openStatuses.includes(item.status);
+}
+
+function groupWithdrawals(items: Withdrawal[], status: WithdrawalStatus | "todos", search: string) {
+  const term = search.trim().toLowerCase();
+  const matches = (item: Withdrawal) =>
+    !term ||
+    item.memberName.toLowerCase().includes(term) ||
+    item.memberCpf.includes(term) ||
+    item.pixKey.toLowerCase().includes(term);
+
+  const visible = items.filter(matches);
+  const openByMember = new Map<string, Withdrawal[]>();
+  for (const item of visible.filter(isOpen)) {
+    const current = openByMember.get(item.memberId) ?? [];
+    current.push(item);
+    openByMember.set(item.memberId, current);
+  }
+
+  const groups: WithdrawalGroup[] = [...openByMember.entries()].map(([memberId, group]) => {
+    const sorted = [...group].sort((a, b) => (b.requestedAt?.getTime() ?? 0) - (a.requestedAt?.getTime() ?? 0));
+    const latest = sorted[0]!;
+    const pixKeys = [...new Set(sorted.map((item) => item.pixKey).filter(Boolean))];
+    const groupStatus: WithdrawalStatus = sorted.every((item) => item.status === "processando") ? "processando" : "solicitado";
+    return {
+      key: `open-${memberId}`,
+      memberName: latest.memberName,
+      memberCpf: latest.memberCpf,
+      pixKey: latest.pixKey,
+      pixKeys,
+      value: sorted.reduce((sum, item) => sum + item.value, 0),
+      status: groupStatus,
+      requestedAt: latest.requestedAt,
+      count: sorted.length,
+      items: sorted,
+    };
+  });
+
+  const closed: WithdrawalGroup[] = visible.filter((item) => !isOpen(item)).map((item) => ({
+    key: item.id,
+    memberName: item.memberName,
+    memberCpf: item.memberCpf,
+    pixKey: item.pixKey,
+    pixKeys: item.pixKey ? [item.pixKey] : [],
+    value: item.value,
+    status: item.status,
+    requestedAt: item.requestedAt,
+    count: 1,
+    items: [item],
+  }));
+
+  return [...groups, ...closed]
+    .filter((group) => status === "todos" || group.items.some((item) => item.status === status))
+    .sort((a, b) => (b.requestedAt?.getTime() ?? 0) - (a.requestedAt?.getTime() ?? 0));
+}
+
 function StatusBadge({ status }: { status: WithdrawalStatus }) {
   const styles = {
     solicitado: "bg-amber-100 text-amber-600",
@@ -49,7 +121,7 @@ export default function SaquesPage() {
   const [items, setItems] = useState<Withdrawal[]>([]);
   const [status, setStatus] = useState<WithdrawalStatus | "todos">("todos");
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Withdrawal | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -68,17 +140,8 @@ export default function SaquesPage() {
     [],
   );
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return items.filter(
-      (item) =>
-        (status === "todos" || item.status === status) &&
-        (!term ||
-          item.memberName.toLowerCase().includes(term) ||
-          item.memberCpf.includes(term) ||
-          item.pixKey.toLowerCase().includes(term)),
-    );
-  }, [items, search, status]);
+  const filtered = useMemo(() => groupWithdrawals(items, status, search), [items, search, status]);
+  const selected = filtered.find((group) => group.key === selectedKey) ?? null;
 
   const pending = items.filter((item) => item.status === "solicitado");
   const processing = items.filter((item) => item.status === "processando");
@@ -92,8 +155,8 @@ export default function SaquesPage() {
     <AdminShell title="Saques" subtitle="Aprovação e rastreio das transferências PIX">
       <section className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: "Aguardando análise", value: String(pending.length), note: brl(pending.reduce((sum, item) => sum + item.value, 0)), icon: Clock3 },
-          { label: "Em processamento", value: String(processing.length), note: brl(processing.reduce((sum, item) => sum + item.value, 0)), icon: LoaderCircle },
+          { label: "Aguardando análise", value: String(new Set(pending.map((item) => item.memberId)).size), note: `${pending.length} pedidos · ${brl(pending.reduce((sum, item) => sum + item.value, 0))}`, icon: Clock3 },
+          { label: "Em processamento", value: String(new Set(processing.map((item) => item.memberId)).size), note: `${processing.length} pedidos · ${brl(processing.reduce((sum, item) => sum + item.value, 0))}`, icon: LoaderCircle },
           { label: "Pagos no mês", value: brl(paidThisMonth.reduce((sum, item) => sum + item.value, 0)), note: `${paidThisMonth.length} transferências`, icon: CheckCircle2 },
           { label: "Volume total", value: brl(items.reduce((sum, item) => sum + item.value, 0)), note: `${items.length} solicitações`, icon: ArrowDownToLine },
         ].map((card) => (
@@ -138,16 +201,19 @@ export default function SaquesPage() {
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px]">
-              <thead className="admin-table-head"><tr>{["Associado", "Valor", "Chave PIX", "Solicitado em", "Status", ""].map((label) => <th key={label || "action"}>{label}</th>)}</tr></thead>
+              <thead className="admin-table-head"><tr>{["Associado", "Valor", "Chave PIX", "Último pedido", "Status", ""].map((label) => <th key={label || "action"}>{label}</th>)}</tr></thead>
               <tbody className="divide-y divide-line-soft">
                 {filtered.map((item) => (
-                  <tr key={item.id} className="admin-table-row" onClick={() => setSelected(item)}>
-                    <td><p className="font-semibold text-ink">{item.memberName}</p><p className="mt-0.5 text-xs text-ink-faint">{item.memberCpf || "CPF não informado"}</p></td>
+                  <tr key={item.key} className="admin-table-row" onClick={() => setSelectedKey(item.key)}>
+                    <td>
+                      <p className="font-semibold text-ink">{item.memberName}</p>
+                      <p className="mt-0.5 text-xs text-ink-faint">{item.count > 1 ? `${item.count} pedidos em aberto` : item.memberCpf || "CPF não informado"}</p>
+                    </td>
                     <td className="font-mono-num text-base font-semibold text-green-800">{brl(item.value)}</td>
                     <td><p className="max-w-[210px] truncate text-sm">{item.pixKey}</p></td>
                     <td className="text-sm text-ink-soft">{item.requestedAt ? item.requestedAt.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "Agora"}</td>
                     <td><StatusBadge status={item.status} /></td>
-                    <td><button type="button" className="rounded-lg px-3 py-2 text-xs font-semibold text-green-700 hover:bg-green-50" onClick={(event) => { event.stopPropagation(); setSelected(item); }}>Analisar</button></td>
+                    <td><button type="button" className="rounded-lg px-3 py-2 text-xs font-semibold text-green-700 hover:bg-green-50" onClick={(event) => { event.stopPropagation(); setSelectedKey(item.key); }}>Analisar</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -156,20 +222,24 @@ export default function SaquesPage() {
         </div>
       )}
 
-      {selected ? <WithdrawalDrawer item={selected} onClose={() => setSelected(null)} /> : null}
+      {selected ? <WithdrawalDrawer key={selected.key} item={selected} onClose={() => setSelectedKey(null)} /> : null}
     </AdminShell>
   );
 }
 
-function WithdrawalDrawer({ item, onClose }: { item: Withdrawal; onClose: () => void }) {
-  const [note, setNote] = useState(item.adminNote);
+function WithdrawalDrawer({ item, onClose }: { item: WithdrawalGroup; onClose: () => void }) {
+  const [note, setNote] = useState(item.items[0]?.adminNote ?? "");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const openItems = item.items.filter(isOpen);
+  const canProcess = openItems.some((entry) => entry.status === "solicitado");
+  const canPay = openItems.length > 0 && openItems.every((entry) => entry.status === "processando");
+  const canReject = openItems.length > 0;
 
   async function changeStatus(next: WithdrawalStatus) {
     setBusy(true);
     setFeedback("");
-    const result = await updateWithdrawalStatus(item, next, note);
+    const result = await updateWithdrawalsBatch(openItems.length ? openItems : item.items, next, note);
     setBusy(false);
     if (!result.ok) return setFeedback(result.error);
     onClose();
@@ -180,12 +250,12 @@ function WithdrawalDrawer({ item, onClose }: { item: Withdrawal; onClose: () => 
       <button type="button" className="absolute inset-0 bg-green-950/45 backdrop-blur-[2px]" aria-label="Fechar painel" onClick={onClose} />
       <aside className="relative h-full w-full max-w-md overflow-y-auto border-l border-white/20 bg-surface shadow-2xl animate-fade-up">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line-soft bg-white/95 px-5 py-4 backdrop-blur">
-          <div><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">Solicitação de saque</p><p className="mt-1 font-display font-semibold">{item.memberName}</p></div>
+          <div><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">Saque do associado</p><p className="mt-1 font-display font-semibold">{item.memberName}</p></div>
           <button type="button" onClick={onClose} className="rounded-xl p-2 text-ink-soft hover:bg-green-50" aria-label="Fechar"><X className="h-5 w-5" /></button>
         </header>
         <div className="space-y-5 p-5">
           <div className="rounded-[20px] bg-green-950 p-5 text-white">
-            <p className="text-xs text-white/55">Valor solicitado</p>
+            <p className="text-xs text-white/55">{item.count > 1 ? `Soma de ${item.count} pedidos em aberto` : "Valor solicitado"}</p>
             <p className="mt-2 font-display font-mono-num text-3xl font-semibold">{brl(item.value)}</p>
             <div className="mt-4 border-t border-white/10 pt-4"><StatusBadge status={item.status} /></div>
           </div>
@@ -194,8 +264,22 @@ function WithdrawalDrawer({ item, onClose }: { item: Withdrawal; onClose: () => 
             <div className="rounded-2xl border border-line-soft p-4">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Chave PIX</p>
               <div className="mt-1.5 flex items-center gap-2"><p className="min-w-0 flex-1 break-all text-sm font-semibold">{item.pixKey}</p><button type="button" onClick={() => void navigator.clipboard.writeText(item.pixKey)} className="rounded-lg p-2 text-green-700 hover:bg-green-50" aria-label="Copiar chave PIX"><Copy className="h-4 w-4" /></button></div>
+              {item.pixKeys.length > 1 ? <p className="mt-2 text-xs text-amber-700">Este associado usou chaves diferentes. O PIX único deve sair para a chave do pedido mais recente.</p> : null}
             </div>
-            {item.note ? <Data label="Observação do associado" value={item.note} /> : null}
+            {item.count > 1 ? (
+              <div className="rounded-2xl border border-line-soft p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Pedidos incluídos</p>
+                <ul className="mt-2 space-y-2">
+                  {item.items.map((entry) => (
+                    <li key={entry.id} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-ink-soft">{entry.requestedAt ? entry.requestedAt.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "Agora"}</span>
+                      <span className="font-mono-num font-semibold">{brl(entry.value)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {item.items.some((entry) => entry.note) ? <Data label="Observação do associado" value={item.items.map((entry) => entry.note).filter(Boolean).join(" · ")} /> : null}
           </section>
           <div>
             <label className="mb-1.5 block text-xs font-semibold">Nota interna</label>
@@ -203,9 +287,9 @@ function WithdrawalDrawer({ item, onClose }: { item: Withdrawal; onClose: () => 
           </div>
           {feedback ? <p className="rounded-xl bg-brick-100 px-3 py-2 text-xs text-brick-600">{feedback}</p> : null}
           <div className="space-y-2">
-            {item.status === "solicitado" ? <button disabled={busy} type="button" onClick={() => void changeStatus("processando")} className="btn-primary btn-md w-full"><ShieldCheck className="h-4 w-4" />Iniciar processamento</button> : null}
-            {item.status === "processando" ? <button disabled={busy} type="button" onClick={() => void changeStatus("pago")} className="btn-primary btn-md w-full"><Check className="h-4 w-4" />Confirmar pagamento</button> : null}
-            {item.status !== "pago" && item.status !== "rejeitado" ? <button disabled={busy} type="button" onClick={() => void changeStatus("rejeitado")} className="btn-outline btn-md w-full !text-brick-600"><XCircle className="h-4 w-4" />Rejeitar solicitação</button> : null}
+            {canProcess ? <button disabled={busy} type="button" onClick={() => void changeStatus("processando")} className="btn-primary btn-md w-full"><ShieldCheck className="h-4 w-4" />Iniciar processamento de todos</button> : null}
+            {canPay ? <button disabled={busy} type="button" onClick={() => void changeStatus("pago")} className="btn-primary btn-md w-full"><Check className="h-4 w-4" />Confirmar PIX de {brl(item.value)}</button> : null}
+            {canReject ? <button disabled={busy} type="button" onClick={() => void changeStatus("rejeitado")} className="btn-outline btn-md w-full !text-brick-600"><XCircle className="h-4 w-4" />Rejeitar todos os pedidos</button> : null}
           </div>
         </div>
       </aside>

@@ -32,7 +32,7 @@ const dados = {
 export default function DashboardPage() {
   const { member } = useMemberSession();
   const primeiroNome = member?.nome?.trim().split(/\s+/)[0] ?? "Associado";
-  const isActive = member?.status === "ativo";
+  const isActive = member?.status === "ativo" || member?.status === "inadimplente";
   const saldo = member?.saldoDisponivel ?? dados.saldo;
   const depositos = member?.depositosCount ?? dados.depositos;
 
@@ -171,7 +171,7 @@ export default function DashboardPage() {
           {
             icon: CircleDollarSign,
             title: "Empréstimo subsidiado",
-            desc: "Condições especiais para associados ativos",
+            desc: "Carência de 30 dias com cadastro ativo",
           },
           {
             icon: HeartPulse,

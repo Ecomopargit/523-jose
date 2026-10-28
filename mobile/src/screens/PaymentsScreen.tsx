@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Linking,
   Pressable,
@@ -26,7 +27,8 @@ import {
   listMyDepositPayments,
   type DepositPayment,
 } from "../lib/deposits";
-import { createRecurringPayment } from "../lib/recurring";
+import { canContributeDaily } from "../lib/member-status";
+import { cancelRecurringPayment, createRecurringPayment, listRecurringPayments, type RecurringPayment } from "../lib/recurring";
 import { colors, fonts, shadow } from "../theme";
 import type { AppTabParamList } from "../types";
 
@@ -34,7 +36,7 @@ type Props = BottomTabScreenProps<AppTabParamList, "Pagamentos">;
 type Step = "form" | "pix" | "success";
 
 const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const quickValues = [7, 35, 70, 150];
+const quickValues = [7, 49, 70, 210];
 
 const statusLabel: Record<DepositPayment["status"], string> = {
   pending: "Aguardando PIX",
@@ -58,9 +60,11 @@ export function PaymentsScreen({ navigation }: Props) {
   const [recurringDays, setRecurringDays] = useState("30");
   const [recurringLoading, setRecurringLoading] = useState(false);
   const [recurringError, setRecurringError] = useState("");
+  const [subscriptions, setSubscriptions] = useState<RecurringPayment[]>([]);
+  const [cancellingId, setCancellingId] = useState("");
 
   const value = Number(amount.replace(",", "."));
-  const isActive = member?.status === "ativo";
+  const isActive = canContributeDaily(member?.status);
 
   const loadHistory = useCallback(async () => {
     try {
@@ -70,10 +74,19 @@ export function PaymentsScreen({ navigation }: Props) {
     }
   }, []);
 
+  const loadSubscriptions = useCallback(async () => {
+    try {
+      setSubscriptions(await listRecurringPayments());
+    } catch {
+      setSubscriptions([]);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       void loadHistory();
-    }, [loadHistory]),
+      void loadSubscriptions();
+    }, [loadHistory, loadSubscriptions]),
   );
 
   useEffect(() => {
@@ -108,7 +121,7 @@ export function PaymentsScreen({ navigation }: Props) {
 
   async function onRefresh() {
     setRefreshing(true);
-    await Promise.all([refresh(), loadHistory()]);
+    await Promise.all([refresh(), loadHistory(), loadSubscriptions()]);
     setRefreshing(false);
   }
 
@@ -192,6 +205,30 @@ export function PaymentsScreen({ navigation }: Props) {
     }
   }
 
+  function confirmCancel(id: string) {
+    Alert.alert("Cancelar recorrência", "As próximas cobranças neste cartão serão interrompidas.", [
+      { text: "Voltar", style: "cancel" },
+      {
+        text: "Cancelar recorrência",
+        style: "destructive",
+        onPress: () => {
+          void (async () => {
+            setCancellingId(id);
+            setRecurringError("");
+            try {
+              await cancelRecurringPayment(id);
+              await loadSubscriptions();
+            } catch (err) {
+              setRecurringError(err instanceof Error ? err.message : "Não foi possível cancelar a recorrência.");
+            } finally {
+              setCancellingId("");
+            }
+          })();
+        },
+      },
+    ]);
+  }
+
   const expires = payment?.expiresAt
     ? new Date(payment.expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
     : null;
@@ -229,7 +266,9 @@ export function PaymentsScreen({ navigation }: Props) {
             <>
               <Text style={styles.cardEyebrow}>NOVO DEPÓSITO</Text>
               <Text style={styles.cardTitle}>Escolha o valor do PIX</Text>
-              <Text style={styles.cardHint}>Gere o QR Code ou o código copia e cola para pagar no app do seu banco.</Text>
+              <Text style={styles.cardHint}>
+                R$ 7,00 = 1 dia de ativação. Antecipe a semana (R$ 49) ou o mês (R$ 210) no mesmo PIX.
+              </Text>
 
               <Text style={styles.label}>Valor</Text>
               <View style={styles.amountField}>
@@ -364,9 +403,25 @@ export function PaymentsScreen({ navigation }: Props) {
             <View style={styles.recurringField}><Text style={styles.label}>Valor por dia</Text><TextInput keyboardType="decimal-pad" value={recurringAmount} onChangeText={(text) => setRecurringAmount(text.replace(/[^0-9,.]/g, ""))} style={styles.recurringInput} /></View>
             <View style={styles.recurringField}><Text style={styles.label}>Dias</Text><TextInput keyboardType="number-pad" value={recurringDays} onChangeText={(text) => setRecurringDays(text.replace(/\D/g, ""))} style={styles.recurringInput} /></View>
           </View>
-          <Text style={styles.recurringTotal}>Total previsto: {money((Number(recurringAmount.replace(",", ".")) || 0) * (Number(recurringDays) || 0))}</Text>
+          <Text style={styles.recurringTotal}>Total previsto: {money((Number(recurringAmount.replace(",", ".")) || 0) * (Number(recurringDays) || 0))}. De cada R$ 7, R$ 5 entram na reserva.</Text>
           {recurringError ? <Text style={styles.recurringError}>{recurringError}</Text> : null}
           <Pressable disabled={recurringLoading || !isActive} onPress={() => void openRecurringCheckout()} style={({ pressed }) => [styles.primary, (recurringLoading || !isActive) && styles.primaryDisabled, pressed && styles.pressed]}><Feather color={colors.white} name="repeat" size={17} /><Text style={styles.primaryText}>{recurringLoading ? "Abrindo checkout..." : "Configurar no cartão"}</Text></Pressable>
+          {subscriptions.map((item) => (
+            <View key={item.id} style={styles.subscriptionRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.subscriptionTitle}>{money(item.amount)} por dia · {item.days} dias</Text>
+                <Text style={styles.subscriptionMeta}>
+                  {item.status === "authorized" ? "Ativa" : item.status === "paused" ? "Pausada" : item.status === "cancelled" ? "Cancelada" : "Aguardando cartão"}
+                  {item.endDate ? ` · até ${new Date(item.endDate).toLocaleDateString("pt-BR")}` : ""}
+                </Text>
+              </View>
+              {item.status !== "cancelled" ? (
+                <Pressable disabled={cancellingId === item.id} onPress={() => confirmCancel(item.id)}>
+                  <Text style={styles.cancelText}>{cancellingId === item.id ? "..." : "Cancelar"}</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))}
         </View>
 
         <View style={styles.sectionHeading}>
@@ -450,6 +505,10 @@ const styles = StyleSheet.create({
   recurringInput: { backgroundColor: colors.green50, borderRadius: 12, color: colors.ink, fontFamily: fonts.extraBold, fontSize: 18, height: 48, marginTop: 7, paddingHorizontal: 12 },
   recurringTotal: { backgroundColor: colors.green50, borderRadius: 11, color: colors.inkSoft, fontFamily: fonts.medium, fontSize: 11, marginTop: 12, padding: 11 },
   recurringError: { color: colors.danger, fontFamily: fonts.semibold, fontSize: 11, marginTop: 10 },
+  subscriptionRow: { alignItems: "center", borderColor: colors.line, borderRadius: 12, borderWidth: 1, flexDirection: "row", gap: 10, marginTop: 10, padding: 12 },
+  subscriptionTitle: { color: colors.ink, fontFamily: fonts.bold, fontSize: 13 },
+  subscriptionMeta: { color: colors.inkSoft, fontFamily: fonts.medium, fontSize: 11, marginTop: 3 },
+  cancelText: { color: colors.danger, fontFamily: fonts.bold, fontSize: 12 },
   cardEyebrow: { color: colors.green600, fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1.2 },
   cardTitle: { color: colors.ink, fontFamily: fonts.extraBold, fontSize: 22, letterSpacing: -0.5, marginTop: 6 },
   cardHint: { color: colors.inkSoft, fontFamily: fonts.regular, fontSize: 12, lineHeight: 18, marginTop: 6 },

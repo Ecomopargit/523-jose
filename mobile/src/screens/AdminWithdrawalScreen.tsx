@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { doc, onSnapshot, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,34 +14,92 @@ type Withdrawal = { id: string; memberId: string; memberName: string; memberCpf:
 const money = (value = 0) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export function AdminWithdrawalScreen({ navigation, route }: Props) {
-  const [item, setItem] = useState<Withdrawal | null>(null);
+  const [items, setItems] = useState<Withdrawal[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [openedAt] = useState(() => Date.now());
+  const memberId = route.params.memberId;
+  const withdrawalId = route.params.withdrawalId;
 
-  useEffect(() => onSnapshot(doc(db, "withdrawals", route.params.withdrawalId), (snapshot) => {
-    if (!snapshot.exists()) return;
-    const data = snapshot.data();
-    const next = { id: snapshot.id, memberId: String(data.memberId ?? ""), memberName: String(data.memberName ?? "Associado"), memberCpf: String(data.memberCpf ?? ""), pixKey: String(data.pixKey ?? ""), note: String(data.note ?? ""), adminNote: String(data.adminNote ?? ""), value: Number(data.value ?? 0), status: String(data.status ?? "solicitado"), requestedAt: data.requestedAt?.toDate?.() ?? null, updatedAt: data.updatedAt?.toDate?.() ?? null };
-    setItem(next);
-    setNote(next.adminNote);
-  }), [route.params.withdrawalId]);
+  useEffect(() => {
+    const trackedIds: { current: string[] | null } = { current: null };
+    const apply = (next: Withdrawal[]) => {
+      const openIds = next.filter((entry) => entry.status === "solicitado" || entry.status === "processando").map((entry) => entry.id);
+      if (!trackedIds.current) trackedIds.current = openIds.length ? openIds : next.slice(0, 1).map((entry) => entry.id);
+      else trackedIds.current = [...new Set([...trackedIds.current, ...openIds])];
+      const visible = next.filter((entry) => trackedIds.current?.includes(entry.id));
+      setItems(visible);
+      setNote((current) => current || visible[0]?.adminNote || "");
+    };
+    const map = (id: string, data: Record<string, unknown>): Withdrawal => {
+      const date = (value: unknown) => {
+        if (!value || typeof value !== "object" || !("toDate" in value) || typeof value.toDate !== "function") return null;
+        return value.toDate();
+      };
+      return {
+        id,
+        memberId: String(data.memberId ?? ""),
+        memberName: String(data.memberName ?? "Associado"),
+        memberCpf: String(data.memberCpf ?? ""),
+        pixKey: String(data.pixKey ?? ""),
+        note: String(data.note ?? ""),
+        adminNote: String(data.adminNote ?? ""),
+        value: Number(data.value ?? 0),
+        status: String(data.status ?? "solicitado"),
+        requestedAt: date(data.requestedAt),
+        updatedAt: date(data.updatedAt),
+      };
+    };
 
-  async function change(status: "processando" | "pago" | "rejeitado") {
-    if (!item || busy) return;
+    if (memberId) {
+      return onSnapshot(query(collection(db, "withdrawals"), where("memberId", "==", memberId)), (snapshot) => {
+        apply(snapshot.docs.map((record) => map(record.id, record.data() as Record<string, unknown>)).sort((a, b) => (b.requestedAt?.getTime() ?? 0) - (a.requestedAt?.getTime() ?? 0)));
+      });
+    }
+    if (!withdrawalId) return;
+    return onSnapshot(doc(db, "withdrawals", withdrawalId), (snapshot) => {
+      if (!snapshot.exists()) return;
+      apply([map(snapshot.id, snapshot.data() as Record<string, unknown>)]);
+    });
+  }, [memberId, withdrawalId]);
+
+  const item = items[0] ?? null;
+  const total = items.reduce((sum, entry) => sum + entry.value, 0);
+  const openItems = items.filter((entry) => entry.status === "solicitado" || entry.status === "processando");
+  const status = items.length && items.every((entry) => entry.status === "pago")
+    ? "pago"
+    : items.length && items.every((entry) => entry.status === "rejeitado")
+      ? "rejeitado"
+      : openItems.every((entry) => entry.status === "processando") && openItems.length
+        ? "processando"
+        : "solicitado";
+
+  async function change(nextStatus: "processando" | "pago" | "rejeitado") {
+    if (!item || busy || !openItems.length) return;
     setBusy(true);
     try {
-      if (status === "pago" && item.status !== "pago") {
+      if (nextStatus === "pago") {
         await runTransaction(db, async (transaction) => {
           const memberRef = doc(db, "users", item.memberId);
           const memberSnapshot = await transaction.get(memberRef);
+          const snapshots = await Promise.all(openItems.map((entry) => transaction.get(doc(db, "withdrawals", entry.id))));
           if (!memberSnapshot.exists()) throw new Error("Associado não encontrado.");
+          const payable = snapshots.filter((snapshot) => snapshot.exists() && !["pago", "rejeitado"].includes(String(snapshot.data()?.status ?? "")));
+          const amount = payable.reduce((sum, snapshot) => sum + Number(snapshot.data()?.value ?? 0), 0);
           const available = Number(memberSnapshot.data().saldoDisponivel ?? 0);
-          if (available < item.value) throw new Error("O associado não possui saldo disponível suficiente.");
-          transaction.update(memberRef, { saldoDisponivel: available - item.value, updatedAt: serverTimestamp() });
-          transaction.update(doc(db, "withdrawals", item.id), { status, adminNote: note.trim(), updatedAt: serverTimestamp() });
+          const bonus = Number(memberSnapshot.data().saldoBonus ?? 0);
+          if (available + bonus < amount) throw new Error("O associado não possui saldo suficiente.");
+          const debitAvailable = Math.min(available, amount);
+          transaction.update(memberRef, {
+            saldoDisponivel: available - debitAvailable,
+            saldoBonus: bonus - (amount - debitAvailable),
+            updatedAt: serverTimestamp(),
+          });
+          payable.forEach((snapshot) => transaction.update(snapshot.ref, { status: nextStatus, adminNote: note.trim(), updatedAt: serverTimestamp() }));
         });
-      } else await updateDoc(doc(db, "withdrawals", item.id), { status, adminNote: note.trim(), updatedAt: serverTimestamp() });
+      } else {
+        await Promise.all(openItems.map((entry) => updateDoc(doc(db, "withdrawals", entry.id), { status: nextStatus, adminNote: note.trim(), updatedAt: serverTimestamp() })));
+      }
     } catch (error) {
       Alert.alert("Não foi possível concluir", error instanceof Error ? error.message : "Tente novamente.");
     } finally { setBusy(false); }
@@ -49,13 +107,13 @@ export function AdminWithdrawalScreen({ navigation, route }: Props) {
 
   if (!item) return <SafeAreaView style={styles.safe}><View style={styles.loading}><ActivityIndicator color={colors.green600} /></View></SafeAreaView>;
   const elapsed = item.requestedAt ? Math.max(0, Math.floor((openedAt - item.requestedAt.getTime()) / 86400000)) : 0;
-  const terminal = ["pago", "rejeitado"].includes(item.status);
+  const terminal = openItems.length === 0;
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}><Pressable onPress={() => navigation.goBack()} style={styles.back}><Feather color={colors.ink} name="arrow-left" size={20} /></Pressable><View style={styles.headerCopy}><Text style={styles.eyebrow}>ANÁLISE FINANCEIRA</Text><Text style={styles.title}>Solicitação de saque</Text></View><View style={styles.dayBadge}><Text style={styles.dayValue}>{elapsed}</Text><Text style={styles.dayLabel}>{elapsed === 1 ? "dia" : "dias"}</Text></View></View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}><Text style={styles.heroLabel}>VALOR SOLICITADO</Text><Text style={styles.heroValue}>{money(item.value)}</Text><View style={styles.heroRule} /><View style={styles.heroFooter}><View><Text style={styles.metaLabel}>STATUS</Text><Text style={styles.metaValue}>{item.status.toUpperCase()}</Text></View><View><Text style={styles.metaLabel}>SOLICITADO EM</Text><Text style={styles.metaValue}>{item.requestedAt?.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) ?? "Agora"}</Text></View></View></View>
+        <View style={styles.hero}><Text style={styles.heroLabel}>{items.length > 1 ? `SOMA DE ${items.length} PEDIDOS` : "VALOR SOLICITADO"}</Text><Text style={styles.heroValue}>{money(total)}</Text><View style={styles.heroRule} /><View style={styles.heroFooter}><View><Text style={styles.metaLabel}>STATUS</Text><Text style={styles.metaValue}>{status.toUpperCase()}</Text></View><View><Text style={styles.metaLabel}>SOLICITADO EM</Text><Text style={styles.metaValue}>{item.requestedAt?.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) ?? "Agora"}</Text></View></View></View>
 
         <Text style={styles.sectionTitle}>Solicitante</Text>
         <View style={styles.card}><Row icon="user" label="Associado" value={item.memberName} /><Row icon="credit-card" label="CPF" value={item.memberCpf || "Não informado"} /><Row icon="key" label="Chave PIX" value={item.pixKey} last /></View>
@@ -63,19 +121,20 @@ export function AdminWithdrawalScreen({ navigation, route }: Props) {
         <Text style={styles.sectionTitle}>Linha do tempo</Text>
         <View style={styles.timeline}>
           <Step done title="Solicitação recebida" text={item.requestedAt?.toLocaleString("pt-BR") ?? "Agora"} />
-          <Step done={["processando", "pago"].includes(item.status)} title="Análise administrativa" text={item.status === "solicitado" ? "Aguardando início" : "Análise registrada"} />
-          <Step done={item.status === "pago"} danger={item.status === "rejeitado"} title={item.status === "rejeitado" ? "Solicitação negada" : "Pagamento via PIX"} text={terminal ? item.updatedAt?.toLocaleString("pt-BR") ?? "Concluído" : "Pendente"} last />
+          <Step done={["processando", "pago"].includes(status)} title="Análise administrativa" text={status === "solicitado" ? "Aguardando início" : "Análise registrada"} />
+          <Step done={status === "pago"} danger={status === "rejeitado"} title={status === "rejeitado" ? "Solicitação negada" : "Pagamento via PIX"} text={terminal ? item.updatedAt?.toLocaleString("pt-BR") ?? "Concluído" : "Pendente"} last />
         </View>
 
+        {items.length > 1 ? <><Text style={styles.sectionTitle}>Pedidos incluídos</Text><View style={styles.card}>{items.map((entry, index) => <Row key={entry.id} icon="file-text" label={entry.requestedAt?.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) ?? "Pedido"} value={money(entry.value)} last={index === items.length - 1} />)}</View></> : null}
         {item.note ? <><Text style={styles.sectionTitle}>Observação do associado</Text><View style={styles.note}><Text style={styles.noteText}>{item.note}</Text></View></> : null}
         <Text style={styles.sectionTitle}>Nota administrativa</Text>
         <TextInput editable={!terminal} multiline onChangeText={setNote} placeholder="Registre comprovante, motivo ou observação interna..." placeholderTextColor={colors.inkFaint} style={styles.input} value={note} />
 
         {!terminal ? <View style={styles.actions}>
-          {item.status === "solicitado" ? <Pressable disabled={busy} onPress={() => void change("processando")} style={styles.primary}><Feather color={colors.white} name="shield" size={16} /><Text style={styles.primaryText}>Iniciar processamento</Text></Pressable> : null}
-          {item.status === "processando" ? <Pressable disabled={busy} onPress={() => Alert.alert("Confirmar pagamento?", `${money(item.value)} será debitado do saldo disponível do associado.`, [{ text: "Cancelar", style: "cancel" }, { text: "Confirmar pagamento", onPress: () => void change("pago") }])} style={styles.primary}><Feather color={colors.white} name="check" size={16} /><Text style={styles.primaryText}>Liberar pagamento</Text></Pressable> : null}
-          <Pressable disabled={busy} onPress={() => Alert.alert("Negar solicitação?", "Informe o motivo na nota administrativa antes de continuar.", [{ text: "Cancelar", style: "cancel" }, { text: "Negar", style: "destructive", onPress: () => void change("rejeitado") }])} style={styles.danger}><Feather color={colors.danger} name="x-circle" size={16} /><Text style={styles.dangerText}>Negar solicitação</Text></Pressable>
-        </View> : <View style={styles.complete}><Feather color={item.status === "pago" ? colors.green700 : colors.danger} name={item.status === "pago" ? "check-circle" : "x-circle"} size={19} /><Text style={styles.completeText}>Processo {item.status === "pago" ? "pago e concluído" : "negado e encerrado"}</Text></View>}
+          {status === "solicitado" ? <Pressable disabled={busy} onPress={() => void change("processando")} style={styles.primary}><Feather color={colors.white} name="shield" size={16} /><Text style={styles.primaryText}>{items.length > 1 ? "Processar todos" : "Iniciar processamento"}</Text></Pressable> : null}
+          {status === "processando" ? <Pressable disabled={busy} onPress={() => Alert.alert("Confirmar pagamento?", `${money(total)} será pago em um único PIX e debitado do saldo do associado.`, [{ text: "Cancelar", style: "cancel" }, { text: "Confirmar pagamento", onPress: () => void change("pago") }])} style={styles.primary}><Feather color={colors.white} name="check" size={16} /><Text style={styles.primaryText}>Liberar PIX de {money(total)}</Text></Pressable> : null}
+          <Pressable disabled={busy} onPress={() => Alert.alert("Negar solicitação?", "Informe o motivo na nota administrativa antes de continuar.", [{ text: "Cancelar", style: "cancel" }, { text: "Negar", style: "destructive", onPress: () => void change("rejeitado") }])} style={styles.danger}><Feather color={colors.danger} name="x-circle" size={16} /><Text style={styles.dangerText}>{items.length > 1 ? "Negar todos" : "Negar solicitação"}</Text></Pressable>
+        </View> : <View style={styles.complete}><Feather color={status === "pago" ? colors.green700 : colors.danger} name={status === "pago" ? "check-circle" : "x-circle"} size={19} /><Text style={styles.completeText}>Processo {status === "pago" ? "pago e concluído" : "negado e encerrado"}</Text></View>}
       </ScrollView>
     </SafeAreaView>
   );

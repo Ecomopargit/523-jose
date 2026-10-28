@@ -8,6 +8,10 @@ import {
 } from "@/lib/activation-constants";
 import { adminDb } from "@/lib/firebase-admin";
 import {
+  coverageDaysFromAmount,
+  extendCoverageUntilDate,
+} from "@/lib/member-status";
+import {
   createDepositPixPayment,
   getMercadoPagoPayment,
   isMercadoPagoMissingPaymentError,
@@ -144,22 +148,33 @@ export async function applyApprovedDeposit(payment: DepositPayment) {
     payment.feeAmount > 0 ? payment.feeAmount : splitDepositAmount(payment.amount).feeAmount;
 
   await adminDb.runTransaction(async (tx) => {
-    const current = await tx.get(paymentRef);
+    const [current, userSnap] = await Promise.all([tx.get(paymentRef), tx.get(userRef)]);
     if (!current.exists) throw new Error("Depósito não encontrado.");
     if (current.data()?.status === "approved") return;
     const stamp = nowIso();
+    const userData = userSnap.data() || {};
+    const blocked = userData.status === "bloqueado";
+    const days = coverageDaysFromAmount(payment.amount);
+    const coverageUntilDate = extendCoverageUntilDate(
+      typeof userData.coverageUntilDate === "string" ? userData.coverageUntilDate : null,
+      days,
+    );
     tx.update(paymentRef, {
       status: "approved",
       approvedAt: stamp,
       updatedAt: stamp,
       reserveAmount: credit,
       feeAmount,
+      coverageDays: days,
     });
     tx.set(
       userRef,
       {
         saldoDisponivel: FieldValue.increment(credit),
         depositosCount: FieldValue.increment(1),
+        lastDepositAt: stamp,
+        coverageUntilDate,
+        ...(blocked ? {} : { status: "ativo" }),
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },

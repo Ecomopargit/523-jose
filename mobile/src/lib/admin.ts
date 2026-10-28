@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 
 import { auth, db } from "./firebase";
+import { effectiveMemberStatus } from "./member-status";
 import type { MemberProfile } from "../types";
 
 function apiBase() {
@@ -59,6 +60,8 @@ export async function getAdminStats(): Promise<AdminStats> {
         referralValidCount: Number(data.referralValidCount ?? 0),
         referralBonusPaidGroups: Number(data.referralBonusPaidGroups ?? 0),
         activatedAt: data.activatedAt?.toDate?.()?.toISOString() ?? (typeof data.activatedAt === "string" ? data.activatedAt : null),
+        lastDepositAt: data.lastDepositAt?.toDate?.()?.toISOString() ?? (typeof data.lastDepositAt === "string" ? data.lastDepositAt : null),
+        coverageUntilDate: typeof data.coverageUntilDate === "string" && data.coverageUntilDate ? data.coverageUntilDate : null,
         withdrawalLockedUntil: data.withdrawalLockedUntil?.toDate?.()?.toISOString() ?? (typeof data.withdrawalLockedUntil === "string" ? data.withdrawalLockedUntil : null),
         status: data.status || "pendente",
         role: data.role || "member",
@@ -73,6 +76,7 @@ export async function getAdminStats(): Promise<AdminStats> {
       } as MemberProfile;
     })
     .filter((member) => member.role !== "admin")
+    .map((member) => ({ ...member, status: effectiveMemberStatus(member) }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const totalAvailable = members.reduce((sum, member) => sum + member.saldoDisponivel, 0);
